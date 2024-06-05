@@ -1,0 +1,10 @@
+2prong analysis
+imax 1 number of bins
+jmax 3 number of processes minus 1
+kmax 5 number of nuisance parameters
+----------------------------------------------------------------------------------------------------------------------------------
+shapes *    ch1  ../shapes/diphoton_combine_1000_DiPhotons_kMpl01_EBEB_2017.root wDiPhotons_kMpl01_EBEB:$PROCESS wDiPhotons_kMpl01_EBEB:$PROCESS_$SYSTEMATIC
+----------------------------------------------------------------------------------------------------------------------------------
+
+
+
