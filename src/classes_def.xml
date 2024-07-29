@@ -216,6 +216,9 @@
   <class name="CMSExternalMorph" />
   <class name="CMSInterferenceFunc" />
   <class name="RooEFTScalingFunction" />
-  <class name="RooDijetPdf" /> 
+  <class name="RooDijetAbsPdf" /> 
+  <class name="RooDijet1Pdf" /> 
+  <class name="RooDijet2Pdf" /> 
+  <class name="RooDijet3Pdf" /> 
 
 </lcgdict>

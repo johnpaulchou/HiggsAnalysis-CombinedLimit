@@ -20,20 +20,31 @@
 using namespace std;
 using namespace RooFit;
 
-ClassImp(RooDijetPdf)
+ClassImp(RooDijetAbsPdf)
+ClassImp(RooDijet1Pdf)
+ClassImp(RooDijet2Pdf)
+ClassImp(RooDijet3Pdf)
 
 //---------------------------------------------------------------------------
-Double_t RooDijetPdf::evaluate() const
+Double_t RooDijet1Pdf::evaluate() const
 {
   using namespace std;
   Double_t x=_x/_sqrts;
-  if(_funcid==0)
     return pow(x,_p1+_p2*log(x));
-  if(_funcid==1)
-    return exp(_p1*x)*pow(x,_p2);
-  if(_funcid==2)
-    return pow(1.0+x*_p1,_p2);
-  return 0.0;
+}
+
+Double_t RooDijet2Pdf::evaluate() const
+{
+  using namespace std;
+  Double_t x=_x/_sqrts;
+  return exp(_p1*x)*pow(x,_p2);
+}
+
+Double_t RooDijet3Pdf::evaluate() const
+{
+  using namespace std;
+  Double_t x=_x/_sqrts;
+  return pow(1.0+x*_p1,_p2);
 }
 
 
