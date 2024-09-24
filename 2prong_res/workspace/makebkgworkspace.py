@@ -2,11 +2,11 @@ import ROOT
 
 
 # where to write things out
-fileout = ROOT.TFile("bkgworkspace.root", "RECREATE")
+fileout = ROOT.TFile("../output/bkgworkspace.root", "RECREATE")
 w = ROOT.RooWorkspace("w","w")
 
 # get the 2D histogram from the file
-rootfile = ROOT.TFile("input/egamma2018-full-newbinning_signalreigon_phi_by_omega.root","READ")
+rootfile = ROOT.TFile("../input/egamma2018-full-newbinning_signalreigon_phi_by_omega.root","READ")
 datahist2d = rootfile.Get("plots/recomass_2d_variable")
 m2pg = ROOT.RooRealVar("m2pg","Invariant mass of the 2-prong and photon",datahist2d.GetYaxis().GetBinLowEdge(1),datahist2d.GetYaxis().GetBinUpEdge(datahist2d.GetYaxis().GetNbins()))
 
@@ -55,26 +55,11 @@ for bin in range(1,datahist2d.GetXaxis().GetNbins()+1):
     getattr(w, "import")(multipdf)
 
     # plot fits for inspection later
-    can = ROOT.TCanvas()
-    can.Divide(2,1)
-    plot1 = m2pg.frame()
-    lo=datahist2d.GetXaxis().GetBinLowEdge(bin)
-    up=datahist2d.GetXaxis().GetBinUpEdge(bin)
-    plot1.SetTitle("2-prong mass ["+str(lo)+", "+str(up)+"]")
-    dataHist.plotOn(plot1)
-    f1.plotOn(plot1,ROOT.RooFit.LineColor(4))
-    f2.plotOn(plot1,ROOT.RooFit.LineColor(2))
-    f3.plotOn(plot1,ROOT.RooFit.LineColor(3))
-    can.cd(1)
-    plot1.Draw()
-    can.cd(2)
-    plot2=plot1
-    can.SetLogy(True)
-    plot2.Draw()
-    can.Update()
-    can.Draw()
-    can.SaveAs("bkgplot_"+label+".pdf")
-
+    fileout.cd()
+    datahist2d.Write()
+    f1.Write()
+    f2.Write()
+    f3.Write()
 
 w.Print()
 fileout.cd()
