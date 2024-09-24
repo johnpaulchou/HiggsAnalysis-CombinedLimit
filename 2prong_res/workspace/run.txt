@@ -1,0 +1,5 @@
+python makebkgworkspace.py
+python makesigworkspace.py
+text2workspace.py combine.txt
+combine -M MultiDimFit combine.root --saveWorkspace -n .bestfit
+python ../test/systematicsAnalyzer.py combine.txt --all -f html > out.html

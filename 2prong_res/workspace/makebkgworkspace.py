@@ -6,17 +6,16 @@ fileout = ROOT.TFile("bkgworkspace.root", "RECREATE")
 w = ROOT.RooWorkspace("w","w")
 
 # get the 2D histogram from the file
-rootfile = ROOT.TFile("egamma2018-partial_signalreigon_phi_by_omega.root","READ")
+rootfile = ROOT.TFile("input/egamma2018-full-newbinning_signalreigon_phi_by_omega.root","READ")
 datahist2d = rootfile.Get("plots/recomass_2d_variable")
+m2pg = ROOT.RooRealVar("m2pg","Invariant mass of the 2-prong and photon",datahist2d.GetYaxis().GetBinLowEdge(1),datahist2d.GetYaxis().GetBinUpEdge(datahist2d.GetYaxis().GetNbins()))
 
 # loop over the 2-prong mass slices
-for bin in range(4,25):
+for bin in range(1,datahist2d.GetXaxis().GetNbins()+1):
     label = "bin"+str(bin)
     datahist1d = datahist2d.ProjectionY("_py"+label,bin,bin)
 
     # convert histogram into a RooDataHist
-    m2pg = ROOT.RooRealVar("m2pg","Invariant mass of the 2-prong and photon",499.23,4150.4400)
-    #m2pg = ROOT.RooRealVar("m2pg","Invariant mass of the 2-prong and photon",499.23,1500)
     dataHist = ROOT.RooDataHist("dataHist_"+label, "dataHist", m2pg, datahist1d)
 
     # set up the three background function models
@@ -47,6 +46,7 @@ for bin in range(4,25):
     multipdf = ROOT.RooMultiPdf("multipdf_"+label, "MultiPdf", cat, models)
     # naming convention of the normalization is specific to Combine and needs to be used this way for an extended likelihood. Bleh.
     norm = ROOT.RooRealVar("multipdf_"+label+"_norm", "Number of background events", dataHist.numEntries(),0,3*dataHist.numEntries())
+#    norm = ROOT.RooRealVar("model_bkg_f1_"+label+"_norm", "Number of background events", dataHist.numEntries(),0,3*dataHist.numEntries())
 
     # write to workspace
     getattr(w, "import")(dataHist)
@@ -57,19 +57,20 @@ for bin in range(4,25):
     # plot fits for inspection later
     can = ROOT.TCanvas()
     can.Divide(2,1)
-    plot = m2pg.frame()
-    lo=hist2d.GetXaxis().GetBinLowEdge(bin)
-    up=hist2d.GetXaxis().GetBinUpEdge(bin)
-    plot.SetTitle("2-prong mass ["+str(lo)+", "+str(up)+"]")
-    dataHist.plotOn(plot)
-    f1.plotOn(plot,ROOT.RooFit.LineColor(4))
-    f2.plotOn(plot,ROOT.RooFit.LineColor(2))
-    f3.plotOn(plot,ROOT.RooFit.LineColor(3))
+    plot1 = m2pg.frame()
+    lo=datahist2d.GetXaxis().GetBinLowEdge(bin)
+    up=datahist2d.GetXaxis().GetBinUpEdge(bin)
+    plot1.SetTitle("2-prong mass ["+str(lo)+", "+str(up)+"]")
+    dataHist.plotOn(plot1)
+    f1.plotOn(plot1,ROOT.RooFit.LineColor(4))
+    f2.plotOn(plot1,ROOT.RooFit.LineColor(2))
+    f3.plotOn(plot1,ROOT.RooFit.LineColor(3))
     can.cd(1)
-    plot.Draw()
+    plot1.Draw()
     can.cd(2)
+    plot2=plot1
     can.SetLogy(True)
-    plot.Draw()
+    plot2.Draw()
     can.Update()
     can.Draw()
     can.SaveAs("bkgplot_"+label+".pdf")
