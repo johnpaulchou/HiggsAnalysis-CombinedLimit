@@ -35,6 +35,30 @@ for wbin in ttw.wbins:
     hchi2probs.append(hchi2prob)
 
 
+
+# calculate chi^2
+def calcChisq(plot, funcname, dataname, nconstraints):
+    func=plot.findObject(funcname)
+    data=plot.findObject(dataname)
+    chisq=0
+    N=data.GetN()
+    for j in range(data.GetN()):
+        x = data.GetPointX(j)
+        y = data.GetPointY(j)
+        errhi = data.GetErrorYhigh(j)
+        errlo = data.GetErrorYlow(j)
+        mu = func.interpolate(x)
+        pull = 0
+        if y<mu:   pull = (y-mu)**2/errhi**2
+        elif y>mu: pull = (y-mu)**2/errlo**2
+        else:      pull=0
+        if y==0:
+            N=N-1
+            pull=0
+        chisq = chisq+pull
+        print(str(N),str(x),str(y),str(errhi),str(errlo),str(mu),str(pull),str(chisq),sep=' ; ')
+    return chisq/(N-nconstraints)
+
 # loop over the w types and the b tags
 for windex, wbin in enumerate(ttw.wbins):
     for btagindex, btagbin in enumerate(ttw.btagbins):
@@ -102,8 +126,13 @@ for windex, wbin in enumerate(ttw.wbins):
                 bkg3.plotOn(plot,ROOT.RooFit.LineColor(colors[3]),ROOT.RooFit.LineWidth(1),ROOT.RooFit.Name("bkg3"))
             else:
                 bkg3.plotOn(plot,ROOT.RooFit.LineColor(colors[3]),ROOT.RooFit.LineWidth(1),ROOT.RooFit.Name("bkg3"))
+                fitresult = rootfile.Get("fitresult_temp_"+wbin+"_"+btagbin+"_"+ptbin+"_bkg3pdf_data_"+wbin+"_"+btagbin+"_"+ptbin)
+                fitresult.Print("v")
+                print("Cov. matrix")
+                fitresult.covarianceMatrix().Print()
+                print("Corr. matrix")
+                fitresult.correlationMatrix().Print()
                 if doPullSig:
-                    fitresult = rootfile.Get("fitresult_temp_"+wbin+"_"+btagbin+"_"+ptbin+"_bkg3pdf_data_"+wbin+"_"+btagbin+"_"+ptbin)
                     bkg3.plotOn(plot,ROOT.RooFit.VisualizeError(fitresult,2),ROOT.RooFit.FillColor(0),ROOT.RooFit.LineWidth(0),ROOT.RooFit.Name("sigma2"))
                     bkg3.plotOn(plot,ROOT.RooFit.VisualizeError(fitresult,1),ROOT.RooFit.FillColor(0),ROOT.RooFit.LineWidth(0),ROOT.RooFit.Name("sigma1"))
                     # get the curves from the plot
@@ -159,14 +188,16 @@ for windex, wbin in enumerate(ttw.wbins):
 
             # calculate chi^2 and F-test
             print(pttitles[ptindex]+" "+btagtitles[btagindex]+" "+wtitles[windex])
-            chi2dof1=plot.chiSquare("bkg0","data",1)
-            chi2dof2=plot.chiSquare("bkg1","data",2)
-            chi2dof3=plot.chiSquare("bkg2","data",3)
-            chi2dof4=plot.chiSquare("bkg3","data",4)
-            chi2prob = ROOT.TMath.Prob(chi2dof1*33,33)
-            hchi2probs[windex].Fill(chi2prob)
-            chi2dof4str="{0:0.2f}".format(chi2dof4)
             if wbin=="asymnoniso":
+                chi2dof1=plot.chiSquare("bkg0","data",1)
+                chi2dof2=plot.chiSquare("bkg1","data",2)
+                chi2dof3=plot.chiSquare("bkg2","data",3)
+                chi2dof4=plot.chiSquare("bkg3","data",4)
+#                calcChisq(plot,"bkg0","data",1)
+                chi2prob = ROOT.TMath.Prob(chi2dof1*33,33)
+                hchi2probs[windex].Fill(chi2prob)
+                chi2dof4str="{0:0.2f}".format(chi2dof4)
+
                 F1=(chi2dof1*32)/(chi2dof2*31)
                 F2=(chi2dof2*31)/(chi2dof3*30)
                 F3=(chi2dof3*30)/(chi2dof4*29)

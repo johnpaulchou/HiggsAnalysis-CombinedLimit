@@ -47,10 +47,33 @@ if __name__ == "__main__":
         for wbin in wbins:
             for btagbin in btagbins:
 
-                # get the template and construct a PDF
-                templateName = "singlemuon_"+wbin+"_0b_"+ptbin+"_loosefittemplate"
-                newName = "temp_"+wbin+"_"+btagbin+"_"+ptbin
+                # get the data
+                dataName = "singlemuon_"+wbin+"_"+btagbin+"_"+ptbin+"_tight"
+                if wbin=="asymnoniso":
+                    dataName += "scaledtosymiso"
+                newName = "data_"+wbin+"_"+btagbin+"_"+ptbin
+                dataTH1 = getTH1(dataName, filename)
+                dataHist = ROOT.RooDataHist(newName,newName,ROOT.RooArgList(m2p),dataTH1)
+                getattr(w,"import")(dataHist)
+                fileout.cd()
+                dataHist.Write()
+
+
+                # get the template TH1
+                templateName = "singlemuon_"+wbin+"_0b_"+ptbin+"_loose"
                 templateTH1 = getTH1(templateName, filename)
+
+                # find any non-0 bins in the data that are 0 in the template
+                # set it to 0.01 if it happens and print a warning
+                for i in range(1, dataTH1.GetNbinsX()+1):
+                    if templateTH1.GetBinContent(i)==0 and dataTH1.GetBinContent(i)!=0:
+                        print("************************************************************************************")
+                        print("found a 0 bin in the template",templateTH1.GetName(),dataTH1.GetName(),str(i),str(dataTH1.GetBinContent(i)),sep=" ; ")
+                        print("************************************************************************************")
+                        templateTH1.SetBinContent(i, 0.01)
+
+                # construct the PDF of the template
+                newName = "temp_"+wbin+"_"+btagbin+"_"+ptbin
                 templateDataHist = ROOT.RooDataHist(newName,newName,ROOT.RooArgList(m2p),templateTH1)
                 templatePdf=ROOT.RooHistPdf(newName+"_pdf",newName+"_pdf",ROOT.RooArgSet(m2p),templateDataHist,2)
                 a1=ROOT.RooRealVar(newName+"_a1",newName+"_a1",0.1,0,100)
@@ -69,22 +92,11 @@ if __name__ == "__main__":
                 bern3=ROOT.RooBernstein(newName+"_bern3",newName+"_bern3",m2p,ROOT.RooArgList(c1,c2,c3,c4))
                 bkg3pdf=ROOT.RooProdPdf(newName+"_bkg3pdf",newName+"_bkg3pdf",ROOT.RooArgSet(templatePdf,bern3))
                 
-                # get the data
-                dataName = "singlemuon_"+wbin+"_"+btagbin+"_"+ptbin+"_tight"
-                if wbin=="asymnoniso":
-                    dataName += "scaledtosymiso"
-                newName = "data_"+wbin+"_"+btagbin+"_"+ptbin
-                dataTH1 = getTH1(dataName, filename)
-                dataHist = ROOT.RooDataHist(newName,newName,ROOT.RooArgList(m2p),dataTH1)
-                getattr(w,"import")(dataHist)
-                fileout.cd()
-                dataHist.Write()
-            
                 # do a preliminary fit and save them for inspection later
-                # r0=templatePdf.fitTo(dataHist, Save=True, Minimizer=("Minuit2","minimize"), SumW2Error=True, Strategy=2, PrintLevel=-1)
-                r1=bkg1pdf.fitTo(dataHist, Save=True, Minimizer=("Minuit2","minimize"), SumW2Error=True, Strategy=2, PrintLevel=1)
-                r2=bkg2pdf.fitTo(dataHist, Save=True, Minimizer=("Minuit2","minimize"), SumW2Error=True, Strategy=2, PrintLevel=1)
-                r3=bkg3pdf.fitTo(dataHist, Save=True, Minimizer=("Minuit2","minimize"), SumW2Error=True, Strategy=2, PrintLevel=1)
+                fileout.cd()
+                r1=bkg1pdf.fitTo(dataHist, Save=True, Minimizer=("Minuit2","minimize"), SumW2Error=True, Strategy=2, PrintLevel=-1)
+                r2=bkg2pdf.fitTo(dataHist, Save=True, Minimizer=("Minuit2","minimize"), SumW2Error=True, Strategy=2, PrintLevel=-1)
+                r3=bkg3pdf.fitTo(dataHist, Save=True, Minimizer=("Minuit2","minimize"), SumW2Error=True, Strategy=2, PrintLevel=-1)
                 r1.Write()
                 r2.Write()
                 r3.Write()
