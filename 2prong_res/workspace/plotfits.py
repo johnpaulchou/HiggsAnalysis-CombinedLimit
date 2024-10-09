@@ -119,8 +119,8 @@ for chunkindex, chunk in enumerate(splitbins):
         line.SetLineWidth(1)
         line.SetLineColor(colors[3])
         line.SetLineStyle(3)
-        line.Draw()
-        line.DrawClone()
+#        line.Draw()
+#        line.DrawClone()
         pullpad.Update()
 
         # calculate and draw the chi^2

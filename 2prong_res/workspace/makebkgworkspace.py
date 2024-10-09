@@ -6,11 +6,13 @@ fileoutname = "../output/bkgworkspace.root"
 
 # get the 2D histogram from the file
 #rootfile = ROOT.TFile("../input/egamma2018-full-newbinning_signalreigon_phi_by_omega.root","READ")
-rootfile = ROOT.TFile("../input/fullsum_Multigetsideband_sept24-HistoMode.root","READ")
-datahist2d = rootfile.Get("plots/recomass_2d_variable_sb")
+#rootfile = ROOT.TFile("../input/fullsum_Multigetsideband_sept24-HistoMode.root","READ")
+rootfile = ROOT.TFile("../input/fullsum_Multigetsideband_sept24-HistoMode_update.root","READ")
+datahist2d = rootfile.Get("plots/recomass_2d_variable_sb_tightpho")
 datahist2d.SetDirectory(0)
 
 m2pg = ROOT.RooRealVar("m2pg","Invariant mass of the 2-prong and photon",datahist2d.GetYaxis().GetBinLowEdge(1),datahist2d.GetYaxis().GetBinUpEdge(datahist2d.GetYaxis().GetNbins()))
+#m2pg = ROOT.RooRealVar("m2pg","Invariant mass of the 2-prong and photon",700,datahist2d.GetYaxis().GetBinUpEdge(datahist2d.GetYaxis().GetNbins()))
 bins = range(1,datahist2d.GetXaxis().GetNbins()+1)
 
 if __name__ == "__main__":
