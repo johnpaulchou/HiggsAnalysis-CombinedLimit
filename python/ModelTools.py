@@ -10,8 +10,6 @@ from sys import exit, stderr, stdout
 import six
 from six.moves import range
 
-from collections import OrderedDict
-
 import ROOT
 
 ROOFIT_EXPR = "expr"
@@ -56,7 +54,7 @@ class ModelBuilderBase:
             self.out = ROOT.RooWorkspace("w", "w")
             # self.out.safe_import = getattr(self.out,"import") # workaround: import is a python keyword
             self.out.safe_import = SafeWorkspaceImporter(self.out)
-            self.objstore = OrderedDict()
+            self.objstore = {}
             self.out.dont_delete = []
             if options.verbose == 0:
                 ROOT.RooMsgService.instance().setGlobalKillBelow(ROOT.RooFit.ERROR)
@@ -175,11 +173,9 @@ class ModelBuilder(ModelBuilderBase):
         self.physics.doParametersOfInterest()
 
         # set a group attribute on POI variables
-        poiIter = self.out.set("POI").createIterator()
-        poi = poiIter.Next()
-        while poi:
+        pois = self.out.set("POI")
+        for poi in pois:
             self.out.var(poi.GetName()).setAttribute("group_POI", True)
-            poi = poiIter.Next()
         self.physics.preProcessNuisances(self.DC.systs)
         self.doNuisances()
         self.doExtArgs()
@@ -223,7 +219,7 @@ class ModelBuilder(ModelBuilderBase):
             self.out.arg(n).setConstant(True)
 
     def doExtArgs(self):
-        open_files = OrderedDict()
+        open_files = {}
         for rp in self.DC.extArgs.keys():
             if self.out.arg(rp):
                 continue
@@ -279,7 +275,7 @@ class ModelBuilder(ModelBuilderBase):
     def doRateParams(self):
         # First support external functions/parameters
         # keep a map of open files/workspaces
-        open_files = OrderedDict()
+        open_files = {}
 
         for rp in self.DC.rateParams.keys():
             for rk in range(len(self.DC.rateParams[rp])):
@@ -848,7 +844,7 @@ class ModelBuilder(ModelBuilderBase):
 
     def doNuisancesGroups(self):
         # Prepare a dictionary of which group a certain nuisance belongs to
-        groupsFor = OrderedDict()
+        groupsFor = {}
         # existingNuisanceNames = tuple(set([syst[0] for syst in self.DC.systs]+self.DC.flatParamNuisances.keys()+self.DC.rateParams.keys()+self.DC.extArgs.keys()+self.DC.discretes))
         existingNuisanceNames = self.DC.getAllVariables()
         for groupName, nuisanceNames in six.iteritems(self.DC.groups):

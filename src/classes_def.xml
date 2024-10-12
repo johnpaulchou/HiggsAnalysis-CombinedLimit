@@ -216,10 +216,18 @@
   <class name="CMSExternalMorph" />
   <class name="CMSInterferenceFunc" />
   <class name="RooEFTScalingFunction" />
+<<<<<<< HEAD
   <class name="RooDijetAbsPdf" /> 
   <class name="RooDijet1Pdf" /> 
   <class name="RooDijet2Pdf" /> 
   <class name="RooDijet3Pdf" /> 
   <class name="RooMomentMorphFuncNDCorr" />
   <class name="RooMomentMorphFuncNDCorr::Grid2" />
+=======
+  <class name="RooModZPdf" />
+  <class name="RooExpPdf" />
+  <class name="RooSumTwoExpPdf" />
+  <class name="RooPowerLawPdf" />
+  <class name="RooSumTwoPowerLawPdf" />
+>>>>>>> origin/new10.0.2
 </lcgdict>
