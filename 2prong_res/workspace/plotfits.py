@@ -186,8 +186,8 @@ for etabin in ws.etabins:
         for plot in plotlist:
             if plot.GetMaximum()>max:
                 max=plot.GetMaximum()
-                for plot in plotlist:
-                    plot.SetMaximum(max*1.1)
+        for plot in plotlist:
+            plot.SetMaximum(max*1.1)
         
         # Write CMS stuff
         can.cd()

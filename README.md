@@ -2,7 +2,7 @@ HiggsAnalysis-CombinedLimit
 ===========================
 
 ### This Branch is for the ɸ->ωω, ω->πππ analysis, and the ttω, ω->πππ analysis
-This was forked from the v9.2.1 tag of the master
+This was forked from the v10.0.2 tag of the master
 
 # Official documentation
 
