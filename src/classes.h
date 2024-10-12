@@ -64,4 +64,4 @@
 #include "HiggsAnalysis/CombinedLimit/interface/RooEFTScalingFunction.h"
 
 #include "HiggsAnalysis/CombinedLimit/interface/RooDijetPdf.h"
-#include "HiggsAnalysis/CombinedLimit/interface/RooMomentMorphFuncNDCorr.h"
+#include "HiggsAnalysis/CombinedLimit/interface/RooMomentMorphFuncNDFix.h"
