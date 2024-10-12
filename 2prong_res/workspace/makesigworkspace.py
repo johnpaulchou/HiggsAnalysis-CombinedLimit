@@ -100,7 +100,7 @@ print("The interpolated acc*eff is "+str(acceff.getValV()))
 ###### main function ######
 if __name__ == "__main__":
 
-    fileout = ROOT.TFile("../output/sigshapes_"+tlabel+".root", "RECREATE")
+    fileout = ROOT.TFile("../output/sigworkspace_"+tlabel+".root", "RECREATE")
     w = ROOT.RooWorkspace("w","w")
 
     # loop over systematic sources
