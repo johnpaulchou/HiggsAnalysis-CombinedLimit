@@ -4,7 +4,7 @@ import ROOT
 doSideband = True
 
 # where to write things out
-fileoutname = "../output/bkgworkspace.root"
+fileoutname = "bkgworkspace.root"
 
 # where to read from
 fileinname = "../input/egamma18.root"
