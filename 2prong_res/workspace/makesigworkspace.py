@@ -157,7 +157,7 @@ def main(wmass, pmass):
                 sliceacc = ROOT.RooRealVar("sliceacc_"+label,"acceptance in a given slice",accnum/accden)
                 sliceacc.setConstant(True)
                 print("The slice acceptance for "+label+" is "+str(sliceacc.getValV()))
-                norm = ROOT.RooProduct("signal_"+label+"_norm", "Normalisation of signal", ROOT.RooArgList(xsec,acceff,sliceacc))
+                norm = ROOT.RooProduct("sigpdf_"+label+"_norm", "Normalisation of signal", ROOT.RooArgList(xsec,acceff,sliceacc))
                 getattr(w,"import")(sigpdf1d)
                 getattr(w,"import")(norm)
 

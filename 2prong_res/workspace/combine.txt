@@ -6,16 +6,17 @@ kmax * number of nuisance parameters
 shapes      data_obs    BIN      bkgworkspace.root                    w:dataHist_BIN
 shapes      sig         BIN      sigworkspace_PMASS_WMASS.root        w:sigpdf_BIN
 shapes      bkg         BIN      bkgworkspace.root                    w:multipdf_BIN
+#shapes      bkg         BIN      bkgworkspace.root                    w:model_bkg_f1_BIN
 -------------------------------------------------------------------------------
 bin             BIN
 observation     -1
 -------------------------------------------------------------------------------
-bin             BIN              BIN
+bin             BIN                BIN
 process         sig                bkg
 process         0                  1
 rate            59                 1.0
 ---------------------------------------------
-lumi lnN 1.026   - 
+lumi          lnN         1.016      1.0
 p1_BIN        flatParam
 p2_BIN        flatParam
 p3_BIN        flatParam

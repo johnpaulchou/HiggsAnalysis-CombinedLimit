@@ -25,6 +25,7 @@ def makecard(wmass, pmass):
     newfilenames = []
 
     # skip the first two bins if we're doing the control region
+#    for bin in range(1,26):
     for bin in range(3,26):
         binstr=str(bin)
         for eta in ["B","E"]:
@@ -58,6 +59,8 @@ for wmasspnt in wmasspoints:
     for pmasspnt in pmasspoints:
         cntr=cntr+1
         if cntr==jobid:
+            print("wmass="+str(wmasspnt))
+            print("pmass="+str(pmasspnt))
             ws.main(wmasspnt, pmasspnt)
             makecard(wmasspnt, pmasspnt)
-            # combine -M AsymptoticLimits newcard.txt
+

@@ -44,27 +44,54 @@ if __name__ == "__main__":
             elif etabin=="endcap": label = label + "E"
             else: exit(1)
             datahist1d = datahist2d.ProjectionY("_py"+label,bin,bin)
+            datanorm=datahist1d.Integral(1,datahist1d.GetNbinsX())
 
             # convert histogram into a RooDataHist
             dataHist = ROOT.RooDataHist("dataHist_"+label, "dataHist", m2pg, datahist1d)
 
+            strategy=1
+            sig=.5
             # set up the three background function models
-            p1 = ROOT.RooRealVar("p1_"+label,"p1",-5,-100,0)
+            p1 = ROOT.RooRealVar("p1_"+label,"p1",-5,-200,0)
             p2 = ROOT.RooRealVar("p2_"+label,"p2",-5,-100,0)
             sqrts = ROOT.RooRealVar("sqrts","sqrts",13000.)
             f1 = ROOT.RooDijet1Pdf("model_bkg_f1_"+label,"f1",m2pg,p1,p2,sqrts)
-            f1.fitTo(dataHist, ROOT.RooFit.Minimizer("Minuit2","minimize"), ROOT.RooFit.SumW2Error(True), ROOT.RooFit.PrintLevel(-1))
+#            f1.fitTo(dataHist, ROOT.RooFit.Minimizer("Minuit2","minimize"), ROOT.RooFit.Strategy(0),ROOT.RooFit.SumW2Error(True), ROOT.RooFit.PrintLevel(-1))
+            f1.fitTo(dataHist, ROOT.RooFit.Minimizer("Minuit2","minimize"), ROOT.RooFit.Strategy(1),ROOT.RooFit.SumW2Error(True), ROOT.RooFit.PrintLevel(-1))
+#            p2.setConstant(True)
+            f1.fitTo(dataHist, ROOT.RooFit.Minimizer("Minuit2","minimize"), ROOT.RooFit.Strategy(2),ROOT.RooFit.SumW2Error(True), ROOT.RooFit.PrintLevel(-1))
+            #            p1.setRange(max(-200,p1.getValV()-sig*p1.getError()),min(0,p1.getValV()+sig*p1.getError()))
+#            p2.setRange(max(-100,p2.getValV()-sig*p2.getError()),min(0,p2.getValV()+sig*p2.getError()))
 
-            p3 = ROOT.RooRealVar("p3_"+label,"p3",-5,-100,0)
-            p4 = ROOT.RooRealVar("p4_"+label,"p4",-5,-100,0)
+
+            p3 = ROOT.RooRealVar("p3_"+label,"p3",-5,-200,0)
+            p4 = ROOT.RooRealVar("p4_"+label,"p4",-5,-200,0)
             f2 = ROOT.RooDijet2Pdf("model_bkg_f2_"+label,"f2",m2pg,p3,p4,sqrts)
-            f2.fitTo(dataHist, ROOT.RooFit.Minimizer("Minuit2","minimize"), ROOT.RooFit.SumW2Error(True), ROOT.RooFit.PrintLevel(-1))
+#            f2.fitTo(dataHist, ROOT.RooFit.Minimizer("Minuit2","minimize"), ROOT.RooFit.Strategy(0),ROOT.RooFit.SumW2Error(True), ROOT.RooFit.PrintLevel(-1))
+            f2.fitTo(dataHist, ROOT.RooFit.Minimizer("Minuit2","minimize"), ROOT.RooFit.Strategy(1),ROOT.RooFit.SumW2Error(True), ROOT.RooFit.PrintLevel(-1))
+#            p4.setConstant(True)
+            f2.fitTo(dataHist, ROOT.RooFit.Minimizer("Minuit2","minimize"), ROOT.RooFit.Strategy(2),ROOT.RooFit.SumW2Error(True), ROOT.RooFit.PrintLevel(-1))
+            #p3.setRange(max(-200,p3.getValV()-sig*p3.getError()),min(0,p3.getValV()+sig*p3.getError()))
+            #p4.setRange(max(-200,p4.getValV()-sig*p4.getError()),min(0,p4.getValV()+sig*p4.getError()))
 
-            p5 = ROOT.RooRealVar("p5_"+label,"p5",5,0,100)
-            p6 = ROOT.RooRealVar("p6_"+label,"p6",-5,-100,100)
+            p5 = ROOT.RooRealVar("p5_"+label,"p5",5,0,200)
+            p6 = ROOT.RooRealVar("p6_"+label,"p6",-5,-200,0)
             f3 = ROOT.RooDijet3Pdf("model_bkg_f3_"+label,"f3",m2pg,p5,p6,sqrts)
-            f3.fitTo(dataHist, ROOT.RooFit.Minimizer("Minuit2","minimize"), ROOT.RooFit.SumW2Error(True), ROOT.RooFit.PrintLevel(-1))
+#            f3.fitTo(dataHist, ROOT.RooFit.Minimizer("Minuit2","minimize"), ROOT.RooFit.Strategy(0),ROOT.RooFit.SumW2Error(True), ROOT.RooFit.PrintLevel(-1))
+            f3.fitTo(dataHist, ROOT.RooFit.Minimizer("Minuit2","minimize"), ROOT.RooFit.Strategy(1),ROOT.RooFit.SumW2Error(True), ROOT.RooFit.PrintLevel(-1))
+#            p6.setConstant(True)
+            f3.fitTo(dataHist, ROOT.RooFit.Minimizer("Minuit2","minimize"), ROOT.RooFit.Strategy(2),ROOT.RooFit.SumW2Error(True), ROOT.RooFit.PrintLevel(-1))
+#            p5.setRange(max(0,p5.getValV()-sig*p5.getError()),min(200,p5.getValV()+sig*p5.getError()))
+#            p6.setRange(max(-200,p6.getValV()-sig*p6.getError()),min(0,p6.getValV()+sig*p6.getError()))
 
+            print(label)
+            print("p1="+str(p1.getValV())+"+"+str(p1.getErrorHi())+"-"+str(p1.getErrorLo()))
+            print("p2="+str(p2.getValV())+"+"+str(p2.getErrorHi())+"-"+str(p2.getErrorLo()))
+            print("p3="+str(p3.getValV())+"+"+str(p3.getErrorHi())+"-"+str(p3.getErrorLo()))
+            print("p4="+str(p4.getValV())+"+"+str(p4.getErrorHi())+"-"+str(p4.getErrorLo()))
+            print("p5="+str(p5.getValV())+"+"+str(p5.getErrorHi())+"-"+str(p5.getErrorLo()))
+            print("p6="+str(p6.getValV())+"+"+str(p6.getErrorHi())+"-"+str(p6.getErrorLo()))
+            
             # create multiPDF
             cat = ROOT.RooCategory("pdfindex_"+label,
                                    "Index of Pdf which is active"
@@ -75,13 +102,22 @@ if __name__ == "__main__":
             models.add(f3)
             multipdf = ROOT.RooMultiPdf("multipdf_"+label, "MultiPdf", cat, models)
             # naming convention of the normalization is specific to Combine and needs to be used this way for an extended likelihood. Bleh.
-            norm = ROOT.RooRealVar("multipdf_"+label+"_norm", "Number of background events", dataHist.numEntries(),0,3*dataHist.numEntries())
+            normf1 = ROOT.RooRealVar("model_bkg_f1_"+label+"_norm", "Number of background events", datanorm, 0, 3*datanorm)
+            normf2 = ROOT.RooRealVar("model_bkg_f2_"+label+"_norm", "Number of background events", datanorm, 0, 3*datanorm)
+            normf3 = ROOT.RooRealVar("model_bkg_f3_"+label+"_norm", "Number of background events", datanorm, 0, 3*datanorm)
+            normmulti = ROOT.RooRealVar("multipdf_"+label+"_norm", "Number of background events", datanorm, 0, 3*datanorm)
 
             # write to workspace
             getattr(w, "import")(dataHist)
             getattr(w, "import")(cat)
-            getattr(w, "import")(norm)
+            getattr(w, "import")(normf1)
+            getattr(w, "import")(normf2)
+            getattr(w, "import")(normf3)
+            getattr(w, "import")(normmulti)
             getattr(w, "import")(multipdf)
+            getattr(w, "import")(f1)
+            getattr(w, "import")(f2)
+            getattr(w, "import")(f3)
 
             # plot fits for inspection later
             fileout.cd()

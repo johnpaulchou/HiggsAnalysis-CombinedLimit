@@ -1,5 +1,5 @@
-python makebkgworkspace.py
-python makesigworkspace.py
-text2workspace.py combine.txt
-combine -M MultiDimFit combine.root --saveWorkspace -n .bestfit
+./run.py 1
+text2workspace.py newcard.txt
+combine -M MultiDimFit newcard.root --saveWorkspace -n .bestfit
+combine -M MultiDimFit newcard.root --freezeParameters allConstrainedNuisances -n .scan.with_syst.statonly --algo grid --points 20 --setParameterRanges r=0., 1.0
 python ../test/systematicsAnalyzer.py combine.txt --all -f html > out.html
