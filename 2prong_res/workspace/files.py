@@ -12,10 +12,11 @@ data2018filename = pathname+"/../input/egamma18.root"
 # set up the grid of generated points and their corresponding input files
 gengridw = ( (1.0, "1p0"), (2.0, "2p0") )
 gengridp = ( (1000., "1000"), (2500., "2500") )
-genfilenames = [ [""]*len(gengridw)]*len(gengridp)
+genfilenames = [ [""]*len(gengridw) for i in range(len(gengridp))]
 for i in range(len(gengridw)):
     for j in range(len(gengridp)):
         genfilenames[i][j]=pathname+"/../input/signal_2x2box_"+gengridp[j][1]+"_"+gengridw[i][1]+"_200k_events.root"
+
         
 # omega and phi mass points to run over
 wmasspoints = numpy.arange(1.0, 2.0+0.1, 0.1)

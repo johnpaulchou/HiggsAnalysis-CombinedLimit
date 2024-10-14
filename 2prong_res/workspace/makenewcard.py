@@ -18,6 +18,7 @@ def main(wmass, pmass):
     for bin in range(3,26):
         binstr=str(bin)
         for eta in ["B","E"]:
+#        for eta in ["B"]:
             oldfile = open(cardname, "r")
             newfile = tempfile.NamedTemporaryFile(delete=False, mode='wt', dir='.')
             path = pathlib.Path(newfile.name)

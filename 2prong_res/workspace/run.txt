@@ -1,4 +1,3 @@
-./run.py 1
 text2workspace.py newcard.txt
 combine -M MultiDimFit newcard.root --saveWorkspace -n .bestfit
 combine -M AsymptoticLimits newcard.txt

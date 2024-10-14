@@ -1,3 +1,5 @@
+#!/bin/env python3
+
 import ROOT
 
 # whether or not to do the sideband region instead of the signal region
@@ -45,44 +47,28 @@ if __name__ == "__main__":
             else: exit(1)
             datahist1d = datahist2d.ProjectionY("_py"+label,bin,bin)
             datanorm=datahist1d.Integral(1,datahist1d.GetNbinsX())
+            print("norm "+label+"="+str(datanorm))
 
             # convert histogram into a RooDataHist
             dataHist = ROOT.RooDataHist("dataHist_"+label, "dataHist", m2pg, datahist1d)
 
-            strategy=1
-            sig=.5
+            strategy=2
             # set up the three background function models
-            p1 = ROOT.RooRealVar("p1_"+label,"p1",-5,-200,0)
-            p2 = ROOT.RooRealVar("p2_"+label,"p2",-5,-100,0)
+            p1 = ROOT.RooRealVar("p1_"+label,"p1",-10,-50,0)
+            p2 = ROOT.RooRealVar("p2_"+label,"p2",-1,-20,0)
             sqrts = ROOT.RooRealVar("sqrts","sqrts",13000.)
             f1 = ROOT.RooDijet1Pdf("model_bkg_f1_"+label,"f1",m2pg,p1,p2,sqrts)
-#            f1.fitTo(dataHist, ROOT.RooFit.Minimizer("Minuit2","minimize"), ROOT.RooFit.Strategy(0),ROOT.RooFit.SumW2Error(True), ROOT.RooFit.PrintLevel(-1))
-            f1.fitTo(dataHist, ROOT.RooFit.Minimizer("Minuit2","minimize"), ROOT.RooFit.Strategy(1),ROOT.RooFit.SumW2Error(True), ROOT.RooFit.PrintLevel(-1))
-#            p2.setConstant(True)
-            f1.fitTo(dataHist, ROOT.RooFit.Minimizer("Minuit2","minimize"), ROOT.RooFit.Strategy(2),ROOT.RooFit.SumW2Error(True), ROOT.RooFit.PrintLevel(-1))
-            #            p1.setRange(max(-200,p1.getValV()-sig*p1.getError()),min(0,p1.getValV()+sig*p1.getError()))
-#            p2.setRange(max(-100,p2.getValV()-sig*p2.getError()),min(0,p2.getValV()+sig*p2.getError()))
-
+            f1.fitTo(dataHist, ROOT.RooFit.Minimizer("Minuit2","minimize"), ROOT.RooFit.Strategy(strategy),ROOT.RooFit.SumW2Error(True), ROOT.RooFit.PrintLevel(-1))
 
             p3 = ROOT.RooRealVar("p3_"+label,"p3",-5,-200,0)
-            p4 = ROOT.RooRealVar("p4_"+label,"p4",-5,-200,0)
+            p4 = ROOT.RooRealVar("p4_"+label,"p4",-1,-20,0)
             f2 = ROOT.RooDijet2Pdf("model_bkg_f2_"+label,"f2",m2pg,p3,p4,sqrts)
-#            f2.fitTo(dataHist, ROOT.RooFit.Minimizer("Minuit2","minimize"), ROOT.RooFit.Strategy(0),ROOT.RooFit.SumW2Error(True), ROOT.RooFit.PrintLevel(-1))
-            f2.fitTo(dataHist, ROOT.RooFit.Minimizer("Minuit2","minimize"), ROOT.RooFit.Strategy(1),ROOT.RooFit.SumW2Error(True), ROOT.RooFit.PrintLevel(-1))
-#            p4.setConstant(True)
-            f2.fitTo(dataHist, ROOT.RooFit.Minimizer("Minuit2","minimize"), ROOT.RooFit.Strategy(2),ROOT.RooFit.SumW2Error(True), ROOT.RooFit.PrintLevel(-1))
-            #p3.setRange(max(-200,p3.getValV()-sig*p3.getError()),min(0,p3.getValV()+sig*p3.getError()))
-            #p4.setRange(max(-200,p4.getValV()-sig*p4.getError()),min(0,p4.getValV()+sig*p4.getError()))
+            f2.fitTo(dataHist, ROOT.RooFit.Minimizer("Minuit2","minimize"), ROOT.RooFit.Strategy(strategy),ROOT.RooFit.SumW2Error(True), ROOT.RooFit.PrintLevel(-1))
 
-            p5 = ROOT.RooRealVar("p5_"+label,"p5",5,0,200)
-            p6 = ROOT.RooRealVar("p6_"+label,"p6",-5,-200,0)
+            p5 = ROOT.RooRealVar("p5_"+label,"p5",5,0,100)
+            p6 = ROOT.RooRealVar("p6_"+label,"p6",-20,-200,0)
             f3 = ROOT.RooDijet3Pdf("model_bkg_f3_"+label,"f3",m2pg,p5,p6,sqrts)
-#            f3.fitTo(dataHist, ROOT.RooFit.Minimizer("Minuit2","minimize"), ROOT.RooFit.Strategy(0),ROOT.RooFit.SumW2Error(True), ROOT.RooFit.PrintLevel(-1))
-            f3.fitTo(dataHist, ROOT.RooFit.Minimizer("Minuit2","minimize"), ROOT.RooFit.Strategy(1),ROOT.RooFit.SumW2Error(True), ROOT.RooFit.PrintLevel(-1))
-#            p6.setConstant(True)
-            f3.fitTo(dataHist, ROOT.RooFit.Minimizer("Minuit2","minimize"), ROOT.RooFit.Strategy(2),ROOT.RooFit.SumW2Error(True), ROOT.RooFit.PrintLevel(-1))
-#            p5.setRange(max(0,p5.getValV()-sig*p5.getError()),min(200,p5.getValV()+sig*p5.getError()))
-#            p6.setRange(max(-200,p6.getValV()-sig*p6.getError()),min(0,p6.getValV()+sig*p6.getError()))
+            f3.fitTo(dataHist, ROOT.RooFit.Minimizer("Minuit2","minimize"), ROOT.RooFit.Strategy(strategy),ROOT.RooFit.SumW2Error(True), ROOT.RooFit.PrintLevel(-1))
 
             print(label)
             print("p1="+str(p1.getValV())+"+"+str(p1.getErrorHi())+"-"+str(p1.getErrorLo()))
@@ -115,9 +101,9 @@ if __name__ == "__main__":
             getattr(w, "import")(normf3)
             getattr(w, "import")(normmulti)
             getattr(w, "import")(multipdf)
-            getattr(w, "import")(f1)
-            getattr(w, "import")(f2)
-            getattr(w, "import")(f3)
+#            getattr(w, "import")(f1)
+#            getattr(w, "import")(f2)
+#            getattr(w, "import")(f3)
 
             # plot fits for inspection later
             fileout.cd()

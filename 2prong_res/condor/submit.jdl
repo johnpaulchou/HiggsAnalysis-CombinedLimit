@@ -1,0 +1,11 @@
+executable = run.sh
+arguments = $(VAR)
+JOB_DIR = ./jobs/
+output = $(JOB_DIR)/out_$(Cluster)_$(VAR).txt
+error = $(JOB_DIR)/out_$(Cluster)_$(VAR).txt
+log = $(JOB_DIR)/log_$(Cluster).txt
+should_transfer_files = YES
+transfer_input_files = combine.tgz
++SingularityImage = "/cvmfs/unpacked.cern.ch/registry.hub.docker.com/cmssw/el7:x86_64"
+queue VAR from seq 1 1 |
+
