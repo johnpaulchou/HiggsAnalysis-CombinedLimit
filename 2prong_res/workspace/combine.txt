@@ -4,9 +4,9 @@ jmax 1 number of processes minus 1
 kmax * number of nuisance parameters
 -------------------------------------------------------------------------------
 shapes      data_obs    BIN      bkgworkspace.root                    w:dataHist_BIN
-shapes      sig         BIN      sigworkspace_PMASS_WMASS.root        w:sigpdf_BIN
+shapes      sig         BIN      WORKSPACEFILE                        w:sigpdf_BIN
 shapes      bkg         BIN      bkgworkspace.root                    w:multipdf_BIN
-#shapes      bkg         BIN      bkgworkspace.root                    w:model_bkg_f1_BIN
+#shapes      bkg         BIN      bkgworkspace.root                   w:model_bkg_f1_BIN
 -------------------------------------------------------------------------------
 bin             BIN
 observation     -1

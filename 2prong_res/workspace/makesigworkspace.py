@@ -1,58 +1,37 @@
+#!/bin/env python3
+
 import ROOT
 import sys
+import files
 from scipy.interpolate import interp1d
-
-# function to get a TH1 from a ROOT file
-def getTH1(filename,histname):
-    rootfile = ROOT.TFile(filename, "READ")
-    if not rootfile or rootfile.IsZombie():
-        print("Error: Unable to open file '{file_name}'.")
-        return None
-
-    hist = rootfile.Get(histname)
-    if not hist or not isinstance(hist, ROOT.TH1) or hist is None:
-        print("Error: Histogram '"+histname+"' not found or is not a valid TH1 object in the file '"+filename+"'.")
-        rootfile.Close()
-        return None
-
-    hist.SetDirectory(0)
-    rootfile.Close()
-    return hist
 
 # function to get acceptance from a file
 def getAcc(filename, histnames, normhistname):
     integral=0.0
     for histname in histnames:
-        h=getTH1(filename, histname)
+        h=files.getTH1(filename, histname)
         integral += h.Integral(1,h.GetXaxis().GetNbins(),1,h.GetYaxis().GetNbins())
 
-    hn=getTH1(filename, normhistname)
+    hn=files.getTH1(filename, normhistname)
     norm=hn.GetBinContent(1)
     return integral/norm
 
 ###### main function ######
 def main(wmass, pmass):
 
-    # list of systematics
-    systs = [ "" ]
-
-    # set up the grid of generated points
-    gridx = ( (1.0, "1p0"), (2.0, "2p0") )
-    gridy = ( (1000., "1000"), (2500., "2500") )
-
     # find the grid points to match up to the chosen omega and phi masses
     txmin=txmax=tymin=tymax=-999.
-    for i in range(len(gridx)-1):
-        for j in range(len(gridy)-1):
-            if gridx[i][0]<=wmass and gridx[i+1][0]>=wmass and gridy[j][0]<=pmass and gridy[j+1][0]>=pmass:
-                txmin=gridx[i][0]
-                txmax=gridx[i+1][0]
-                tymin=gridy[j][0]
-                tymax=gridy[j+1][0]
-                fnA="../input/signal_2x2box_"+gridy[j][1]+"_"+gridx[i][1]+"_200k_events.root"
-                fnB="../input/signal_2x2box_"+gridy[j][1]+"_"+gridx[i+1][1]+"_200k_events.root"
-                fnC="../input/signal_2x2box_"+gridy[j+1][1]+"_"+gridx[i][1]+"_200k_events.root"
-                fnD="../input/signal_2x2box_"+gridy[j+1][1]+"_"+gridx[i+1][1]+"_200k_events.root"
+    for i in range(len(files.gengridw)-1):
+        for j in range(len(files.gengridp)-1):
+            if files.gengridw[i][0]<=wmass and files.gengridw[i+1][0]>=wmass and files.gengridp[j][0]<=pmass and files.gengridp[j+1][0]>=pmass:
+                txmin=files.gengridw[i][0]
+                txmax=files.gengridw[i+1][0]
+                tymin=files.gengridp[j][0]
+                tymax=files.gengridp[j+1][0]
+                fnA=files.genfilenames[i][j]
+                fnB=files.genfilenames[i+1][j]
+                fnC=files.genfilenames[i][j+1]
+                fnD=files.genfilenames[i+1][j+1]
 
     if txmin<0 or txmax<0 or tymin<0 or tymax<0:
         print("Outside the theory bounds")
@@ -93,21 +72,20 @@ def main(wmass, pmass):
     print("The interpolated acc*eff is "+str(acceff.getValV()))
     
     # create label for output workspace
-    tlabel=str(pmass)+"_"+str(wmass)
-    fileout = ROOT.TFile("sigworkspace_"+tlabel+".root", "RECREATE")
+    fileout = ROOT.TFile(files.sigworkspacefn(wmass,pmass),"RECREATE")
     w = ROOT.RooWorkspace("w","w")
 
     # loop over systematic sources
-    for syst in systs:
+    for syst in files.systs:
 
         # loop over barrel/endcap histograms
         for histindex,histname in enumerate(histnames):
 
             # get the 2D histograms
-            hA=getTH1(fnA, histname+syst)
-            hB=getTH1(fnB, histname+syst)
-            hC=getTH1(fnC, histname+syst)
-            hD=getTH1(fnD, histname+syst)
+            hA=files.getTH1(fnA, histname+syst)
+            hB=files.getTH1(fnB, histname+syst)
+            hC=files.getTH1(fnC, histname+syst)
+            hD=files.getTH1(fnD, histname+syst)
 
             # create the observables (do this based on the data's histogram boundaries)
             m2p = ROOT.RooRealVar("m2p","Invariant mass of the 2-prong",hA.GetXaxis().GetBinLowEdge(1),hA.GetXaxis().GetBinUpEdge(hA.GetXaxis().GetNbins()))
