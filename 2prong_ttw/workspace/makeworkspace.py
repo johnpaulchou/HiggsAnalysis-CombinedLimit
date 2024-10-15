@@ -12,6 +12,7 @@ def getTH1(histname,filename):
     hist = rootfile.Get(histname)
     if not hist or not isinstance(hist, ROOT.TH1) or hist is None:
         print("Error: Histogram '", histname, "' not found or is not a valid TH1 object in the file '", filename ,"'.")
+        exit(1)
         rootfile.Close()
         return None
     hist.SetDirectory(0)
@@ -26,6 +27,9 @@ fileoutname = "workspace.root"
 ptbins = ["20_40", "40_60", "60_80", "80_100", "100_140", "140_180", "180_220", "220_300", "300_380", "380on" ]
 btagbins = ["1b", "mb"]
 
+# create the observable
+m2p = ROOT.RooRealVar("m2p","Invariant mass of the 2-prong",0.25,5.53)
+
 # need to specify whether we are using the asymnoniso SB or the symiso SR
 wbin = "asymnoniso"
 #wbins = ["symiso", "asymnoniso"]
@@ -39,10 +43,7 @@ xs = 504.
 
 # where to read things from
 filename="../input/hists_for_jp_15-10-24.root"
-
-# create the observable
-m2p = ROOT.RooRealVar("m2p","Invariant mass of the 2-prong",0.25,5.53)
-
+#filename="../input/hists_for_jp.root"
 
 ###############################################################
 # start of the "main" function
@@ -70,8 +71,7 @@ if __name__ == "__main__":
             dataHist.Write()
 
             # get the template TH1
-            templateName = "singlemuon_"+wbin+"_0b_"+ptbin+"_loose"
-            templateTH1 = getTH1(templateName, filename)
+            templateTH1 = getTH1("singlemuon_"+wbin+"_0b_"+ptbin+"_loose", filename)
 
             # find any non-0 bins in the data that are 0 in the template
             # set it to 0.01 if it happens and print a warning
@@ -84,7 +84,7 @@ if __name__ == "__main__":
 
             # construct the PDF of the template
             newName = "temp_"+btagbin+"_"+ptbin
-            templateDataHist = ROOT.RooDataHist(newName,newName,ROOT.RooArgList(m2p),templateTH1)
+            templateDataHist = ROOT.RooDataHist(newName+"_dh",newName+"_dh",ROOT.RooArgList(m2p),templateTH1)
             templatePdf=ROOT.RooHistPdf(newName+"_pdf0",newName+"_pdf0",ROOT.RooArgSet(m2p),templateDataHist,2)
             a1=ROOT.RooRealVar(newName+"_a1",newName+"_a1",0.1,0,100)
             a2=ROOT.RooRealVar(newName+"_a2",newName+"_a2",0.1,0,100)
@@ -131,6 +131,7 @@ if __name__ == "__main__":
             r1.Write()
             r2.Write()
             r3.Write()
+            templateDataHist.Write()
             templatePdf.Write()
             bkg1pdf.Write()
             bkg2pdf.Write()
@@ -138,6 +139,7 @@ if __name__ == "__main__":
             
             
             # get the signal
+            '''
             sigName = "sig_"+str(sigmass)+"_symiso_"+btagbin+"_"+ptbin+"_tight"
             sigTH1 = getTH1(sigName, filename)
             normTH1 = getTH1("sig_"+str(sigmass)+"_totalentries", filename)
@@ -151,6 +153,7 @@ if __name__ == "__main__":
             sigTH1.Write()
             getattr(w,"import")(sigPdf)
             getattr(w,"import")(normVar)
+            '''
             
     fileout.cd()
     w.Print()
