@@ -38,8 +38,12 @@ wbin = "asymnoniso"
 order=0
 
 # need to specify which signal we're considering
-sigmass = "M500"
-xs = 504.
+#sigmass = "M500"
+#xs = 504.
+#sigmass = "M2000"
+#xs = 534.
+sigmass = "M4000"
+xs = 529.
 
 # where to read things from
 filename="../input/hists_for_jp_15-10-24.root"
@@ -55,6 +59,9 @@ if __name__ == "__main__":
     fileout = ROOT.TFile(fileoutname,"RECREATE")
     w = ROOT.RooWorkspace("w","w")
 
+    # used to calculate acceptance
+    totalsignorm=0.
+    
     # loop over the bins
     for ptbin in ptbins:
         for btagbin in btagbins:
@@ -139,7 +146,6 @@ if __name__ == "__main__":
             
             
             # get the signal
-            '''
             sigName = "sig_"+str(sigmass)+"_symiso_"+btagbin+"_"+ptbin+"_tight"
             sigTH1 = getTH1(sigName, filename)
             normTH1 = getTH1("sig_"+str(sigmass)+"_totalentries", filename)
@@ -147,17 +153,20 @@ if __name__ == "__main__":
             sigDataHist = ROOT.RooDataHist(newName+"_hist",newName+"hist",ROOT.RooArgSet(m2p),sigTH1)
             sigPdf = ROOT.RooHistPdf(newName+"_pdf",newName+"_pdf",ROOT.RooArgSet(m2p),sigDataHist,2)
             norm = sigTH1.Integral(1,sigTH1.GetNbinsX())/normTH1.GetBinContent(1)*xs
+            totalsignorm = totalsignorm+norm
             normVar = ROOT.RooRealVar(newName+"_pdf_norm","Norm of signal",norm)
             print(sigName+" norm = "+str(normVar))
             fileout.cd()
             sigTH1.Write()
             getattr(w,"import")(sigPdf)
             getattr(w,"import")(normVar)
-            '''
+
             
     fileout.cd()
     w.Print()
     w.Write()
     fileout.Close()
+
+    print(str(totalsignorm))
     
 ### end main

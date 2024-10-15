@@ -16,8 +16,6 @@ def main():
     for ptbin in ws.ptbins:
         for btagbin in ws.btagbins:
 
-            if ptbin!=ws.ptbins[0]: continue
-            
             oldfile = open(cardname, "r")
             newfile = tempfile.NamedTemporaryFile(delete=False, mode='wt', dir='.')
             path = pathlib.Path(newfile.name)
