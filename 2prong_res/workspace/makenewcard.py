@@ -14,8 +14,8 @@ def main(wmass, pmass):
     newfilenames = []
 
     # skip the first two bins if we're doing the control region
-#    for bin in range(1,26):
     for bin in range(3,26):
+#    for bin in range(3,4):
         binstr=str(bin)
         for eta in ["B","E"]:
 #        for eta in ["B"]:

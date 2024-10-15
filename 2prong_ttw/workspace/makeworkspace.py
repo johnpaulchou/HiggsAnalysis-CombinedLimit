@@ -18,7 +18,7 @@ def getTH1(histname,filename):
 
 
 # where to write things out
-fileoutname = "../output/ws.root"
+fileoutname = "ws.root"
 
 # binning labels
 ptbins = ["20_40", "40_60", "60_80", "80_100", "100_140", "140_180", "180_220", "220_300", "300_380", "380on" ]
