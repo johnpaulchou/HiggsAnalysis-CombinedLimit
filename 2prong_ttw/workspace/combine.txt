@@ -15,8 +15,13 @@ process         sig                bkg
 process         0                  1
 rate            59                 1.0
 ---------------------------------------------
-lumi          lnN         1.016      1.0
-MuonReco      shape       1          -
-MuonId        shape       1          -
-MuonIso       shape       1          -
-MuonHlt       shape       1          -
+lumi                  lnN         1.016      1.0
+MuonReco              shape       1          -
+MuonId                shape       1          -
+MuonIso               shape       1          -
+MuonHlt               shape       1          -
+BtagLightCorrelated   shape       1          -
+BtagBCCorrelated      shape       1          -
+BtagLightUncorrelated shape       1          -
+BtagBCUncorrelated    shape       1          -
+

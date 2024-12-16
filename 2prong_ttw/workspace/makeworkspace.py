@@ -38,6 +38,7 @@ wbin = "asymnoniso"
 order=0
 
 # need to specify which signal we're considering
+sigtype = "eta"
 sigmass = "M500"
 xs = 504.
 #sigmass = "M2000"
@@ -46,10 +47,13 @@ xs = 504.
 #xs = 529.
 
 #systematic uncertainties
-systs = ["", "_MuonRecoUp", "_MuonRecoDown", "_MuonIdUp", "_MuonIdDown", "_MuonIsoUp", "_MuonIsoDown", "_MuonHltUp", "_MuonHltDown" ]
+systs = ["", "_MuonRecoUp", "_MuonRecoDown", "_MuonIdUp", "_MuonIdDown", "_MuonIsoUp", "_MuonIsoDown", "_MuonHltUp", "_MuonHltDown",
+         "_BtagLightCorrelatedUp", "_BtagLightCorrelatedDown", "_BtagBCCorrelatedUp", "_BtagBCCorrelatedDown", "_BtagLightUncorrelatedUp", "_BtagLightUncorrelatedDown",
+         "_BtagBCUncorrelatedUp", "_BtagBCUncorrelatedDown"]
 
 # where to read things from
-filename="../input/hists_for_jp_15-10-24.root"
+filename="../input/hists_for_jp_16-12-24.root"
+#filename="../input/hists_for_jp_15-10-24.root"
 #filename="../input/hists_for_jp.root"
 
 ###############################################################
@@ -147,10 +151,10 @@ if __name__ == "__main__":
             
             # get the signal
             for syst in systs:
-                sigName = "sig_"+str(sigmass)+"_symiso_"+btagbin+"_"+ptbin+"_tight"+syst
+                sigName = sigtype+"_"+str(sigmass)+"_symiso_"+btagbin+"_"+ptbin+"_tight"+syst
                 sigTH1 = getTH1(sigName, filename)
-                normTH1 = getTH1("sig_"+str(sigmass)+"_totalentries", filename)
-                newName = "sig_"+btagbin+"_"+ptbin
+                normTH1 = getTH1(sigtype+"_"+str(sigmass)+"_totalentries", filename)
+                newName = sigtype+"_"+btagbin+"_"+ptbin
                 sigDataHist = ROOT.RooDataHist(newName+"_hist"+syst,newName+"hist"+syst,ROOT.RooArgSet(m2p),sigTH1)
                 sigPdf = ROOT.RooHistPdf(newName+"_pdf"+syst,newName+"_pdf"+syst,ROOT.RooArgSet(m2p),sigDataHist,2)
                 norm = sigTH1.Integral(1,sigTH1.GetNbinsX())/normTH1.GetBinContent(1)*xs

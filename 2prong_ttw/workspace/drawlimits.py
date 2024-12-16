@@ -32,13 +32,29 @@ Expected 97.5%: r < 0.6452
 
 x = [0.5, 2., 4. ]
 ex = [0.1, 0.1, 0.1 ]
-obs = [0.118, 0.670, 0.471 ]
-exp = [0.123, 0.725, 0.578 ]
-eyl = [0.027, 0.111, 0.090 ]
-eyh = [0.036, 0.134, 0.110 ]
-eyl2 =[0.045, 0.194, 0.158 ]
-eyh2 =[0.074, 0.271, 0.225 ]
+obs = [0.0139, 0.4484, 0.2223 ]
+e25 = [0.0061, 0.2791, 0.1761 ]
+e16 = [0.0092, 0.3738, 0.2378 ]
+e50 = [0.0151, 0.5215, 0.3340 ]
+e84 = [0.0253, 0.7335, 0.4738 ]
+e97 = [0.0386, 0.9865, 0.6452 ]
 
+exp = [0, 0, 0]
+eyl = [0, 0, 0]
+eyh = [0, 0, 0]
+eyl2 =[0, 0, 0]
+eyh2 =[0, 0, 0]
+
+br=0.2734126
+for i in range(3):
+    obs[i]=(obs[i]/br)**.5
+    exp[i]=(e50[i]/br)**.5
+    eyl[i]=exp[i]-(e16[i]/br)**.5
+    eyh[i]=(e84[i]/br)**.5-exp[i]
+    eyl2[i]=exp[i]-(e25[i]/br)**.5
+    eyh2[i]=(e97[i]/br)**.5-exp[i]
+
+    
 g = ROOT.TGraphErrors(3, ar.array('d',x),  ar.array('d',obs))
 gexp = ROOT.TGraphErrors(3, ar.array('d',x), ar.array('d',exp))
 ge1 = ROOT.TGraphAsymmErrors(3, ar.array('d',x),  ar.array('d',exp), ar.array('d',ex), ar.array('d',ex), ar.array('d',eyl), ar.array('d',eyh))
@@ -51,7 +67,7 @@ ge2.SetFillColor(ROOT.TColor.GetColor("#F5BB54"))
 ge2.SetFillStyle(1001)
 ge2.Draw("a3")
 ge2.SetMinimum(0)
-ge2.SetMaximum(1.2)
+ge2.SetMaximum(3.0)
 ge2.GetXaxis().SetTitle("m_{#omega} [GeV]")
 ge2.GetYaxis().SetTitle("95% C.L. Lower limit on g_{#psi}")
 ge1.SetFillColor(ROOT.TColor.GetColor("#607641"))
@@ -61,7 +77,7 @@ gexp.SetLineStyle(2)
 gexp.Draw("SAME L")
 g.Draw("SAME LP")
 
-leg = ROOT.TLegend(0.5,0.2,0.9,0.4)
+leg = ROOT.TLegend(0.5,0.65,0.9,0.85)
 leg.SetBorderSize(0)
 leg.SetFillColor(0)
 leg.SetTextFont(42)
@@ -85,6 +101,11 @@ lumitxt = ROOT.TLatex()
 lumitxt.SetTextFont(42)
 lumitxt.SetTextSize(0.05)
 lumitxt.DrawLatexNDC(0.65,0.91,"59 fb^{-1} (13 TeV)")
+
+brtxt = ROOT.TLatex()
+brtxt.SetTextFont(42)
+brtxt.SetTextSize(0.04)
+brtxt.DrawLatexNDC(0.65,0.20,"#eta BRs")
 
 can.Update()
 can.Draw()
