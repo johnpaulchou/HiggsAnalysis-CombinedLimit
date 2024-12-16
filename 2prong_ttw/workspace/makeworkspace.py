@@ -39,12 +39,12 @@ order=0
 
 # need to specify which signal we're considering
 sigtype = "eta"
-sigmass = "M500"
-xs = 504.
-#sigmass = "M2000"
-#xs = 534.
-#sigmass = "M4000"
-#xs = 529.
+sigmasses = ["M500", "M750", "M850", "M1000", "M1500", "M2000", "M2500", "M3000", "M4000" ]
+xsecs = [ 504., 508., 502., 523., 533., 536., 534., 533., 529. ]
+signum = 2
+BR=0.2836869
+sigmass = sigmasses[signum]
+xs = xsecs[signum]*BR
 
 #systematic uncertainties
 systs = ["", "_MuonRecoUp", "_MuonRecoDown", "_MuonIdUp", "_MuonIdDown", "_MuonIsoUp", "_MuonIsoDown", "_MuonHltUp", "_MuonHltDown",
@@ -119,7 +119,7 @@ if __name__ == "__main__":
             normf1 = ROOT.RooRealVar(newName+"_pdf1_norm", "Number of background events", datanorm, 0, 3*datanorm)
             normf2 = ROOT.RooRealVar(newName+"_pdf2_norm", "Number of background events", datanorm, 0, 3*datanorm)
             normf3 = ROOT.RooRealVar(newName+"_pdf3_norm", "Number of background events", datanorm, 0, 3*datanorm)
-                
+
             if order==0:
                 getattr(w,"import")(templatePdf)
                 getattr(w,"import")(normtemp)
@@ -154,7 +154,7 @@ if __name__ == "__main__":
                 sigName = sigtype+"_"+str(sigmass)+"_symiso_"+btagbin+"_"+ptbin+"_tight"+syst
                 sigTH1 = getTH1(sigName, filename)
                 normTH1 = getTH1(sigtype+"_"+str(sigmass)+"_totalentries", filename)
-                newName = sigtype+"_"+btagbin+"_"+ptbin
+                newName = "sig_"+btagbin+"_"+ptbin
                 sigDataHist = ROOT.RooDataHist(newName+"_hist"+syst,newName+"hist"+syst,ROOT.RooArgSet(m2p),sigTH1)
                 sigPdf = ROOT.RooHistPdf(newName+"_pdf"+syst,newName+"_pdf"+syst,ROOT.RooArgSet(m2p),sigDataHist,2)
                 norm = sigTH1.Integral(1,sigTH1.GetNbinsX())/normTH1.GetBinContent(1)*xs

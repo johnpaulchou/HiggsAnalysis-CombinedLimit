@@ -88,10 +88,12 @@ if __name__ == "__main__":
             models.add(f3)
             multipdf = ROOT.RooMultiPdf("multipdf_"+label, "MultiPdf", cat, models)
             # naming convention of the normalization is specific to Combine and needs to be used this way for an extended likelihood. Bleh.
-            normf1 = ROOT.RooRealVar("model_bkg_f1_"+label+"_norm", "Number of background events", datanorm, 0, 3*datanorm)
-            normf2 = ROOT.RooRealVar("model_bkg_f2_"+label+"_norm", "Number of background events", datanorm, 0, 3*datanorm)
-            normf3 = ROOT.RooRealVar("model_bkg_f3_"+label+"_norm", "Number of background events", datanorm, 0, 3*datanorm)
-            normmulti = ROOT.RooRealVar("multipdf_"+label+"_norm", "Number of background events", datanorm, 0, 3*datanorm)
+            normlo=0.
+            normhi=2.
+            normf1 = ROOT.RooRealVar("model_bkg_f1_"+label+"_norm", "Number of background events", datanorm, datanorm*normlo, datanorm*normhi)
+            normf2 = ROOT.RooRealVar("model_bkg_f2_"+label+"_norm", "Number of background events", datanorm, datanorm*normlo, datanorm*normhi)
+            normf3 = ROOT.RooRealVar("model_bkg_f3_"+label+"_norm", "Number of background events", datanorm, datanorm*normlo, datanorm*normhi)
+            normmulti = ROOT.RooRealVar("multipdf_"+label+"_norm", "Number of background events", datanorm, datanorm*normlo, datanorm*normhi)
 
             # write to workspace
             getattr(w, "import")(dataHist)

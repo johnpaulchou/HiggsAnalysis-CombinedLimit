@@ -6,38 +6,39 @@ tdrstyle.setTDRStyle()
 
 '''
 500
-Observed Limit: r < 0.0139
-Expected  2.5%: r < 0.0061
-Expected 16.0%: r < 0.0092
-Expected 50.0%: r < 0.0151
-Expected 84.0%: r < 0.0253
-Expected 97.5%: r < 0.0386
+Observed Limit: r < 0.0588
+Expected  2.5%: r < 0.0243
+Expected 16.0%: r < 0.0375
+Expected 50.0%: r < 0.0610
+Expected 84.0%: r < 0.1014
+Expected 97.5%: r < 0.1573
 
-2000
-Observed Limit: r < 0.4484
-Expected  2.5%: r < 0.2791
-Expected 16.0%: r < 0.3738
-Expected 50.0%: r < 0.5215
-Expected 84.0%: r < 0.7335
-Expected 97.5%: r < 0.9865
+750
+Observed Limit: r < 0.7191
+Expected  2.5%: r < 0.1553
+Expected 16.0%: r < 0.2183
+Expected 50.0%: r < 0.3232
+Expected 84.0%: r < 0.4817
+Expected 97.5%: r < 0.6834
 
-4000
-Observed Limit: r < 0.2223
-Expected  2.5%: r < 0.1761
-Expected 16.0%: r < 0.2378
-Expected 50.0%: r < 0.3340
-Expected 84.0%: r < 0.4738
-Expected 97.5%: r < 0.6452
+850
+Observed Limit: r < 1.1922
+Expected  2.5%: r < 0.2204
+Expected 16.0%: r < 0.3084
+Expected 50.0%: r < 0.4551
+Expected 84.0%: r < 0.6728
+Expected 97.5%: r < 0.9477
+
 '''
 
 x = [0.5, 2., 4. ]
 ex = [0.1, 0.1, 0.1 ]
-obs = [0.0139, 0.4484, 0.2223 ]
-e25 = [0.0061, 0.2791, 0.1761 ]
-e16 = [0.0092, 0.3738, 0.2378 ]
-e50 = [0.0151, 0.5215, 0.3340 ]
-e84 = [0.0253, 0.7335, 0.4738 ]
-e97 = [0.0386, 0.9865, 0.6452 ]
+obs = [0.0588, 0.4484, 0.2223 ]
+e25 = [0.0243, 0.2791, 0.1761 ]
+e16 = [0.0375, 0.3738, 0.2378 ]
+e50 = [0.0610, 0.5215, 0.3340 ]
+e84 = [0.1014, 0.7335, 0.4738 ]
+e97 = [0.1573, 0.9865, 0.6452 ]
 
 exp = [0, 0, 0]
 eyl = [0, 0, 0]
