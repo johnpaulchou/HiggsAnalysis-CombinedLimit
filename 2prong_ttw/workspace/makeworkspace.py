@@ -24,7 +24,8 @@ def getTH1(histname,filename):
 fileoutname = "workspace.root"
 
 # binning labels
-ptbins = ["20_40", "40_60", "60_80", "80_100", "100_140", "140_180", "180_220", "220_300", "300_380", "380on" ]
+#ptbins = ["20_40", "40_60", "60_80", "80_100", "100_140", "140_180", "180_220", "220_300", "300_380", "380on" ]
+ptbins = ["20_60", "60_100", "100_180", "180_300", "300on" ]
 btagbins = ["1b", "mb"]
 
 # create the observable
@@ -52,7 +53,8 @@ systs = ["", "_MuonRecoUp", "_MuonRecoDown", "_MuonIdUp", "_MuonIdDown", "_MuonI
          "_BtagBCUncorrelatedUp", "_BtagBCUncorrelatedDown"]
 
 # where to read things from
-filename="../input/hists_for_jp_16-12-24.root"
+filename="../input/hists_for_jp_17-12-24.root"
+#filename="../input/hists_for_jp_16-12-24.root"
 #filename="../input/hists_for_jp_15-10-24.root"
 #filename="../input/hists_for_jp.root"
 

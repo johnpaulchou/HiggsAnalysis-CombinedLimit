@@ -4,7 +4,8 @@ import makeworkspace as ttw
 
 tdrstyle.setTDRStyle()
 
-pttitles = ["=20-40", "=40-60", "=60-80", "=80-100", "=100-140", "=140-180", "=180-220", "=220-300", "=300-380", ">380" ]
+#pttitles = ["=20-40", "=40-60", "=60-80", "=80-100", "=100-140", "=140-180", "=180-220", "=220-300", "=300-380", ">380" ]
+pttitles = ["=20-60", "=60-100", "=100-180", "=180-300", ">300" ]
 btagtitles = ["1 b tag", "#kern[0.2]{#geq}#kern[-0.1]{2} b tags" ]
 #wtitles = ["Sym. iso.", "Asym. non-iso."]
 
@@ -108,6 +109,7 @@ for btagindex, btagbin in enumerate(ttw.btagbins):
         plot = ttw.m2p.frame()
         plotlist.append(plot)
 
+        print(rootfile.GetName()+"; data_"+btagbin+"_"+ptbin)
         data = rootfile.Get("data_"+btagbin+"_"+ptbin)
         bkg0 = rootfile.Get("temp_"+btagbin+"_"+ptbin+"_pdf0")
         bkg1 = rootfile.Get("temp_"+btagbin+"_"+ptbin+"_pdf1")
