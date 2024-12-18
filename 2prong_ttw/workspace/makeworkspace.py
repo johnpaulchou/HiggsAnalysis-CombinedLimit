@@ -25,7 +25,8 @@ fileoutname = "workspace.root"
 
 # binning labels
 #ptbins = ["20_40", "40_60", "60_80", "80_100", "100_140", "140_180", "180_220", "220_300", "300_380", "380on" ]
-ptbins = ["20_60", "60_100", "100_180", "180_300", "300on" ]
+#ptbins = ["20_60", "60_100", "100_180", "180_300", "300on" ]
+ptbins = ["20_40", "40_60", "60_80","80_100","380on" ]
 btagbins = ["1b", "mb"]
 
 # create the observable
@@ -42,7 +43,7 @@ order=0
 sigtype = "eta"
 sigmasses = ["M500", "M750", "M850", "M1000", "M1500", "M2000", "M2500", "M3000", "M4000" ]
 xsecs = [ 504., 508., 502., 523., 533., 536., 534., 533., 529. ]
-signum = 2
+signum = 4
 BR=0.2836869
 sigmass = sigmasses[signum]
 xs = xsecs[signum]*BR
@@ -53,8 +54,8 @@ systs = ["", "_MuonRecoUp", "_MuonRecoDown", "_MuonIdUp", "_MuonIdDown", "_MuonI
          "_BtagBCUncorrelatedUp", "_BtagBCUncorrelatedDown"]
 
 # where to read things from
-filename="../input/hists_for_jp_17-12-24.root"
-#filename="../input/hists_for_jp_16-12-24.root"
+#filename="../input/hists_for_jp_17-12-24.root"
+filename="../input/hists_for_jp_16-12-24.root"
 #filename="../input/hists_for_jp_15-10-24.root"
 #filename="../input/hists_for_jp.root"
 
@@ -117,6 +118,7 @@ if __name__ == "__main__":
 
             # compute the normalizations
             datanorm = dataTH1.Integral(1,dataTH1.GetNbinsX())
+            print("JPC data norm: "+newName+", "+str(datanorm))
             normtemp = ROOT.RooRealVar(newName+"_pdf0_norm", "Number of background events", datanorm, 0, 3*datanorm)
             normf1 = ROOT.RooRealVar(newName+"_pdf1_norm", "Number of background events", datanorm, 0, 3*datanorm)
             normf2 = ROOT.RooRealVar(newName+"_pdf2_norm", "Number of background events", datanorm, 0, 3*datanorm)
@@ -161,6 +163,9 @@ if __name__ == "__main__":
                 sigPdf = ROOT.RooHistPdf(newName+"_pdf"+syst,newName+"_pdf"+syst,ROOT.RooArgSet(m2p),sigDataHist,2)
                 norm = sigTH1.Integral(1,sigTH1.GetNbinsX())/normTH1.GetBinContent(1)*xs
                 normVar = ROOT.RooRealVar(newName+"_pdf"+syst+"_norm","Norm of signal",norm)
+                if syst=="":
+                    print("JPC signal norm: "+newName+", "+str(norm))
+
                 print(sigName+" norm = "+str(normVar))
                 fileout.cd()
                 getattr(w,"import")(sigPdf)
