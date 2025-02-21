@@ -1,6 +1,7 @@
 #!/bin/env python3
 
 import ROOT
+import argparse
 
 # function to get a TH1 from a root file
 def getTH1(histname,filename):
@@ -22,31 +23,23 @@ def getTH1(histname,filename):
 
 # where to write things out
 fileoutname = "workspace.root"
+workspacename = "w"
 
 # binning labels
-#ptbins = ["20_40", "40_60", "60_80", "80_100", "100_140", "140_180", "180_220", "220_300", "300_380", "380on" ]
-#ptbins = ["20_60", "60_100", "100_180", "180_300", "300on" ]
-ptbins = ["20_40", "40_60", "60_80","80_100","380on" ]
+ptbins = ["20_40", "40_60", "60_80", "80_100", "100_140", "140_180", "180_220", "220_300", "300_380", "380on" ]
 btagbins = ["1b", "mb"]
 
 # create the observable
 m2p = ROOT.RooRealVar("m2p","Invariant mass of the 2-prong",0.25,5.53)
 
-# need to specify whether we are using the asymnoniso SB or the symiso SR
-wbin = "asymnoniso"
-#wbins = ["symiso", "asymnoniso"]
-
-# need to specify the order of the pdf we're sending to the workspace
-order=0
-
 # need to specify which signal we're considering
 sigtype = "eta"
 sigmasses = ["M500", "M750", "M850", "M1000", "M1500", "M2000", "M2500", "M3000", "M4000" ]
 xsecs = [ 504., 508., 502., 523., 533., 536., 534., 533., 529. ]
-signum = 4
 BR=0.2836869
-sigmass = sigmasses[signum]
-xs = xsecs[signum]*BR
+
+# set the luminosity value here
+lumi = 59.
 
 #systematic uncertainties
 systs = ["", "_MuonRecoUp", "_MuonRecoDown", "_MuonIdUp", "_MuonIdDown", "_MuonIsoUp", "_MuonIsoDown", "_MuonHltUp", "_MuonHltDown",
@@ -65,27 +58,33 @@ filename="../input/hists_for_jp_16-12-24.root"
 
 if __name__ == "__main__":
 
+    parser = argparse.ArgumentParser(formatter_class=argparse.ArgumentDefaultsHelpFormatter)
+    parser.add_argument("--imass",help="signal mass index (0-"+str(len(sigmasses)-1)+")", choices=range(len(sigmasses)), type=int)
+    parser.add_argument("--region",help="region that we're working in",choices=["symiso","asymnoniso"], default="asymnoniso")
+    args=parser.parse_args()
+    sigmass = sigmasses[args.imass]
+    xs = xsecs[args.imass]*BR
+    region = args.region
+    
     # setup the output file and workspace
     fileout = ROOT.TFile(fileoutname,"RECREATE")
-    w = ROOT.RooWorkspace("w","w")
+    w = ROOT.RooWorkspace(workspacename,workspacename)
 
     # loop over the bins
     for ptbin in ptbins:
         for btagbin in btagbins:
 
             # get the data
-            dataName = "singlemuon_"+wbin+"_"+btagbin+"_"+ptbin+"_tight"
-            if wbin=="asymnoniso":
+            dataName = "singlemuon_"+region+"_"+btagbin+"_"+ptbin+"_tight"
+            if region=="asymnoniso":
                 dataName += "scaledtosymiso"
             newName = "data_"+btagbin+"_"+ptbin
             dataTH1 = getTH1(dataName, filename)
             dataHist = ROOT.RooDataHist(newName,newName,ROOT.RooArgList(m2p),dataTH1)
             getattr(w,"import")(dataHist)
-            fileout.cd()
-            dataHist.Write()
 
             # get the template TH1
-            templateTH1 = getTH1("singlemuon_"+wbin+"_0b_"+ptbin+"_loose", filename)
+            templateTH1 = getTH1("singlemuon_"+region+"_0b_"+ptbin+"_loose", filename)
 
             # find any non-0 bins in the data that are 0 in the template
             # set it to 0.01 if it happens and print a warning
@@ -100,58 +99,48 @@ if __name__ == "__main__":
             newName = "temp_"+btagbin+"_"+ptbin
             templateDataHist = ROOT.RooDataHist(newName+"_dh",newName+"_dh",ROOT.RooArgList(m2p),templateTH1)
             templatePdf=ROOT.RooHistPdf(newName+"_pdf0",newName+"_pdf0",ROOT.RooArgSet(m2p),templateDataHist,2)
-            a1=ROOT.RooRealVar(newName+"_a1",newName+"_a1",0.1,0,100)
-            a2=ROOT.RooRealVar(newName+"_a2",newName+"_a2",0.1,0,100)
+            templatePdfB1=ROOT.RooHistPdf(newName+"_pdfb1",newName+"_pdfb1",ROOT.RooArgSet(m2p),templateDataHist,2)
+            templatePdfB2=ROOT.RooHistPdf(newName+"_pdfb2",newName+"_pdfb2",ROOT.RooArgSet(m2p),templateDataHist,2)
+            templatePdfB3=ROOT.RooHistPdf(newName+"_pdfb3",newName+"_pdfb3",ROOT.RooArgSet(m2p),templateDataHist,2)
+            a1=ROOT.RooRealVar(newName+"_a1",newName+"_a1",0.1,0,1)
+            a2=ROOT.RooRealVar(newName+"_a2",newName+"_a2",1)
             bern1=ROOT.RooBernstein(newName+"_bern1",newName+"_bern1",m2p,ROOT.RooArgList(a1,a2))
-            bkg1pdf=ROOT.RooProdPdf(newName+"_pdf1",newName+"_pdf1",ROOT.RooArgSet(templatePdf,bern1))
-            b1=ROOT.RooRealVar(newName+"_b1",newName+"_b1",0.1,0,100)
-            b2=ROOT.RooRealVar(newName+"_b2",newName+"_b2",0.1,0,100)
-            b3=ROOT.RooRealVar(newName+"_b3",newName+"_b3",0.1,0,100)
+            bkg1pdf=ROOT.RooProdPdf(newName+"_pdf1",newName+"_pdf1",ROOT.RooArgSet(templatePdfB1,bern1))
+            b1=ROOT.RooRealVar(newName+"_b1",newName+"_b1",0.1,0,1)
+            b2=ROOT.RooRealVar(newName+"_b2",newName+"_b2",0.1,0,1)
+            b3=ROOT.RooRealVar(newName+"_b3",newName+"_b3",1)
             bern2=ROOT.RooBernstein(newName+"_bern2",newName+"_bern2",m2p,ROOT.RooArgList(b1,b2,b3))
-            bkg2pdf=ROOT.RooProdPdf(newName+"_pdf2",newName+"_pdf2",ROOT.RooArgSet(templatePdf,bern2))
-            c1=ROOT.RooRealVar(newName+"_c1",newName+"_c1",0.1,0,100)
-            c2=ROOT.RooRealVar(newName+"_c2",newName+"_c2",0.1,0,100)
-            c3=ROOT.RooRealVar(newName+"_c3",newName+"_c3",0.1,0,100)
-            c4=ROOT.RooRealVar(newName+"_c4",newName+"_c4",0.1,0,100)
+            bkg2pdf=ROOT.RooProdPdf(newName+"_pdf2",newName+"_pdf2",ROOT.RooArgSet(templatePdfB2,bern2))
+            c1=ROOT.RooRealVar(newName+"_c1",newName+"_c1",0.1,0,1)
+            c2=ROOT.RooRealVar(newName+"_c2",newName+"_c2",0.1,0,1)
+            c3=ROOT.RooRealVar(newName+"_c3",newName+"_c3",0.1,0,1)
+            c4=ROOT.RooRealVar(newName+"_c4",newName+"_c4",1)
             bern3=ROOT.RooBernstein(newName+"_bern3",newName+"_bern3",m2p,ROOT.RooArgList(c1,c2,c3,c4))
-            bkg3pdf=ROOT.RooProdPdf(newName+"_pdf3",newName+"_pdf3",ROOT.RooArgSet(templatePdf,bern3))
+            bkg3pdf=ROOT.RooProdPdf(newName+"_pdf3",newName+"_pdf3",ROOT.RooArgSet(templatePdfB3,bern3))
 
             # compute the normalizations
             datanorm = dataTH1.Integral(1,dataTH1.GetNbinsX())
-            print("JPC data norm: "+newName+", "+str(datanorm))
             normtemp = ROOT.RooRealVar(newName+"_pdf0_norm", "Number of background events", datanorm, 0, 3*datanorm)
             normf1 = ROOT.RooRealVar(newName+"_pdf1_norm", "Number of background events", datanorm, 0, 3*datanorm)
             normf2 = ROOT.RooRealVar(newName+"_pdf2_norm", "Number of background events", datanorm, 0, 3*datanorm)
             normf3 = ROOT.RooRealVar(newName+"_pdf3_norm", "Number of background events", datanorm, 0, 3*datanorm)
 
-            if order==0:
-                getattr(w,"import")(templatePdf)
-                getattr(w,"import")(normtemp)
-            elif order==1:
-                getattr(w,"import")(bkg1pdf)
-                getattr(w,"import")(normf1)
-            elif order==2:
-                getattr(w,"import")(bkg2pdf)
-                getattr(w,"import")(normf2)
-            elif order==3:
-                getattr(w,"import")(bkg3pdf)
-                getattr(w,"import")(normf3)
-                
-
             # do a preliminary fit and save them for inspection later
-            fileout.cd()
             r1=bkg1pdf.fitTo(dataHist, Save=True, Minimizer=("Minuit2","minimize"), SumW2Error=True, Strategy=2, PrintLevel=-1)
             r2=bkg2pdf.fitTo(dataHist, Save=True, Minimizer=("Minuit2","minimize"), SumW2Error=True, Strategy=2, PrintLevel=-1)
             r3=bkg3pdf.fitTo(dataHist, Save=True, Minimizer=("Minuit2","minimize"), SumW2Error=True, Strategy=2, PrintLevel=-1)
-            r1.Write()
-            r2.Write()
-            r3.Write()
-            templateDataHist.Write()
-            templatePdf.Write()
-            bkg1pdf.Write()
-            bkg2pdf.Write()
-            bkg3pdf.Write()
-            
+
+            getattr(w,"import")(r1)
+            getattr(w,"import")(r2)
+            getattr(w,"import")(r3)
+            getattr(w,"import")(templatePdf)
+            getattr(w,"import")(normtemp)
+            getattr(w,"import")(bkg1pdf)
+            getattr(w,"import")(normf1)
+            getattr(w,"import")(bkg2pdf)
+            getattr(w,"import")(normf2)
+            getattr(w,"import")(bkg3pdf)
+            getattr(w,"import")(normf3)
             
             # get the signal
             for syst in systs:
@@ -163,17 +152,8 @@ if __name__ == "__main__":
                 sigPdf = ROOT.RooHistPdf(newName+"_pdf"+syst,newName+"_pdf"+syst,ROOT.RooArgSet(m2p),sigDataHist,2)
                 norm = sigTH1.Integral(1,sigTH1.GetNbinsX())/normTH1.GetBinContent(1)*xs
                 normVar = ROOT.RooRealVar(newName+"_pdf"+syst+"_norm","Norm of signal",norm)
-                if syst=="":
-                    print("JPC signal norm: "+newName+", "+str(norm))
-
-                print(sigName+" norm = "+str(normVar))
-                fileout.cd()
                 getattr(w,"import")(sigPdf)
                 getattr(w,"import")(normVar)
-#                sigTH1.SetName(newName)
-#                sigTH1.Scale(xs/normTH1.GetBinContent(1))
-#                fileout.cd()
-#                sigTH1.Write()
             
     fileout.cd()
     w.Print()

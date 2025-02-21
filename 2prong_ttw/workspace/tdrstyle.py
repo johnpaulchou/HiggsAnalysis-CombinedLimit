@@ -1,5 +1,18 @@
 import ROOT as rt
 
+colors = [rt.TColor.GetColor("#3f90da"),
+          rt.TColor.GetColor("#ffa90e"),
+          rt.TColor.GetColor("#bd1f01"),
+          rt.TColor.GetColor("#94a4a2"),
+          rt.TColor.GetColor("#832db6"),
+          rt.TColor.GetColor("#a96b59"),
+          rt.TColor.GetColor("#e76300"),
+          rt.TColor.GetColor("#b9ac70"),
+          rt.TColor.GetColor("#717581"),
+          rt.TColor.GetColor("#92dadd"),
+          rt.TColor.GetColor("#607641"),
+          rt.TColor.GetColor("#F5BB54")]
+
 def tdrGrid( gridOn):
   tdrStyle.SetPadGridX(gridOn)
   tdrStyle.SetPadGridY(gridOn)

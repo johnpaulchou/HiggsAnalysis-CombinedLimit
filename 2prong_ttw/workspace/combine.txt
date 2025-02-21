@@ -6,6 +6,7 @@ kmax * number of nuisance parameters
 shapes      data_obs    BBIN      workspace.root                    w:data_BIN
 shapes      sig         BBIN      workspace.root                    w:sig_BIN_pdf w:sig_BIN_pdf_$SYSTEMATIC
 shapes      bkg         BBIN      workspace.root                    w:temp_BIN_pdf0
+#shapes      bkg         BBIN      workspace.root                    w:temp_BIN_pdf3
 -------------------------------------------------------------------------------
 bin             BBIN
 observation     -1
@@ -13,7 +14,7 @@ observation     -1
 bin             BBIN               BBIN
 process         sig                bkg
 process         0                  1
-rate            59                 1.0
+rate            LUMI               1.0
 ---------------------------------------------
 lumi                  lnN         1.016      1.0
 MuonReco              shape       1          -
@@ -24,4 +25,7 @@ BtagLightCorrelated   shape       1          -
 BtagBCCorrelated      shape       1          -
 BtagLightUncorrelated shape       1          -
 BtagBCUncorrelated    shape       1          -
-
+#temp_BIN_c1    	      flatParam
+#temp_BIN_c2    	      flatParam
+#temp_BIN_c3    	      flatParam
+#temp_BIN_c4    	      flatParam

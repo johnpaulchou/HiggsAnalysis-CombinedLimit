@@ -1,16 +1,13 @@
 import ROOT
-import CMS_lumi, tdrstyle
+import tdrstyle
 import makeworkspace as ttw
 
 tdrstyle.setTDRStyle()
 
-#pttitles = ["=20-40", "=40-60", "=60-80", "=80-100", "=100-140", "=140-180", "=180-220", "=220-300", "=300-380", ">380" ]
-pttitles = ["=20-60", "=60-100", "=100-180", "=180-300", ">300" ]
+pttitles = ["=20-40", "=40-60", "=60-80", "=80-100", "=100-140", "=140-180", "=180-220", "=220-300", "=300-380", ">380" ]
+#pttitles = ["=20-60", "=60-100", "=100-180", "=180-300", ">300" ]
 btagtitles = ["1 b tag", "#kern[0.2]{#geq}#kern[-0.1]{2} b tags" ]
-#wtitles = ["Sym. iso.", "Asym. non-iso."]
-
-CMS_lumi.lumi_13TeV = "59 fb^{-1}"
-CMS_lumi.writeExtraText = 1
+wtitles = ["Sym. iso.", "Asym. non-iso."]
 
 rootfile = ROOT.TFile(ttw.fileoutname, "READ")
 
