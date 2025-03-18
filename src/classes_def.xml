@@ -222,6 +222,7 @@
   <class name="RooDijet3Pdf" /> 
   <class name="RooMomentMorphFuncNDFix" />
   <class name="RooMomentMorphFuncNDFix::Grid2" />
+  <class name="RooHistSplinePdf" />
   <class name="RooModZPdf" />
   <class name="RooExpPdf" />
   <class name="RooSumTwoExpPdf" />
