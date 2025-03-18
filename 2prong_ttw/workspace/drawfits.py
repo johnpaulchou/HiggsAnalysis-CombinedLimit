@@ -147,10 +147,11 @@ if __name__ == "__main__":
 
     # either draw the signal or draw all of the background fits
     # if you are drawing the signal, pick the background order to draw on top of
+    # the bkgOrder also specifies what is drawn in the pull plot
     drawSignal = True
     bkgOrder = 3
     lumi = ttw.lumi
-    sigscale = 3.
+    sigscale = 1.
 
     # setup bin titles
     pttitles = ["=20-40", "=40-60", "=60-80", "=80-100", "=100-140", "=140-180", "=180-220", "=220-300", "=300-380", ">380" ]
@@ -191,10 +192,10 @@ if __name__ == "__main__":
             can=ROOT.TCanvas("c_"+btagbin+"_"+ptbin, "c_"+btagbin+"_"+ptbin,300,300)
             can.cd()
             pad = ROOT.TPad("pad"+ptbin,"pad"+ptbin,0,0.25,1,1)
-            pad.SetMargin(0.15,0.08,0.03,0.1) #L, R, B, T
+            pad.SetMargin(0.15,0.08,0.02,0.1) #L, R, B, T
             pad.Draw()
             pullpad = ROOT.TPad("pullpad"+ptbin,"pullpad"+ptbin,0,0,1,0.25)
-            pullpad.SetMargin(0.15,0.08,0.15,0.03) #L, R, B, T
+            pullpad.SetMargin(0.15,0.08,0.25,0.02) #L, R, B, T
             pullpad.SetTickx()
             pullpad.Draw()
 
@@ -224,8 +225,22 @@ if __name__ == "__main__":
             pdfhisttitles.append("Bkgd*Bern1")
             pdfhisttitles.append("Bkgd*Bern2")
             pdfhisttitles.append("Bkgd*Bern3")
-            sighist = pdf_to_histogram(sig, var.getBinning(), "sig_"+btagbin+"_"+ptbin+"_pdfhist", signorm.getVal()*lumi*sigscale) # scale signal to lumi
-            
+            sighist = pdf_to_histogram(sig, var.getBinning(), "sig_"+btagbin+"_"+ptbin+"_pdfhist", signorm.getVal()*sigscale) # scale signal to an arbitrary value
+
+            # compute the pull graph
+            pull=graph.Clone(graph.GetName()+"_pull")
+            for i in range(pull.GetN()):
+                N = graph.GetPointY(i)
+                errup=graph.GetErrorYhigh(i)
+                errlo=graph.GetErrorYlow(i)
+                pred=pdfhists[bkgOrder].GetBinContent(i+1) # needs to be offset by one here
+                # compute central point
+                if N<pred:   pull.SetPointY(i, (N-pred)/errup)
+                elif N>pred: pull.SetPointY(i, (N-pred)/errlo)
+                else:        pull.SetPointY(i, 0)
+                pull.SetPointEYhigh(i,1)
+                pull.SetPointEYlow(i,1)
+                
             # format things
             can.SetFillColor(0)
             can.SetBorderMode(0)
@@ -246,6 +261,25 @@ if __name__ == "__main__":
             graph.SetMarkerColor(ROOT.kBlack)
             graph.SetLineColor(ROOT.kBlack)
 
+            pull.SetMarkerSize(0.3)
+            pull.SetMarkerStyle(20)
+            pull.SetLineWidth(2)
+            pull.GetXaxis().SetTitle("M(2p) [GeV]")
+            pull.GetXaxis().SetLabelSize(0.10)
+            pull.GetXaxis().SetTitleSize(0.13)
+            pull.GetXaxis().SetTitleOffset(0.65)
+            pull.SetStats(0)
+            pull.SetTitle("")
+            pull.GetYaxis().SetTitle("#frac{data-pred.}{error}")
+            pull.GetYaxis().SetTitleSize(0.13)
+            pull.GetYaxis().SetLabelSize(0.13)
+            pull.GetYaxis().SetTitleOffset(0.33)
+            pull.GetYaxis().SetNdivisions(5, 5, 0)
+            pull.GetYaxis().CenterTitle(True)
+            pull.SetMarkerColor(ROOT.kBlack)
+            pull.SetLineColor(ROOT.kBlack)
+            pull.GetXaxis().SetRangeUser(var.getBinning().binLow(0),var.getBinning().binHigh(var.getBinning().numBins()-1))
+            
             for pdfhistindex, pdfhist in enumerate(pdfhists):
                 pdfhists[pdfhistindex].SetLineColor(colors[pdfhistindex])
                 pdfhists[pdfhistindex].SetFillColor(0)
@@ -298,6 +332,20 @@ if __name__ == "__main__":
                 for pdfhistindex, pdfhist in enumerate(pdfhists):
                     leg.AddEntry(pdfhist, pdfhisttitles[pdfhistindex], "l")
             leg.Draw()
+
+            # Draw pulls
+            pullpad.cd()
+            pull.Draw("APZ")
+            line = ROOT.TLine()
+            line.SetNDC(False)
+            line.SetX1(var.getBinning().binLow(0))
+            line.SetX2(var.getBinning().binHigh(var.getBinning().numBins()-1))
+            line.SetY1(0)
+            line.SetY2(0)
+            line.SetLineWidth(1)
+            line.SetLineColor(colors[3])
+            line.SetLineStyle(3)
+            line.Draw()            
 
             
             can.SaveAs("../plots/"+can.GetName()+".pdf")

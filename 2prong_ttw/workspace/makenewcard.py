@@ -32,7 +32,8 @@ def main():
             newfilenames.append(path.name)
             for line in oldfile:
                 newline=line.replace("BIN",btagbin+"_"+ptbin)
-                newline=newline.replace("LUMI",str(ws.lumi))
+#                newline=newline.replace("LUMI",str(ws.lumi))
+                newline=newline.replace("LUMI","1.0")
                 newfile.write(newline)
             newfile.close()
             oldfile.close()

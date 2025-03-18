@@ -4,7 +4,8 @@
 
 niter="100"
 
-for mass in {0..8}; do
+#for mass in {0..8}; do
+for mass in {3..3}; do
     ./makeworkspace.py --imass $mass
     ./makenewcard.py --imass $mass
     echo "Processing mass $mass"

@@ -7,7 +7,7 @@ import argparse
 def getTH1(histname,filename):
     rootfile = ROOT.TFile(filename, "READ")
     if not rootfile or rootfile.IsZombie():
-        print("Error: Unable to open file '{file_name}'.")
+        print("Error: Unable to open file '{filename}'.")
         return None
     
     hist = rootfile.Get(histname)
@@ -39,7 +39,7 @@ xsecs = [ 504., 508., 502., 523., 533., 536., 534., 533., 529. ]
 BR=0.2836869
 
 # set the luminosity value here
-lumi = 59.
+lumi = 138.
 
 #systematic uncertainties
 systs = ["", "_MuonRecoUp", "_MuonRecoDown", "_MuonIdUp", "_MuonIdDown", "_MuonIsoUp", "_MuonIsoDown", "_MuonHltUp", "_MuonHltDown",
@@ -47,10 +47,7 @@ systs = ["", "_MuonRecoUp", "_MuonRecoDown", "_MuonIdUp", "_MuonIdDown", "_MuonI
          "_BtagBCUncorrelatedUp", "_BtagBCUncorrelatedDown"]
 
 # where to read things from
-#filename="../input/hists_for_jp_17-12-24.root"
-filename="../input/hists_for_jp_16-12-24.root"
-#filename="../input/hists_for_jp_15-10-24.root"
-#filename="../input/hists_for_jp.root"
+filename="../input/summed_hists_11-03-2025.root"
 
 ###############################################################
 # start of the "main" function
@@ -98,10 +95,10 @@ if __name__ == "__main__":
             # construct the PDF of the template
             newName = "temp_"+btagbin+"_"+ptbin
             templateDataHist = ROOT.RooDataHist(newName+"_dh",newName+"_dh",ROOT.RooArgList(m2p),templateTH1)
-            templatePdf=ROOT.RooHistPdf(newName+"_pdf0",newName+"_pdf0",ROOT.RooArgSet(m2p),templateDataHist,2)
-            templatePdfB1=ROOT.RooHistPdf(newName+"_pdfb1",newName+"_pdfb1",ROOT.RooArgSet(m2p),templateDataHist,2)
-            templatePdfB2=ROOT.RooHistPdf(newName+"_pdfb2",newName+"_pdfb2",ROOT.RooArgSet(m2p),templateDataHist,2)
-            templatePdfB3=ROOT.RooHistPdf(newName+"_pdfb3",newName+"_pdfb3",ROOT.RooArgSet(m2p),templateDataHist,2)
+            templatePdf=ROOT.RooHistSplinePdf(newName+"_pdf0",newName+"_pdf0",ROOT.RooArgSet(m2p),templateDataHist,2,ROOT.RooArgList())
+            templatePdfB1=ROOT.RooHistSplinePdf(newName+"_pdfb1",newName+"_pdfb1",ROOT.RooArgSet(m2p),templateDataHist,2,ROOT.RooArgList())
+            templatePdfB2=ROOT.RooHistSplinePdf(newName+"_pdfb2",newName+"_pdfb2",ROOT.RooArgSet(m2p),templateDataHist,2,ROOT.RooArgList())
+            templatePdfB3=ROOT.RooHistSplinePdf(newName+"_pdfb3",newName+"_pdfb3",ROOT.RooArgSet(m2p),templateDataHist,2,ROOT.RooArgList())
             a1=ROOT.RooRealVar(newName+"_a1",newName+"_a1",0.1,0,1)
             a2=ROOT.RooRealVar(newName+"_a2",newName+"_a2",1)
             bern1=ROOT.RooBernstein(newName+"_bern1",newName+"_bern1",m2p,ROOT.RooArgList(a1,a2))
@@ -120,6 +117,7 @@ if __name__ == "__main__":
 
             # compute the normalizations
             datanorm = dataTH1.Integral(1,dataTH1.GetNbinsX())
+            print(dataTH1.GetName()+" norm = "+str(datanorm))
             normtemp = ROOT.RooRealVar(newName+"_pdf0_norm", "Number of background events", datanorm, 0, 3*datanorm)
             normf1 = ROOT.RooRealVar(newName+"_pdf1_norm", "Number of background events", datanorm, 0, 3*datanorm)
             normf2 = ROOT.RooRealVar(newName+"_pdf2_norm", "Number of background events", datanorm, 0, 3*datanorm)
@@ -146,11 +144,11 @@ if __name__ == "__main__":
             for syst in systs:
                 sigName = sigtype+"_"+str(sigmass)+"_symiso_"+btagbin+"_"+ptbin+"_tight"+syst
                 sigTH1 = getTH1(sigName, filename)
-                normTH1 = getTH1(sigtype+"_"+str(sigmass)+"_totalentries", filename)
+#                normTH1 = getTH1(sigtype+"_"+str(sigmass)+"_totalentries", filename)
                 newName = "sig_"+btagbin+"_"+ptbin
                 sigDataHist = ROOT.RooDataHist(newName+"_hist"+syst,newName+"hist"+syst,ROOT.RooArgSet(m2p),sigTH1)
                 sigPdf = ROOT.RooHistPdf(newName+"_pdf"+syst,newName+"_pdf"+syst,ROOT.RooArgSet(m2p),sigDataHist,2)
-                norm = sigTH1.Integral(1,sigTH1.GetNbinsX())/normTH1.GetBinContent(1)*xs
+                norm = sigTH1.Integral(1,sigTH1.GetNbinsX()) #/normTH1.GetBinContent(1)*xs
                 normVar = ROOT.RooRealVar(newName+"_pdf"+syst+"_norm","Norm of signal",norm)
                 getattr(w,"import")(sigPdf)
                 getattr(w,"import")(normVar)
