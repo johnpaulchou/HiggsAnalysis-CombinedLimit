@@ -150,9 +150,9 @@ if __name__ == "__main__":
     # either draw the signal or draw all of the background fits
     # if you are drawing the signal, pick the background index to draw on top of
     # the bkgIndex also specifies what is drawn in the pull plot
-    drawSignal = False
-    bkgIndex = 1
-    sigscale = 1.
+    drawSignal = True
+    bkgIndex = 0
+    sigscale = 20.0
     drawSpline = False
     drawChisq = True
     
@@ -178,15 +178,14 @@ if __name__ == "__main__":
               ROOT.TColor.GetColor("#92dadd"),
               ROOT.TColor.GetColor("#607641"),
               ROOT.TColor.GetColor("#F5BB54")]
-    
     ROOT.gStyle.SetErrorX(0)
     ROOT.gStyle.SetTitleFont(42)
     ROOT.gStyle.SetTitleFont(42, "XYZ")
     ROOT.gStyle.SetHistLineWidth(2)
+    sigcolorindex=4
 
     # create the chi^2 prob histogram
-    hChisqProb=ROOT.TH1D("hChisqProb","#chi^{2} Probability",8,0,1)
-    
+    hChisqProb=ROOT.TH1D("hChisqProb","#chi^{2} Probability",8,0,1)    
     
     # loop over the b tags
     for btagindex, btagbin in enumerate(ttw.btagbins):
@@ -227,6 +226,7 @@ if __name__ == "__main__":
 
             # compute the pull graph and chi^2
             pull=graph.Clone(graph.GetName()+"_pull")
+            sigpullhist = sighist.Clone(sighist.GetName()+"_pull")
             chisq=0
             ndof=0
             for i in range(pull.GetN()):
@@ -234,6 +234,7 @@ if __name__ == "__main__":
                 errup=graph.GetErrorYhigh(i)
                 errlo=graph.GetErrorYlow(i)
                 pred=pdfhists[bkgIndex].GetBinContent(i+1) # needs to be offset by one here
+
                 # compute central point
                 if N<pred:   pullval=(N-pred)/errup
                 elif N>pred: pullval=(N-pred)/errlo
@@ -244,6 +245,12 @@ if __name__ == "__main__":
                 if N>0:
                     chisq = chisq+pullval**2
                     ndof = ndof+1
+
+                # compute sigpullhist stuff
+                sig=sigpullhist.GetBinContent(i+1) # needs to be offset by one here
+                if N>(sig+pred):  sigpullhist.SetBinContent(i+1,sig/errlo)
+                else:             sigpullhist.SetBinContent(i+1,sig/errup)
+
             chisqprob=ROOT.TMath.Prob(chisq,ndof)
             hChisqProb.Fill(chisqprob)
                     
@@ -289,8 +296,8 @@ if __name__ == "__main__":
             for pdfhistindex, pdfhist in enumerate(pdfhists):
                 pdfhists[pdfhistindex].SetLineColor(colors[pdfhistindex])
                 pdfhists[pdfhistindex].SetFillColor(0)
-            sighist.SetLineColor(colors[4])
-            sighist.SetFillColor(colors[4])
+            sighist.SetLineColor(colors[sigcolorindex])
+            sighist.SetFillColor(colors[sigcolorindex])
 
             # Draw things
             pad.cd()
@@ -349,6 +356,8 @@ if __name__ == "__main__":
             # Draw pulls
             pullpad.cd()
             pull.Draw("APZ")
+            sigpullhist.SetLineColor(colors[sigcolorindex])
+            sigpullhist.Draw("same")
             line = ROOT.TLine()
             line.SetNDC(False)
             line.SetX1(var.getBinning().binLow(0))
