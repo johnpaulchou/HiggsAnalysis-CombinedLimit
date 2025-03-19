@@ -42,7 +42,7 @@ systs = ["", "_MuonRecoUp", "_MuonRecoDown", "_MuonIdUp", "_MuonIdDown", "_MuonI
          "_BtagBCUncorrelatedUp", "_BtagBCUncorrelatedDown"]
 
 # where to read things from
-filename="../input/summed_hists_11-03-2025.root"
+filename="../input/summed_hists_19-03-2025.root"
 
 ###############################################################
 # start of the "main" function
@@ -52,7 +52,7 @@ if __name__ == "__main__":
 
     parser = argparse.ArgumentParser(formatter_class=argparse.ArgumentDefaultsHelpFormatter)
     parser.add_argument("--imass",help="signal mass index (0-"+str(len(sigmasses)-1)+")", choices=range(len(sigmasses)), type=int)
-    parser.add_argument("--region",help="region that we're working in",choices=["symiso","asymnoniso"], default="asymnoniso")
+    parser.add_argument("--region",help="region that we're working in",choices=["symiso","asymnoniso","asymnoniso_unscaled"], default="asymnoniso")
     args=parser.parse_args()
     sigmass = sigmasses[args.imass]
     region = args.region
@@ -66,17 +66,24 @@ if __name__ == "__main__":
         for btagbin in btagbins:
 
             # get the data
-            dataName = "singlemuon_"+region+"_"+btagbin+"_"+ptbin+"_tight"
-            if region=="asymnoniso":
-                dataName += "scaledtosymiso"
+            if region=="symiso":
+                dataName = "singlemuon_symiso_"+btagbin+"_"+ptbin+"_tight"
+            elif region=="asymnoniso":
+                dataName = "singlemuon_asymnoniso_"+btagbin+"_"+ptbin+"_tightscaledtosymiso"
+            elif region=="asymnoniso_unscaled":
+                dataName = "singlemuon_asymnoniso_"+btagbin+"_"+ptbin+"_tight"
+                
             newName = "data_"+btagbin+"_"+ptbin
             dataTH1 = getTH1(dataName, filename)
             dataHist = ROOT.RooDataHist(newName,newName,ROOT.RooArgList(m2p),dataTH1)
             getattr(w,"import")(dataHist)
 
             # get the template TH1
-            templateTH1 = getTH1("singlemuon_"+region+"_0b_"+ptbin+"_loose", filename)
-
+            if region=="symiso":
+                templateTH1 = getTH1("singlemuon_symiso_0b_"+ptbin+"_loose", filename)
+            elif region=="asymnoniso" or region=="asymnoniso_unscaled":
+                templateTH1 = getTH1("singlemuon_asymnoniso_0b_"+ptbin+"_loose", filename)
+                
             # find any non-0 bins in the data that are 0 in the template
             # set it to 0.01 if it happens and print a warning
             for i in range(1, dataTH1.GetNbinsX()+1):
@@ -89,11 +96,11 @@ if __name__ == "__main__":
             # construct the PDF of the template
             newName = "temp_"+btagbin+"_"+ptbin
             templateDataHist = ROOT.RooDataHist(newName+"_dh",newName+"_dh",ROOT.RooArgList(m2p),templateTH1)
-            a1=ROOT.RooRealVar(newName+"_a1",newName+"_a1",0,-0.5,0.5)
-            a2=ROOT.RooRealVar(newName+"_a2",newName+"_a2",0,-0.5,0.5)
-            a3=ROOT.RooRealVar(newName+"_a3",newName+"_a3",0,-0.5,0.5)
-            a4=ROOT.RooRealVar(newName+"_a4",newName+"_a4",0,-0.5,0.5)
-            a5=ROOT.RooRealVar(newName+"_a5",newName+"_a5",0,-0.5,0.5)
+            a1=ROOT.RooRealVar(newName+"_a1",newName+"_a1",0,-0.7,0.7)
+            a2=ROOT.RooRealVar(newName+"_a2",newName+"_a2",0,-0.7,0.7)
+            a3=ROOT.RooRealVar(newName+"_a3",newName+"_a3",0,-0.7,0.7)
+            a4=ROOT.RooRealVar(newName+"_a4",newName+"_a4",0,-0.7,0.7)
+            a5=ROOT.RooRealVar(newName+"_a5",newName+"_a5",0,-0.7,0.7)
             bkg0pdf=ROOT.RooHistPdf(newName+"_pdf0",newName+"_pdf0",ROOT.RooArgList(m2p),templateDataHist,2)
             bkg1pdf=ROOT.RooHistSplinePdf(newName+"_pdf1",newName+"_pdf1",ROOT.RooArgList(m2p),templateDataHist,2,ROOT.RooArgList(a1,a2,a3,a4,a5))
 
@@ -104,22 +111,13 @@ if __name__ == "__main__":
             normf1 = ROOT.RooRealVar(newName+"_pdf1_norm", "Number of background events", datanorm, 0, 3*datanorm)
 
             # do a preliminary fit and save them for inspection later
-#            r0=bkg0pdf.fitTo(dataHist, Save=True, Minimizer=("Minuit2","minimize"), SumW2Error=True, Strategy=2, PrintLevel=-1)
             r1=bkg1pdf.fitTo(dataHist, Save=True, Minimizer=("Minuit2","minimize"), SumW2Error=True, Strategy=2, PrintLevel=-1)
 
-            print("asdf2")
-#            getattr(w,"import")(r0)
-            print("asdf3")
             getattr(w,"import")(bkg0pdf)
-            print("asdf4")
             getattr(w,"import")(normf0)
-            print("asdf5")
             getattr(w,"import")(r1)
-            print("asdf6")
             getattr(w,"import")(bkg1pdf)
-            print("asdf7")
             getattr(w,"import")(normf1)
-            print("asdf8")
             
             # get the signal
             for syst in systs:

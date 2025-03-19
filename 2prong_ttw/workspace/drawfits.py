@@ -154,6 +154,7 @@ if __name__ == "__main__":
     bkgIndex = 1
     sigscale = 1.
     drawSpline = False
+    drawChisq = True
     
     # setup bin titles
     pttitles = ["=20-40", "=40-60", "=60-80", "=80-100", "=100-140", "=140-180", "=180-220", "=220-300", "=300-380", ">380" ]
@@ -182,6 +183,9 @@ if __name__ == "__main__":
     ROOT.gStyle.SetTitleFont(42)
     ROOT.gStyle.SetTitleFont(42, "XYZ")
     ROOT.gStyle.SetHistLineWidth(2)
+
+    # create the chi^2 prob histogram
+    hChisqProb=ROOT.TH1D("hChisqProb","#chi^{2} Probability",8,0,1)
     
     
     # loop over the b tags
@@ -197,7 +201,7 @@ if __name__ == "__main__":
             pad.SetMargin(0.15,0.08,0.02,0.1) #L, R, B, T
             pad.Draw()
             pullpad = ROOT.TPad("pullpad"+ptbin,"pullpad"+ptbin,0,0,1,0.25)
-            pullpad.SetMargin(0.15,0.08,0.25,0.02) #L, R, B, T
+            pullpad.SetMargin(0.15,0.08,0.3,0.02) #L, R, B, T
             pullpad.SetTickx()
             pullpad.Draw()
 
@@ -221,20 +225,28 @@ if __name__ == "__main__":
             pdfhisttitles.append("Bkgd*Spline")
             sighist = pdf_to_histogram(sig, var.getBinning(), "sig_"+btagbin+"_"+ptbin+"_pdfhist", signorm.getVal()*sigscale) # scale signal to an arbitrary value
 
-            # compute the pull graph
+            # compute the pull graph and chi^2
             pull=graph.Clone(graph.GetName()+"_pull")
+            chisq=0
+            ndof=0
             for i in range(pull.GetN()):
                 N = graph.GetPointY(i)
                 errup=graph.GetErrorYhigh(i)
                 errlo=graph.GetErrorYlow(i)
                 pred=pdfhists[bkgIndex].GetBinContent(i+1) # needs to be offset by one here
                 # compute central point
-                if N<pred:   pull.SetPointY(i, (N-pred)/errup)
-                elif N>pred: pull.SetPointY(i, (N-pred)/errlo)
-                else:        pull.SetPointY(i, 0)
+                if N<pred:   pullval=(N-pred)/errup
+                elif N>pred: pullval=(N-pred)/errlo
+                else:        pullval=0
+                pull.SetPointY(i, pullval)
                 pull.SetPointEYhigh(i,1)
                 pull.SetPointEYlow(i,1)
-                
+                if N>0:
+                    chisq = chisq+pullval**2
+                    ndof = ndof+1
+            chisqprob=ROOT.TMath.Prob(chisq,ndof)
+            hChisqProb.Fill(chisqprob)
+                    
             # format things
             can.SetFillColor(0)
             can.SetBorderMode(0)
@@ -259,9 +271,9 @@ if __name__ == "__main__":
             pull.SetMarkerStyle(20)
             pull.SetLineWidth(2)
             pull.GetXaxis().SetTitle("M(2p) [GeV]")
-            pull.GetXaxis().SetLabelSize(0.10)
+            pull.GetXaxis().SetLabelSize(0.13)
             pull.GetXaxis().SetTitleSize(0.13)
-            pull.GetXaxis().SetTitleOffset(0.65)
+            pull.GetXaxis().SetTitleOffset(0.73)
             pull.SetStats(0)
             pull.SetTitle("")
             pull.GetYaxis().SetTitle("#frac{data-pred.}{error}")
@@ -326,6 +338,14 @@ if __name__ == "__main__":
                     leg.AddEntry(pdfhist, pdfhisttitles[pdfhistindex], "l")
             leg.Draw()
 
+            # draw chisq
+            if drawChisq:
+                chisqstr="#chi^{2}/d.o.f.="+"{0:0.0f}/".format(chisq)+str(ndof)+"={0:0.2f}".format(chisq/ndof)
+                chisqtxt=ROOT.TLatex()
+                chisqtxt.SetTextFont(42)
+                chisqtxt.SetTextSize(0.04)
+                chisqtxt.DrawLatexNDC(0.65,0.2,chisqstr)
+            
             # Draw pulls
             pullpad.cd()
             pull.Draw("APZ")
@@ -347,4 +367,17 @@ if __name__ == "__main__":
             
             can.SaveAs("../plots/"+can.GetName()+".pdf")
 
-
+    # Draw chisq probability histogram
+    if drawChisq:
+        can=ROOT.TCanvas("chisqprob","chisqprob",300,300)
+        can.SetFillColor(0)
+        can.SetBorderMode(0)
+        can.SetFrameFillStyle(0)
+        can.SetFrameBorderMode(0)
+        can.SetTickx(0)
+        can.SetTicky(0)
+        hChisqProb.SetMarkerSize(0.3)
+        hChisqProb.SetMarkerStyle(20)
+        hChisqProb.SetBinErrorOption(ROOT.TH1.kPoisson)
+        hChisqProb.Draw("E0")
+        can.SaveAs("../plots/"+can.GetName()+".pdf")
