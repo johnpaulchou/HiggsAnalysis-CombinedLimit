@@ -91,7 +91,7 @@ if __name__ == "__main__":
                     print("************************************************************************************")
                     print("found a 0 bin in the template",templateTH1.GetName(),dataTH1.GetName(),str(i),str(dataTH1.GetBinContent(i)),sep=" ; ")
                     print("************************************************************************************")
-                    templateTH1.SetBinContent(i, 0.01)
+                    templateTH1.SetBinContent(i, 1.0)
 
             # construct the PDF of the template
             newName = "temp_"+btagbin+"_"+ptbin
