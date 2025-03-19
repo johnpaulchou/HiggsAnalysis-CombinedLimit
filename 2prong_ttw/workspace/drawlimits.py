@@ -1,86 +1,171 @@
+#!/bin/env python3
+
 import tdrstyle
 import ROOT
 import array as ar
+import argparse
+import re
+import makeworkspace as ttw
+import math
 
 tdrstyle.setTDRStyle()
 
-x = [0.5, 0.75, 0.85, 1.0, 1.5, 2.0, 2.5, 3.0, 4.0 ]
-ex = [0.1, 0.1, 0.1, 0.1, 0.1, 0.1, 0.1, 0.1, 0.1 ]
-obs = [0.106600, 0.338700, 0.492200, 0.778700, 5.727500, 3.461200, 3.998900, 1.373300, 4.034700]
-e25 = [0.026200, 0.182100, 0.271200, 0.490100, 1.489700, 1.573200, 1.452600, 1.207800, 1.067500]
-e16 = [0.039600, 0.254800, 0.381200, 0.674800, 1.942400, 2.051200, 1.922800, 1.624000, 1.453100]
-e50 = [0.064500, 0.376000, 0.564500, 0.972700, 2.648400, 2.796900, 2.656200, 2.273400, 2.054700]
-e84 = [0.106100, 0.561800, 0.841200, 1.406900, 3.661900, 3.856000, 3.693900, 3.179600, 2.931000]
-e97 = [0.164400, 0.795800, 1.186500, 1.933900, 4.879900, 5.109000, 4.943800, 4.273500, 4.161900]
 
-exp = [0, 0, 0, 0, 0, 0, 0, 0, 0]
-eyl = [0, 0, 0, 0, 0, 0, 0, 0, 0]
-eyh = [0, 0, 0, 0, 0, 0, 0, 0, 0]
-eyl2 =[0, 0, 0, 0, 0, 0, 0, 0, 0]
-eyh2 =[0, 0, 0, 0, 0, 0, 0, 0, 0]
+def cross(x1, y1, x2, y2):
+    return x1-(x2-x1)/math.log(y2/y1)*math.log(y1)
 
-br=0.2734126
-for i in range(9):
-    obs[i]=(obs[i]/br)**.5
-    exp[i]=(e50[i]/br)**.5
-    eyl[i]=exp[i]-(e16[i]/br)**.5
-    eyh[i]=(e84[i]/br)**.5-exp[i]
-    eyl2[i]=exp[i]-(e25[i]/br)**.5
-    eyh2[i]=(e97[i]/br)**.5-exp[i]
 
+###############################################################
+# start of the "main" function
+###############################################################
+
+if __name__ == "__main__":
     
-g = ROOT.TGraphErrors(9, ar.array('d',x),  ar.array('d',obs))
-gexp = ROOT.TGraphErrors(9, ar.array('d',x), ar.array('d',exp))
-ge1 = ROOT.TGraphAsymmErrors(9, ar.array('d',x),  ar.array('d',exp), ar.array('d',ex), ar.array('d',ex), ar.array('d',eyl), ar.array('d',eyh))
-ge2 = ROOT.TGraphAsymmErrors(9, ar.array('d',x),  ar.array('d',exp), ar.array('d',ex), ar.array('d',ex), ar.array('d',eyl2), ar.array('d',eyh2))
+    # setup parser
+    parser = argparse.ArgumentParser(formatter_class=argparse.ArgumentDefaultsHelpFormatter)
+    parser.add_argument("files", nargs="+", help="A list of root files")
+    args = parser.parse_args()
 
-can = ROOT.TCanvas("limits","limits",500,500)
-can.cd()
-can.SetMargin(0.16,0.05,0.15,0.10)
-ge2.SetFillColor(ROOT.TColor.GetColor("#F5BB54"))
-ge2.SetFillStyle(1001)
-ge2.Draw("a3")
-ge2.SetMinimum(0)
-ge2.SetMaximum(7.0)
-ge2.GetXaxis().SetTitle("m_{#omega} [GeV]")
-ge2.GetYaxis().SetTitle("95% C.L. Lower limit on g_{#psi}")
-ge1.SetFillColor(ROOT.TColor.GetColor("#607641"))
-ge1.SetFillStyle(1001)
-ge1.Draw("Same3l")
-gexp.SetLineStyle(2)
-gexp.Draw("SAME L")
-g.Draw("SAME LP")
+    # setup output for printing
+    pdffilename="../plots/limits.pdf"
 
-leg = ROOT.TLegend(0.5,0.65,0.9,0.85)
-leg.SetBorderSize(0)
-leg.SetFillColor(0)
-leg.SetTextFont(42)
-leg.SetTextSize(0.04)
-leg.AddEntry(g, "Observed", "LP")
-leg.AddEntry(gexp, "Median Expected", "L")
-leg.AddEntry(ge1, "68% Expected", "F")
-leg.AddEntry(ge2, "95% Expected", "F")
-leg.Draw()
+    # setup data
+    x = []
+    ex = []
+    obs = []
+    e25 = []
+    e16 = []
+    e50 = []
+    e84 = []
+    e97 = []
+    
+    # loop over the files that are passed to the command line
+    for filename in args.files:
 
-# Write CMS stuff
-cmstxt = ROOT.TLatex()
-cmstxt.SetTextFont(61)
-cmstxt.SetTextSize(0.07)
-cmstxt.DrawLatexNDC(0.16,0.91,"CMS")
-extratxt = ROOT.TLatex()
-extratxt.SetTextFont(52)
-extratxt.SetTextSize(0.05)
-extratxt.DrawLatexNDC(0.31,0.91,"Preliminary")
-lumitxt = ROOT.TLatex()
-lumitxt.SetTextFont(42)
-lumitxt.SetTextSize(0.05)
-lumitxt.DrawLatexNDC(0.65,0.91,"59 fb^{-1} (13 TeV)")
+        # Try to open the ROOT TFile
+        rootfile = ROOT.TFile(filename, "READ")
+        if not rootfile or rootfile.IsZombie():
+            print("Error: Unable to open file "+filename+".")
+            continue
 
-brtxt = ROOT.TLatex()
-brtxt.SetTextFont(42)
-brtxt.SetTextSize(0.04)
-brtxt.DrawLatexNDC(0.65,0.20,"#eta BRs")
+        # parse the filename to get the parameters
+        # NB that this assumes it takes the form, higgsCombineTest.AsymptoticLimits.m*.root, which should come from runlimits.sh
+        # This code won't work if that formula is changed
+        m = re.search('higgsCombineTest.AsymptoticLimits.m(.+?).root', filename)
+        if m:
+            try:
+                imass=int(m.group(1))
+            except ValueError:
+                print("Could not convert "+m.group(1)+" into a number")
+                continue
+        else:
+            print("Could not parse the file "+filename+" according to the regex.")
+            continue
 
-can.Update()
-can.Draw()
-can.Print("limits.pdf")
+        # Try to get the tree
+        treename="limit"
+        tree = rootfile.Get(treename)
+        if not tree or not isinstance(tree, ROOT.TTree) or tree is None:
+            print("Error: Tree '", treename, "' not found or is not a valid TTree object in the file '", filename ,"'.")
+            continue
+
+        # skip the 850 MeV mass point
+        if imass==2: continue
+        
+        # start filling in data
+        x.append(float(ttw.sigmasses[imass][1:])/1000.)
+        ex.append(0.1)
+        tree.GetEntry(0)
+        e25.append(tree.limit)
+        tree.GetEntry(1)
+        e16.append(tree.limit)
+        tree.GetEntry(2)
+        e50.append(tree.limit)
+        tree.GetEntry(3)
+        e84.append(tree.limit)
+        tree.GetEntry(4)
+        e97.append(tree.limit)
+        tree.GetEntry(5)
+        obs.append(tree.limit)
+
+    # edit the contents for plotting
+    for i in range(len(x)):
+        e25[i]=e50[i]-e25[i]
+        e16[i]=e50[i]-e16[i]
+        e84[i]=e84[i]-e50[i]
+        e97[i]=e97[i]-e50[i]
+
+    # determine the point where the observed and expected crosses mu=1
+    for i in range(len(x)-1):
+        if obs[i]<1. and obs[i+1]>1.:
+            print("observed crosses mu=1.0 at "+str(cross(x[i],obs[i],x[i+1],obs[i+1])))
+        if e50[i]<1. and e50[i+1]>1.:
+            print("expected crosses mu=1.0 at "+str(cross(x[i],e50[i],x[i+1],e50[i+1])))
+    
+        
+    # draw the plots
+    g = ROOT.TGraphErrors(len(x), ar.array('d',x),  ar.array('d',obs))
+    gexp = ROOT.TGraphErrors(len(x), ar.array('d',x), ar.array('d',e50))
+    ge1 = ROOT.TGraphAsymmErrors(len(x), ar.array('d',x),  ar.array('d',e50), ar.array('d',ex), ar.array('d',ex), ar.array('d',e16), ar.array('d',e84))
+    ge2 = ROOT.TGraphAsymmErrors(len(x), ar.array('d',x),  ar.array('d',e50), ar.array('d',ex), ar.array('d',ex), ar.array('d',e25), ar.array('d',e97))
+
+    can = ROOT.TCanvas("limits","limits",500,500)
+    can.cd()
+    can.SetMargin(0.16,0.05,0.15,0.10)
+    ge2.SetFillColor(ROOT.TColor.GetColor("#F5BB54"))
+    ge2.SetFillStyle(1001)
+    ge2.Draw("a3")
+    ge2.SetMinimum(0.01)
+    ge2.SetMaximum(8.0)
+    ge2.GetXaxis().SetTitle("m_{#omega} [GeV]")
+    ge2.GetXaxis().SetRangeUser(x[0],x[len(x)-1])
+    ge2.GetYaxis().SetTitle("95% C.L. Lower limit on #mu")
+    ge1.SetFillColor(ROOT.TColor.GetColor("#607641"))
+    ge1.SetFillStyle(1001)
+    ge1.Draw("Same3l")
+    gexp.SetLineStyle(2)
+    gexp.Draw("SAME L")
+    g.Draw("SAME LP")
+    ROOT.gPad.SetLogy()
+
+    leg = ROOT.TLegend(0.5,0.20,0.9,0.38)
+    leg.SetBorderSize(0)
+    leg.SetFillColor(0)
+    leg.SetTextFont(42)
+    leg.SetTextSize(0.04)
+    leg.AddEntry(g, "Observed", "LP")
+    leg.AddEntry(gexp, "Median Expected", "L")
+    leg.AddEntry(ge1, "68% Expected", "F")
+    leg.AddEntry(ge2, "95% Expected", "F")
+    leg.Draw()
+
+    # Write CMS stuff
+    cmstxt = ROOT.TLatex()
+    cmstxt.SetTextFont(61)
+    cmstxt.SetTextSize(0.07)
+    cmstxt.DrawLatexNDC(0.16,0.91,"CMS")
+    extratxt = ROOT.TLatex()
+    extratxt.SetTextFont(52)
+    extratxt.SetTextSize(0.05)
+    extratxt.DrawLatexNDC(0.31,0.91,"Preliminary")
+    lumitxt = ROOT.TLatex()
+    lumitxt.SetTextFont(42)
+    lumitxt.SetTextSize(0.05)
+    lumitxt.DrawLatexNDC(0.65,0.91,"138 fb^{-1} (13 TeV)")
+    
+    brtxt = ROOT.TLatex()
+    brtxt.SetTextFont(42)
+    brtxt.SetTextSize(0.04)
+    brtxt.DrawLatexNDC(0.25,0.20,"#eta BRs")
+
+    # Draw horizontal line
+    line=ROOT.TLine(x[0],1.0,x[len(x)-1],1.0)
+    line.SetLineWidth(2)
+    line.SetLineStyle(3)
+    line.Draw()
+    
+    can.Update()
+    can.Draw()
+    can.Print(pdffilename)
+
+

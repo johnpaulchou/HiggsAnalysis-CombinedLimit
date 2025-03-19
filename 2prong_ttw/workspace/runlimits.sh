@@ -7,4 +7,5 @@ do
     ./makenewcard.py --imass $mass
     echo "Processing mass $mass"
     combine -M AsymptoticLimits newcard.txt
+    mv higgsCombineTest.AsymptoticLimits.mH120.root higgsCombineTest.AsymptoticLimits.m${mass}.root
 done
