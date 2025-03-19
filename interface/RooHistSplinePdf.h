@@ -4,11 +4,13 @@
 //---------------------------------------------------------------------------
 
 #include "RooHistPdf.h"
+#include "TSpline.h"
 
 //---------------------------------------------------------------------------
 class RooHistSplinePdf : public RooHistPdf
 {
 public:
+  RooHistSplinePdf() {}
   RooHistSplinePdf(const char *name, const char *title, const RooArgSet& vars,
 		   const RooDataHist& dhist, Int_t intOrder, const RooArgList &coefList);
 
@@ -25,6 +27,7 @@ public:
  
   RooArgList const &coefList() const { return _coefList; }
 
+  TSpline3 getSpline(void) const;
   
 protected:
  
