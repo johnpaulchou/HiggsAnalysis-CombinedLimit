@@ -148,13 +148,13 @@ Returns:
 if __name__ == "__main__":
 
     # either draw the signal or draw all of the background fits
-    # if you are drawing the signal, pick the background order to draw on top of
-    # the bkgOrder also specifies what is drawn in the pull plot
-    drawSignal = True
-    bkgOrder = 0
-    lumi = ttw.lumi
+    # if you are drawing the signal, pick the background index to draw on top of
+    # the bkgIndex also specifies what is drawn in the pull plot
+    drawSignal = False
+    bkgIndex = 1
     sigscale = 1.
-
+    drawSpline = False
+    
     # setup bin titles
     pttitles = ["=20-40", "=40-60", "=60-80", "=80-100", "=100-140", "=140-180", "=180-220", "=220-300", "=300-380", ">380" ]
     btagtitles = ["=1 b tag", "#kern[0.2]{#geq}#kern[-0.1]{2} b tags" ]
@@ -205,28 +205,20 @@ if __name__ == "__main__":
             graph,var=get_datagraph_from_workspace(ws, "data_"+btagbin+"_"+ptbin)
             
             # get the template and signal pdfs and their respective normalizations
-            #            pdf0=ws.pdf("temp_"+btagbin+"_"+ptbin+"_pdf0")
+            pdf0=ws.pdf("temp_"+btagbin+"_"+ptbin+"_pdf0")
             pdf1=ws.pdf("temp_"+btagbin+"_"+ptbin+"_pdf1")
-            # pdf2=ws.pdf("temp_"+btagbin+"_"+ptbin+"_pdf2")
-            # pdf3=ws.pdf("temp_"+btagbin+"_"+ptbin+"_pdf3")
             sig=ws.pdf("sig_"+btagbin+"_"+ptbin+"_pdf")
-            # pdf0norm=ws.var("temp_"+btagbin+"_"+ptbin+"_pdf0_norm")
+            pdf0norm=ws.var("temp_"+btagbin+"_"+ptbin+"_pdf0_norm")
             pdf1norm=ws.var("temp_"+btagbin+"_"+ptbin+"_pdf1_norm")
-            # pdf2norm=ws.var("temp_"+btagbin+"_"+ptbin+"_pdf2_norm")
-            # pdf3norm=ws.var("temp_"+btagbin+"_"+ptbin+"_pdf3_norm")
             signorm=ws.var("sig_"+btagbin+"_"+ptbin+"_pdf_norm")
             
             # turn the PDFs into histograms
             pdfhists = []
             pdfhisttitles = []
-            # pdfhists.append(pdf_to_histogram(pdf0, var.getBinning(), "temp_"+btagbin+"_"+ptbin+"_pdf0hist", pdf0norm.getVal()))            
+            pdfhists.append(pdf_to_histogram(pdf0, var.getBinning(), "temp_"+btagbin+"_"+ptbin+"_pdf0hist", pdf0norm.getVal()))            
             pdfhists.append(pdf_to_histogram(pdf1, var.getBinning(), "temp_"+btagbin+"_"+ptbin+"_pdf1hist", pdf1norm.getVal()))
-            # pdfhists.append(pdf_to_histogram(pdf2, var.getBinning(), "temp_"+btagbin+"_"+ptbin+"_pdf2hist", pdf2norm.getVal()))
-            # pdfhists.append(pdf_to_histogram(pdf3, var.getBinning(), "temp_"+btagbin+"_"+ptbin+"_pdf3hist", pdf3norm.getVal()))
             pdfhisttitles.append("Background")
-            # pdfhisttitles.append("Bkgd*Bern1")
-            # pdfhisttitles.append("Bkgd*Bern2")
-            # pdfhisttitles.append("Bkgd*Bern3")
+            pdfhisttitles.append("Bkgd*Spline")
             sighist = pdf_to_histogram(sig, var.getBinning(), "sig_"+btagbin+"_"+ptbin+"_pdfhist", signorm.getVal()*sigscale) # scale signal to an arbitrary value
 
             # compute the pull graph
@@ -235,7 +227,7 @@ if __name__ == "__main__":
                 N = graph.GetPointY(i)
                 errup=graph.GetErrorYhigh(i)
                 errlo=graph.GetErrorYlow(i)
-                pred=pdfhists[bkgOrder].GetBinContent(i+1) # needs to be offset by one here
+                pred=pdfhists[bkgIndex].GetBinContent(i+1) # needs to be offset by one here
                 # compute central point
                 if N<pred:   pull.SetPointY(i, (N-pred)/errup)
                 elif N>pred: pull.SetPointY(i, (N-pred)/errlo)
@@ -293,7 +285,7 @@ if __name__ == "__main__":
             graph.Draw("APZ")
             if drawSignal:
                 stack=ROOT.THStack("stack","")
-                stack.Add(pdfhists[bkgOrder])
+                stack.Add(pdfhists[bkgIndex])
                 stack.Add(sighist)
                 stack.Draw("hist same")
             else:
@@ -313,8 +305,7 @@ if __name__ == "__main__":
             lumitxt = ROOT.TLatex()
             lumitxt.SetTextFont(42)
             lumitxt.SetTextSize(0.05)
-            formattedlumi = f"{lumi:.0f}"
-            lumitxt.DrawLatexNDC(0.68,0.915,formattedlumi+" fb^{-1} (13 TeV)")
+            lumitxt.DrawLatexNDC(0.68,0.915,"138 fb^{-1} (13 TeV)")
             txt = ROOT.TLatex()
             txt.SetTextFont(42)
             txt.SetTextSize(0.05)
@@ -329,7 +320,7 @@ if __name__ == "__main__":
             leg.AddEntry(graph, "data", "ep")
             if drawSignal:
                 leg.AddEntry(sighist, "Signal", "f")
-                leg.AddEntry(pdfhists[bkgOrder],pdfhisttitles[bkgOrder],"l")
+                leg.AddEntry(pdfhists[bkgIndex],pdfhisttitles[bkgIndex],"l")
             else:
                 for pdfhistindex, pdfhist in enumerate(pdfhists):
                     leg.AddEntry(pdfhist, pdfhisttitles[pdfhistindex], "l")
@@ -347,11 +338,12 @@ if __name__ == "__main__":
             line.SetLineWidth(1)
             line.SetLineColor(colors[3])
             line.SetLineStyle(3)
-            line.Draw()            
-            spline=pdf1.getSpline()
-            spline.SetLineWidth(2)
-            spline.SetLineColor(colors[4])
-            spline.Draw("same")
+            line.Draw()
+            if drawSpline:
+                spline=pdf1.getSpline()
+                spline.SetLineWidth(2)
+                spline.SetLineColor(colors[4])
+                spline.Draw("same")
             
             can.SaveAs("../plots/"+can.GetName()+".pdf")
 

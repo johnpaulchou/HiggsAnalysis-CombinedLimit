@@ -1,3 +1,5 @@
+#!/bin/env python3
+
 import makeworkspace as ttw
 import ROOT
 import argparse

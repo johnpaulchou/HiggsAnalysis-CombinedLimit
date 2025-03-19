@@ -4,8 +4,7 @@
 
 niter="100"
 
-#for mass in {0..8}; do
-for mass in {3..3}; do
+for mass in {0..8}; do
     ./makeworkspace.py --imass $mass
     ./makenewcard.py --imass $mass
     echo "Processing mass $mass"
@@ -29,8 +28,6 @@ for mass in {3..3}; do
 	combine newcard.txt -M FitDiagnostics --toysFile higgsCombineTest.GenerateOnly.mH125.123456.root  -t $niter --rMin $lo --rMax $hi --cminDefaultMinimizerStrategy=0
 	mv fitDiagnosticsTest.root fitDiagnosticsTest_m${mass}_sig${strength}.root
 
-#	echo $mass $range $lo $hi
-	
     done
 done
 

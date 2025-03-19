@@ -94,19 +94,32 @@ if __name__ == "__main__":
             a3=ROOT.RooRealVar(newName+"_a3",newName+"_a3",0,-0.5,0.5)
             a4=ROOT.RooRealVar(newName+"_a4",newName+"_a4",0,-0.5,0.5)
             a5=ROOT.RooRealVar(newName+"_a5",newName+"_a5",0,-0.5,0.5)
+            bkg0pdf=ROOT.RooHistPdf(newName+"_pdf0",newName+"_pdf0",ROOT.RooArgList(m2p),templateDataHist,2)
             bkg1pdf=ROOT.RooHistSplinePdf(newName+"_pdf1",newName+"_pdf1",ROOT.RooArgList(m2p),templateDataHist,2,ROOT.RooArgList(a1,a2,a3,a4,a5))
 
             # compute the normalizations
             datanorm = dataTH1.Integral(1,dataTH1.GetNbinsX())
             print(dataTH1.GetName()+" norm = "+str(datanorm))
+            normf0 = ROOT.RooRealVar(newName+"_pdf0_norm", "Number of background events", datanorm, 0, 3*datanorm)
             normf1 = ROOT.RooRealVar(newName+"_pdf1_norm", "Number of background events", datanorm, 0, 3*datanorm)
 
             # do a preliminary fit and save them for inspection later
+#            r0=bkg0pdf.fitTo(dataHist, Save=True, Minimizer=("Minuit2","minimize"), SumW2Error=True, Strategy=2, PrintLevel=-1)
             r1=bkg1pdf.fitTo(dataHist, Save=True, Minimizer=("Minuit2","minimize"), SumW2Error=True, Strategy=2, PrintLevel=-1)
 
+            print("asdf2")
+#            getattr(w,"import")(r0)
+            print("asdf3")
+            getattr(w,"import")(bkg0pdf)
+            print("asdf4")
+            getattr(w,"import")(normf0)
+            print("asdf5")
             getattr(w,"import")(r1)
+            print("asdf6")
             getattr(w,"import")(bkg1pdf)
+            print("asdf7")
             getattr(w,"import")(normf1)
+            print("asdf8")
             
             # get the signal
             for syst in systs:
