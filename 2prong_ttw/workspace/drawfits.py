@@ -312,7 +312,7 @@ if __name__ == "__main__":
             pull.GetXaxis().SetTitle("M(2p) [GeV]")
             pull.GetXaxis().SetLabelSize(0.13)
             pull.GetXaxis().SetTitleSize(0.13)
-            pull.GetXaxis().SetTitleOffset(0.73)
+            pull.GetXaxis().SetTitleOffset(0.75)
             pull.SetStats(0)
             pull.SetTitle("")
             pull.GetYaxis().SetTitle("#frac{data-pred.}{error}")
@@ -343,7 +343,8 @@ if __name__ == "__main__":
                 for pdfhist in pdfhists:
                     pdfhist.Draw("same")
             graph.Draw("PZ") # draw a 2nd time on top
-
+            pad.RedrawAxis() # redraw the tick marks
+            
             # Write text
             cmstxt = ROOT.TLatex()
             cmstxt.SetTextFont(61)

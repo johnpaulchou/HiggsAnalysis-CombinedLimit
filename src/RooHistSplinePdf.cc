@@ -67,7 +67,7 @@ double RooHistSplinePdf::evaluate() const
 
   // create the spline, evaluate it, and multiply
   double scale=getSpline().Eval(val)+1.0;
+  if(scale<0.0) scale=0.0;
   
-  //  cout << "JPC val=" << val << "; min=" << min << "; max=" << max << "; histeval=" << histeval << "; scale=" << scale << "; n=" << n << endl;
   return scale*histeval;
 }
