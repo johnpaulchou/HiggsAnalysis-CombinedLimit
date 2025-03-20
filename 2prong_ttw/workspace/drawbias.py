@@ -126,6 +126,7 @@ if __name__ == "__main__":
     firstgr.GetXaxis().SetTitle("M_{#omega} [MeV]")
     firstgr.GetYaxis().SetTitle("Bias")
     firstgr.SetTitle("")
+    firstgr.GetYaxis().SetRangeUser(-2.,2.)
     for grindex, graphmupair in enumerate(graphandmus):
         gr=graphmupair[0]
         gr.SetMarkerStyle(20+grindex)
@@ -148,7 +149,7 @@ if __name__ == "__main__":
     leg.Draw()
 
     # Draw Box
-    box = ROOT.TBox(firstgr.GetXaxis().GetXmin(), -0.1, firstgr.GetXaxis().GetXmax(), 0.1)
+    box = ROOT.TBox(firstgr.GetXaxis().GetXmin(), -0.5, firstgr.GetXaxis().GetXmax(), 0.5)
     box.SetFillColorAlpha(ROOT.kBlack,0.1)
     box.Draw()
     

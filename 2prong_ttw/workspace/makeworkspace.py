@@ -33,7 +33,6 @@ btagbins = ["1b", "mb"]
 m2p = ROOT.RooRealVar("m2p","Invariant mass of the 2-prong",0.25,5.53)
 
 # need to specify which signal we're considering
-sigtype = "eta"
 sigmasses = ["M500", "M750", "M850", "M1000", "M1500", "M2000", "M2500", "M3000", "M4000" ]
 
 #systematic uncertainties
@@ -50,17 +49,26 @@ filename="../input/summed_hists_19-03-2025.root"
 
 if __name__ == "__main__":
 
+    # setup and use the parser
     parser = argparse.ArgumentParser(formatter_class=argparse.ArgumentDefaultsHelpFormatter)
     parser.add_argument("--imass",help="signal mass index (0-"+str(len(sigmasses)-1)+")", choices=range(len(sigmasses)), type=int)
     parser.add_argument("--region",help="region that we're working in",choices=["symiso","asymnoniso","asymnoniso_unscaled"], default="asymnoniso")
+    parser.add_argument("--sigtype",help="signal type that we're using",choices=["eta","etaprime"],default="eta")
     args=parser.parse_args()
     sigmass = sigmasses[args.imass]
+    sigtype = args.sigtype
     region = args.region
     
     # setup the output file and workspace
     fileout = ROOT.TFile(fileoutname,"RECREATE")
     w = ROOT.RooWorkspace(workspacename,workspacename)
 
+    # write the parser parameters to the rootfile
+    fileout.cd()
+    (ROOT.TNamed("sigmass",sigmass)).Write()
+    (ROOT.TNamed("sigtype",sigtype)).Write()
+    (ROOT.TNamed("region",region)).Write()
+    
     # loop over the bins
     for ptbin in ptbins:
         for btagbin in btagbins:
@@ -72,7 +80,8 @@ if __name__ == "__main__":
                 dataName = "singlemuon_asymnoniso_"+btagbin+"_"+ptbin+"_tightscaledtosymiso"
             elif region=="asymnoniso_unscaled":
                 dataName = "singlemuon_asymnoniso_"+btagbin+"_"+ptbin+"_tight"
-                
+
+            # create a RooDataHist from the data histogram
             newName = "data_"+btagbin+"_"+ptbin
             dataTH1 = getTH1(dataName, filename)
             dataHist = ROOT.RooDataHist(newName,newName,ROOT.RooArgList(m2p),dataTH1)
@@ -85,7 +94,7 @@ if __name__ == "__main__":
                 templateTH1 = getTH1("singlemuon_asymnoniso_0b_"+ptbin+"_loose", filename)
                 
             # find any non-0 bins in the data that are 0 in the template
-            # set it to 0.01 if it happens and print a warning
+            # set it to 1.0 if it happens and print a warning
             for i in range(1, dataTH1.GetNbinsX()+1):
                 if templateTH1.GetBinContent(i)==0 and dataTH1.GetBinContent(i)!=0:
                     print("************************************************************************************")
@@ -96,15 +105,16 @@ if __name__ == "__main__":
             # construct the PDF of the template
             newName = "temp_"+btagbin+"_"+ptbin
             templateDataHist = ROOT.RooDataHist(newName+"_dh",newName+"_dh",ROOT.RooArgList(m2p),templateTH1)
-            a1=ROOT.RooRealVar(newName+"_a1",newName+"_a1",0,-0.7,0.7)
-            a2=ROOT.RooRealVar(newName+"_a2",newName+"_a2",0,-0.7,0.7)
-            a3=ROOT.RooRealVar(newName+"_a3",newName+"_a3",0,-0.7,0.7)
-            a4=ROOT.RooRealVar(newName+"_a4",newName+"_a4",0,-0.7,0.7)
-            a5=ROOT.RooRealVar(newName+"_a5",newName+"_a5",0,-0.7,0.7)
+            a1=ROOT.RooRealVar(newName+"_a1",newName+"_a1",0,-0.6,0.6)
+            a2=ROOT.RooRealVar(newName+"_a2",newName+"_a2",0,-0.6,0.6)
+            a3=ROOT.RooRealVar(newName+"_a3",newName+"_a3",0,-0.6,0.6)
+            a4=ROOT.RooRealVar(newName+"_a4",newName+"_a4",0,-0.6,0.6)
+            a5=ROOT.RooRealVar(newName+"_a5",newName+"_a5",0,-0.6,0.6)
             bkg0pdf=ROOT.RooHistPdf(newName+"_pdf0",newName+"_pdf0",ROOT.RooArgList(m2p),templateDataHist,2)
             bkg1pdf=ROOT.RooHistSplinePdf(newName+"_pdf1",newName+"_pdf1",ROOT.RooArgList(m2p),templateDataHist,2,ROOT.RooArgList(a1,a2,a3,a4,a5))
 
             # compute the normalizations
+            # (note that the naming convention for the normalization parameter is assumed to be "*_norm" by HiggsCombine)
             datanorm = dataTH1.Integral(1,dataTH1.GetNbinsX())
             print(dataTH1.GetName()+" norm = "+str(datanorm))
             normf0 = ROOT.RooRealVar(newName+"_pdf0_norm", "Number of background events", datanorm, 0, 3*datanorm)
@@ -119,7 +129,7 @@ if __name__ == "__main__":
             getattr(w,"import")(bkg1pdf)
             getattr(w,"import")(normf1)
             
-            # get the signal
+            # get the signal and its normalization (with systematics)
             for syst in systs:
                 sigName = sigtype+"_"+str(sigmass)+"_symiso_"+btagbin+"_"+ptbin+"_tight"+syst
                 sigTH1 = getTH1(sigName, filename)

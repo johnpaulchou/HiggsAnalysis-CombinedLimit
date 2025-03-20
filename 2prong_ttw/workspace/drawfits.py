@@ -4,7 +4,38 @@ import ctypes
 import array
 import ROOT
 import tdrstyle
+import argparse
 import makeworkspace as ttw
+
+
+"""
+Retrieve the title of a TNamed object from a ROOT file
+
+Parameters:
+    - file_path: Path to the ROOT file containing the TNamed object
+    - tnamed_name: name of the TNamed object
+
+Returns:
+    - string
+"""
+def get_tnamed_title_from_file(file_path, tnamed_name):
+    # Open the ROOT file
+    root_file = ROOT.TFile.Open(file_path, "READ")
+    if not root_file or root_file.IsZombie():
+        raise RuntimeError(f"Cannot open file: {file_path}")
+
+    # Get the TNamed object
+    tnamed = root_file.Get(tnamed_name)
+    if not tnamed:
+        root_file.Close()
+        raise RuntimeError(f"Cannot find TNamed '{tnamed_name}' in file: {file_path}")
+
+    # get the title before closing the file
+    title = tnamed.GetTitle()
+    root_file.Close()
+
+    return title
+
 
 
 """
@@ -127,19 +158,6 @@ def pdf_to_histogram(pdf, binning, hist_name, normalization=1.0):
     return hist
 
 
-"""
-Renormalize the bin contents by dividing by the bin width
-
-Parameters:
-    - hist: TH1D histogram object
-    - doPoisson: Compute Poisson errors (default: false)
-
-Returns:
-    - TGraphAsymmErrors 
-"""
-    
-
-
 
 ###############################################################
 # start of the "main" function
@@ -147,15 +165,24 @@ Returns:
 
 if __name__ == "__main__":
 
+    # setup and use the parser
     # either draw the signal or draw all of the background fits
     # if you are drawing the signal, pick the background index to draw on top of
     # the bkgIndex also specifies what is drawn in the pull plot
-    drawSignal = True
-    bkgIndex = 0
-    sigscale = 20.0
-    drawSpline = False
-    drawChisq = True
+    parser = argparse.ArgumentParser(formatter_class=argparse.ArgumentDefaultsHelpFormatter)
+    parser.add_argument("--drawSignal",help="Draw the signal on top of the background. If not, it draws all background fits instead.",action=argparse.BooleanOptionalAction,default=True)
+    parser.add_argument("--drawSpline",help="Draw the spline in the pull area.",action=argparse.BooleanOptionalAction,default=False)
+    parser.add_argument("--drawChisq",help="Print the chi^2 on the plots and create the chi^2 probability histogram.",action=argparse.BooleanOptionalAction,default=True)
+    parser.add_argument("--sigScale",help="How to scale the signal, if drawn.",type=float,default=1.0)
+    parser.add_argument("--bkgIndex",help="Which background to compute the pull and chi^2 with respect to and/or plot the signal on top of.",type=int,choices=[0,1],default=1)
     
+    args=parser.parse_args()
+    drawSignal = args.drawSignal
+    sigScale = args.sigScale
+    bkgIndex = args.bkgIndex
+    drawSpline=args.drawSpline
+    drawChisq=args.drawChisq
+
     # setup bin titles
     pttitles = ["=20-40", "=40-60", "=60-80", "=80-100", "=100-140", "=140-180", "=180-220", "=220-300", "=300-380", ">380" ]
     btagtitles = ["=1 b tag", "#kern[0.2]{#geq}#kern[-0.1]{2} b tags" ]
@@ -165,6 +192,11 @@ if __name__ == "__main__":
     # get the workspace
     ws = get_workspace_from_file(ttw.fileoutname, ttw.workspacename)
 
+    # get the parameters
+    sigmass = get_tnamed_title_from_file(ttw.fileoutname, "sigmass")
+    sigtype = get_tnamed_title_from_file(ttw.fileoutname, "sigtype")
+    region  = get_tnamed_title_from_file(ttw.fileoutname, "region")
+    
     # global style settings
     colors = [ROOT.TColor.GetColor("#3f90da"),
               ROOT.TColor.GetColor("#ffa90e"),
@@ -182,7 +214,7 @@ if __name__ == "__main__":
     ROOT.gStyle.SetTitleFont(42)
     ROOT.gStyle.SetTitleFont(42, "XYZ")
     ROOT.gStyle.SetHistLineWidth(2)
-    sigcolorindex=4
+    sigcolorindex=5
 
     # create the chi^2 prob histogram
     hChisqProb=ROOT.TH1D("hChisqProb","#chi^{2} Probability",8,0,1)    
@@ -218,11 +250,11 @@ if __name__ == "__main__":
             # turn the PDFs into histograms
             pdfhists = []
             pdfhisttitles = []
-            pdfhists.append(pdf_to_histogram(pdf0, var.getBinning(), "temp_"+btagbin+"_"+ptbin+"_pdf0hist", pdf0norm.getVal()))            
+            pdfhists.append(pdf_to_histogram(pdf0, var.getBinning(), "temp_"+btagbin+"_"+ptbin+"_pdf0hist", pdf0norm.getVal()))
             pdfhists.append(pdf_to_histogram(pdf1, var.getBinning(), "temp_"+btagbin+"_"+ptbin+"_pdf1hist", pdf1norm.getVal()))
-            pdfhisttitles.append("Background")
-            pdfhisttitles.append("Bkgd*Spline")
-            sighist = pdf_to_histogram(sig, var.getBinning(), "sig_"+btagbin+"_"+ptbin+"_pdfhist", signorm.getVal()*sigscale) # scale signal to an arbitrary value
+            pdfhisttitles.append("background")
+            pdfhisttitles.append("post-fit bkg.")
+            sighist = pdf_to_histogram(sig, var.getBinning(), "sig_"+btagbin+"_"+ptbin+"_pdfhist", signorm.getVal()*sigScale) # scale signal to an arbitrary value
 
             # compute the pull graph and chi^2
             pull=graph.Clone(graph.GetName()+"_pull")
@@ -253,7 +285,7 @@ if __name__ == "__main__":
 
             chisqprob=ROOT.TMath.Prob(chisq,ndof)
             hChisqProb.Fill(chisqprob)
-                    
+
             # format things
             can.SetFillColor(0)
             can.SetBorderMode(0)
@@ -327,18 +359,28 @@ if __name__ == "__main__":
             lumitxt.DrawLatexNDC(0.68,0.915,"138 fb^{-1} (13 TeV)")
             txt = ROOT.TLatex()
             txt.SetTextFont(42)
-            txt.SetTextSize(0.05)
-            txt.DrawLatexNDC(0.50,0.83,btagtitles[btagindex]+", p_{T}"+pttitles[ptindex]+" GeV")
-
+            txt.SetTextSize(0.04)
+            if region=="symiso":
+                regiontxt="sym. iso."
+            elif region=="asymnoniso":
+                regiontxt="asym. non-iso. (scaled)"
+            elif region=="asymnoniso_unscaled":
+                regiontxt="asym. non-iso."
+            txt.DrawLatexNDC(0.55,0.80,"#splitline{"+btagtitles[btagindex]+", p_{T}"+pttitles[ptindex]+" GeV}{"+regiontxt+"}")
+            
+            
             # Draw legend
-            leg=ROOT.TLegend(0.65,0.40,0.90,0.75)
+            leg=ROOT.TLegend(0.6,0.40,0.90,0.70)
             leg.SetBorderSize(0)
             leg.SetFillColor(0)
             leg.SetTextFont(42)
-            leg.SetTextSize(0.05)
+            leg.SetTextSize(0.04)
             leg.AddEntry(graph, "data", "ep")
             if drawSignal:
-                leg.AddEntry(sighist, "Signal", "f")
+                if sigtype=="eta":
+                    leg.AddEntry(sighist, "m_{#eta}="+sigmass[1:]+" MeV (x"+str(sigScale)+")", "f")
+                elif sigtype=="etaprime":
+                    leg.AddEntry(sighist, "m_{#eta'}="+sigmass[1:]+" MeV (x"+str(sigScale)+")", "f")
                 leg.AddEntry(pdfhists[bkgIndex],pdfhisttitles[bkgIndex],"l")
             else:
                 for pdfhistindex, pdfhist in enumerate(pdfhists):
@@ -356,8 +398,9 @@ if __name__ == "__main__":
             # Draw pulls
             pullpad.cd()
             pull.Draw("APZ")
-            sigpullhist.SetLineColor(colors[sigcolorindex])
-            sigpullhist.Draw("same")
+            if drawSignal:
+                sigpullhist.SetLineColor(colors[sigcolorindex])
+                sigpullhist.Draw("same")
             line = ROOT.TLine()
             line.SetNDC(False)
             line.SetX1(var.getBinning().binLow(0))

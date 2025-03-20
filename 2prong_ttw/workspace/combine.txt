@@ -13,7 +13,7 @@ observation     -1
 bin             BBIN               BBIN
 process         sig                bkg
 process         0                  1
-rate            LUMI               1.0
+rate            1.0                1.0
 ---------------------------------------------
 lumi                  lnN         1.016      1.0
 MuonReco              shape       1          -
