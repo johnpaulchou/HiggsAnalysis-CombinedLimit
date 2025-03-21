@@ -5,7 +5,10 @@ import array
 import ROOT
 import tdrstyle
 import argparse
+import numpy as np
 import makeworkspace as ttw
+import sys
+import io
 
 
 """
@@ -159,6 +162,69 @@ def pdf_to_histogram(pdf, binning, hist_name, normalization=1.0):
 
 
 
+"""
+Estimate the 1-sigma uncertainty envelope of a function using Monte Carlo sampling.
+
+Parameters:
+    - pdf: RooAbsPdf. The pdf to evaluate, which accepts parameters and x as inputs.
+    - fitresult: RooFitResult of the fit which we want to get the envelope for.
+    - binning: RooBinning that you want to use
+    - num_samples: Number of Monte Carlo samples to generate.
+
+Returns:
+    - list of uncertainties evaluated at the central value of the bins
+
+"""
+
+def monte_carlo_uncertainty_envelope(pdf, normalization, fitresult, binning, num_samples=1000):
+
+    # first thing is to copy the pdf so that we don't mess with the parameters
+    # then, get the variables and observable for the pdf, and create a argument set for the observable
+    pdf_copy = pdf.Clone(pdf.GetName()+"_copy")
+    variables = pdf_copy.getVariables()
+    observable = variables.first()
+    argset = ROOT.RooArgSet(observable)
+    
+    # get the parameters from the fit and then put their values into the means
+    params = fitresult.floatParsFinal()
+    param_means = [params[i].getVal() for i in range(params.getSize())]
+
+    # get the covariance matrix for the fit
+    cov=fitresult.covarianceMatrix()
+    size=cov.GetNrows()
+    param_cov=np.zeros((size, size))
+    for i in range(size):
+        for j in range(size):
+            param_cov[i, j] = cov[i][j]  # Access matrix elements
+
+    # get the central values of the bins we are evaluating the pdf at
+    x_values = [binning.binCenter(i) for i in range(binning.numBins())]
+
+    # Generate random samples of parameters
+    param_samples = np.random.multivariate_normal(param_means, param_cov, num_samples)
+    
+    # Initialize array to store function evaluations
+    func_evals = np.zeros((num_samples, len(x_values)))
+
+    # Evaluate the function for each parameter sample
+    for i, params in enumerate(param_samples):
+
+        # set the parameters
+        for j,parameter in enumerate(params):
+            variables[j+1].setVal(parameter)
+
+        # set the x value and evaluate
+        for k,x in enumerate(x_values):
+            variables[0].setVal(x)
+            func_evals[i, k] = pdf_copy.getVal(argset)*normalization
+
+    # Compute mean and standard deviation at each x
+    # mean_values = np.mean(func_evals, axis=0)
+    std_devs = np.std(func_evals, axis=0)
+    return std_devs
+
+
+
 ###############################################################
 # start of the "main" function
 ###############################################################
@@ -166,22 +232,14 @@ def pdf_to_histogram(pdf, binning, hist_name, normalization=1.0):
 if __name__ == "__main__":
 
     # setup and use the parser
-    # either draw the signal or draw all of the background fits
-    # if you are drawing the signal, pick the background index to draw on top of
-    # the bkgIndex also specifies what is drawn in the pull plot
     parser = argparse.ArgumentParser(formatter_class=argparse.ArgumentDefaultsHelpFormatter)
-    parser.add_argument("--drawSignal",help="Draw the signal on top of the background. If not, it draws all background fits instead.",action=argparse.BooleanOptionalAction,default=True)
+    parser.add_argument("--drawSignal",help="Draw the signal on top of the background. If so, make sure to specify which background index to drop on top of. If not, it draws all background fits instead.",action=argparse.BooleanOptionalAction,default=True)
     parser.add_argument("--drawSpline",help="Draw the spline in the pull area.",action=argparse.BooleanOptionalAction,default=False)
     parser.add_argument("--drawChisq",help="Print the chi^2 on the plots and create the chi^2 probability histogram.",action=argparse.BooleanOptionalAction,default=True)
     parser.add_argument("--sigScale",help="How to scale the signal, if drawn.",type=float,default=1.0)
     parser.add_argument("--bkgIndex",help="Which background to compute the pull and chi^2 with respect to and/or plot the signal on top of.",type=int,choices=[0,1],default=1)
-    
+    parser.add_argument("--drawBkgUncertainty",help="Draw the uncertainty on the background fit. Note this takes a long time and only works when bkgIndex=1",action=argparse.BooleanOptionalAction,default=False)
     args=parser.parse_args()
-    drawSignal = args.drawSignal
-    sigScale = args.sigScale
-    bkgIndex = args.bkgIndex
-    drawSpline=args.drawSpline
-    drawChisq=args.drawChisq
 
     # setup bin titles
     pttitles = ["=20-40", "=40-60", "=60-80", "=80-100", "=100-140", "=140-180", "=180-220", "=220-300", "=300-380", ">380" ]
@@ -237,7 +295,7 @@ if __name__ == "__main__":
             pullpad.Draw()
 
             # get the roodatahist and corresponding variable, then create a TH1 from it
-            graph,var=get_datagraph_from_workspace(ws, "data_"+btagbin+"_"+ptbin)
+            datagraph,var=get_datagraph_from_workspace(ws, "data_"+btagbin+"_"+ptbin)
             
             # get the template and signal pdfs and their respective normalizations
             pdf0=ws.pdf("temp_"+btagbin+"_"+ptbin+"_pdf0")
@@ -254,18 +312,26 @@ if __name__ == "__main__":
             pdfhists.append(pdf_to_histogram(pdf1, var.getBinning(), "temp_"+btagbin+"_"+ptbin+"_pdf1hist", pdf1norm.getVal()))
             pdfhisttitles.append("background")
             pdfhisttitles.append("post-fit bkg.")
-            sighist = pdf_to_histogram(sig, var.getBinning(), "sig_"+btagbin+"_"+ptbin+"_pdfhist", signorm.getVal()*sigScale) # scale signal to an arbitrary value
+            sighist = pdf_to_histogram(sig, var.getBinning(), "sig_"+btagbin+"_"+ptbin+"_pdfhist", signorm.getVal()*args.sigScale) # scale signal to an arbitrary value
 
+            # compute the uncertainty on the background fit (right now, this hard-coded for pdf1)
+            if args.drawBkgUncertainty:
+                fitresult=ws.obj("fitresult_temp_"+btagbin+"_"+ptbin+"_pdf1_data_"+btagbin+"_"+ptbin)
+                if not fitresult: raise RuntimeError(f"Cannot get fitresult")
+                bkg_uncertainties=monte_carlo_uncertainty_envelope(pdf1, pdf1norm.getVal(), fitresult, var.getBinning())
+            
             # compute the pull graph and chi^2
-            pull=graph.Clone(graph.GetName()+"_pull")
+            pull=datagraph.Clone(datagraph.GetName()+"_pull")
             sigpullhist = sighist.Clone(sighist.GetName()+"_pull")
+            bkguncertaintypull=ROOT.TGraphErrors(var.getBinning().numBins())
+            
             chisq=0
             ndof=0
             for i in range(pull.GetN()):
-                N = graph.GetPointY(i)
-                errup=graph.GetErrorYhigh(i)
-                errlo=graph.GetErrorYlow(i)
-                pred=pdfhists[bkgIndex].GetBinContent(i+1) # needs to be offset by one here
+                N = datagraph.GetPointY(i)
+                errup=datagraph.GetErrorYhigh(i)
+                errlo=datagraph.GetErrorYlow(i)
+                pred=pdfhists[args.bkgIndex].GetBinContent(i+1) # needs to be offset by one here
 
                 # compute central point
                 if N<pred:   pullval=(N-pred)/errup
@@ -283,6 +349,14 @@ if __name__ == "__main__":
                 if N>(sig+pred):  sigpullhist.SetBinContent(i+1,sig/errlo)
                 else:             sigpullhist.SetBinContent(i+1,sig/errup)
 
+                # compute the background error pull
+                if args.drawBkgUncertainty:
+                    bkguncertaintypull.SetPoint(i,var.getBinning().binCenter(i),0.0)
+                    if N>(pred+bkg_uncertainties[i]):
+                        bkguncertaintypull.SetPointError(i,var.getBinning().binWidth(i)/2,bkg_uncertainties[i]/errlo)
+                    else:
+                        bkguncertaintypull.SetPointError(i,var.getBinning().binWidth(i)/2,bkg_uncertainties[i]/errup)
+
             chisqprob=ROOT.TMath.Prob(chisq,ndof)
             hChisqProb.Fill(chisqprob)
 
@@ -294,17 +368,17 @@ if __name__ == "__main__":
             can.SetTickx(0)
             can.SetTicky(0)
             
-            graph.GetXaxis().SetLabelSize(0)
-            graph.SetMarkerSize(0.3)
-            graph.SetMarkerStyle(20)
-            graph.SetLineWidth(2)
-            graph.GetXaxis().SetTitle("")
-            graph.SetStats(0)
-            graph.SetTitle("")
-            graph.GetYaxis().SetTitle("Events/GeV")
-            graph.GetYaxis().SetTitleSize(0.05)
-            graph.SetMarkerColor(ROOT.kBlack)
-            graph.SetLineColor(ROOT.kBlack)
+            datagraph.GetXaxis().SetLabelSize(0)
+            datagraph.SetMarkerSize(0.3)
+            datagraph.SetMarkerStyle(20)
+            datagraph.SetLineWidth(2)
+            datagraph.GetXaxis().SetTitle("")
+            datagraph.SetStats(0)
+            datagraph.SetTitle("")
+            datagraph.GetYaxis().SetTitle("Events/GeV")
+            datagraph.GetYaxis().SetTitleSize(0.05)
+            datagraph.SetMarkerColor(ROOT.kBlack)
+            datagraph.SetLineColor(ROOT.kBlack)
 
             pull.SetMarkerSize(0.3)
             pull.SetMarkerStyle(20)
@@ -333,16 +407,16 @@ if __name__ == "__main__":
 
             # Draw things
             pad.cd()
-            graph.Draw("APZ")
-            if drawSignal:
+            datagraph.Draw("APZ")
+            if args.drawSignal:
                 stack=ROOT.THStack("stack","")
-                stack.Add(pdfhists[bkgIndex])
+                stack.Add(pdfhists[args.bkgIndex])
                 stack.Add(sighist)
                 stack.Draw("hist same")
             else:
                 for pdfhist in pdfhists:
                     pdfhist.Draw("same")
-            graph.Draw("PZ") # draw a 2nd time on top
+            datagraph.Draw("PZ") # draw a 2nd time on top
             pad.RedrawAxis() # redraw the tick marks
             
             # Write text
@@ -376,20 +450,23 @@ if __name__ == "__main__":
             leg.SetFillColor(0)
             leg.SetTextFont(42)
             leg.SetTextSize(0.04)
-            leg.AddEntry(graph, "data", "ep")
-            if drawSignal:
+            leg.AddEntry(datagraph, "data", "ep")
+            if args.drawSignal:
                 if sigtype=="eta":
-                    leg.AddEntry(sighist, "m_{#eta}="+sigmass[1:]+" MeV (x"+str(sigScale)+")", "f")
+                    leg.AddEntry(sighist, "m_{#eta}="+sigmass[1:]+" MeV (x"+str(args.sigScale)+")", "f")
                 elif sigtype=="etaprime":
-                    leg.AddEntry(sighist, "m_{#eta'}="+sigmass[1:]+" MeV (x"+str(sigScale)+")", "f")
-                leg.AddEntry(pdfhists[bkgIndex],pdfhisttitles[bkgIndex],"l")
+                    leg.AddEntry(sighist, "m_{#eta'}="+sigmass[1:]+" MeV (x"+str(args.sigScale)+")", "f")
+                leg.AddEntry(pdfhists[args.bkgIndex],pdfhisttitles[args.bkgIndex],"l")
             else:
                 for pdfhistindex, pdfhist in enumerate(pdfhists):
                     leg.AddEntry(pdfhist, pdfhisttitles[pdfhistindex], "l")
+            if args.drawBkgUncertainty:
+                leg.AddEntry(bkguncertaintypull, "bkg. uncertainty","f")
+
             leg.Draw()
 
             # draw chisq
-            if drawChisq:
+            if args.drawChisq:
                 chisqstr="#chi^{2}/d.o.f.="+"{0:0.0f}/".format(chisq)+str(ndof)+"={0:0.2f}".format(chisq/ndof)
                 chisqtxt=ROOT.TLatex()
                 chisqtxt.SetTextFont(42)
@@ -399,7 +476,7 @@ if __name__ == "__main__":
             # Draw pulls
             pullpad.cd()
             pull.Draw("APZ")
-            if drawSignal:
+            if args.drawSignal:
                 sigpullhist.SetLineColor(colors[sigcolorindex])
                 sigpullhist.Draw("same")
             line = ROOT.TLine()
@@ -412,16 +489,25 @@ if __name__ == "__main__":
             line.SetLineColor(colors[3])
             line.SetLineStyle(3)
             line.Draw()
-            if drawSpline:
+            if args.drawSpline:
                 spline=pdf1.getSpline()
                 spline.SetLineWidth(2)
                 spline.SetLineColor(colors[4])
                 spline.Draw("same")
+
+            if args.drawBkgUncertainty:
+                bkguncertaintypull.SetFillColorAlpha(ROOT.kBlack,0.5)
+                bkguncertaintypull.SetFillStyle(1001)
+                bkguncertaintypull.SetLineColor(0)
+                bkguncertaintypull.Draw("3")
+
+            can.Modified()
+            can.Update()
             
             can.SaveAs("../plots/"+can.GetName()+".pdf")
 
     # Draw chisq probability histogram
-    if drawChisq:
+    if args.drawChisq:
         can=ROOT.TCanvas("chisqprob","chisqprob",300,300)
         can.SetFillColor(0)
         can.SetBorderMode(0)
