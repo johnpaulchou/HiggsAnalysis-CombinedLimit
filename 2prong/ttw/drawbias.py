@@ -5,7 +5,7 @@ import ROOT
 import argparse
 import re
 import numpy
-import tdrstyle
+import common.tdrstyle as tdrstyle
 
 ###############################################################
 # start of the "main" function
@@ -19,7 +19,7 @@ if __name__ == "__main__":
     args = parser.parse_args()
 
     # setup output for printing
-    pdffilename="../plots/biasfits.pdf"
+    pdffilename="./plots/biasfits.pdf"
     first=True
 
     # stuff to plot

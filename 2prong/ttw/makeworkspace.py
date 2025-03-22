@@ -47,7 +47,7 @@ regions = ["symiso","asymnoniso","asymnoniso_unscaled"]
 sigtypes = ["eta","etaprime"]
 
 # where to read things from
-filename="../input/summed_hists_19-03-2025.root"
+filename="./input/summed_hists_19-03-2025.root"
 
 ###############################################################
 # start of the "main" function

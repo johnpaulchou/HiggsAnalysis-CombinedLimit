@@ -1,6 +1,6 @@
 #!/bin/env python3
 
-import tdrstyle
+import common.tdrstyle as tdrstyle
 import ROOT
 import array as ar
 import argparse
@@ -27,7 +27,7 @@ if __name__ == "__main__":
     args = parser.parse_args()
 
     # setup output for printing
-    pdffilename="../plots/limits.pdf"
+    pdffilename="./plots/limits.pdf"
 
     # setup data
     x = []

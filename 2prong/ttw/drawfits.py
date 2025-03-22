@@ -3,7 +3,6 @@
 import ctypes
 import array
 import ROOT
-import tdrstyle
 import argparse
 import numpy as np
 import makeworkspace as ttw
@@ -282,7 +281,7 @@ if __name__ == "__main__":
         for ptindex, ptbin in enumerate(ttw.ptbins):
             
             # create the canvas and subdivide into a top and bottom pad
-            can=ROOT.TCanvas("c_"+btagbin+"_"+ptbin, "c_"+btagbin+"_"+ptbin,300,300)
+            can=ROOT.TCanvas("fits_"+region+"_"+btagbin+"_"+ptbin, "c_"+btagbin+"_"+ptbin,300,300)
             can.cd()
             pad = ROOT.TPad("pad"+ptbin,"pad"+ptbin,0,0.25,1,1)
             pad.SetMargin(0.15,0.08,0.02,0.1) #L, R, B, T
@@ -464,7 +463,7 @@ if __name__ == "__main__":
 
             # draw chisq
             if args.drawChisq:
-                chisqstr="#chi^{2}/d.o.f.={0:0.2f}".format(chisq/ndof)
+                chisqstr="#chi^{2}/d.o.f.="+"{0:0.2f}".format(chisq/ndof)
                 chisqtxt=ROOT.TLatex()
                 chisqtxt.SetTextFont(42)
                 chisqtxt.SetTextSize(0.04)
@@ -501,7 +500,7 @@ if __name__ == "__main__":
             can.Modified()
             can.Update()
             
-            can.SaveAs("../plots/"+can.GetName()+".pdf")
+            can.SaveAs("./plots/"+can.GetName()+".pdf")
 
     # Draw chisq probability histogram
     if args.drawChisq:
@@ -516,4 +515,4 @@ if __name__ == "__main__":
         hChisqProb.SetMarkerStyle(20)
         hChisqProb.SetBinErrorOption(ROOT.TH1.kPoisson)
         hChisqProb.Draw("E0")
-        can.SaveAs("../plots/"+can.GetName()+".pdf")
+        can.SaveAs("./plots/"+can.GetName()+".pdf")
