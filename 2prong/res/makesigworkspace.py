@@ -4,21 +4,31 @@ import ROOT
 import sys
 import files
 from scipy.interpolate import interp1d
+import common.common as common
+import argparse
 
 # function to get acceptance from a file
 def getAcc(filename, histnames, normhistname):
     integral=0.0
     for histname in histnames:
-        h=files.getTH1(filename, histname)
+        h=common.get_TH1_from_file(filename, histname)
         integral += h.Integral(1,h.GetXaxis().GetNbins(),1,h.GetYaxis().GetNbins())
 
-    hn=files.getTH1(filename, normhistname)
+    hn=common.get_TH1_from_file(filename, normhistname)
     norm=hn.GetBinContent(1)
     return integral/norm
 
-###### main function ######
-def main(wmass, pmass):
 
+###### main function ######
+if __name__ == "__main__":
+    parser = argparse.ArgumentParser(formatter_class=argparse.ArgumentDefaultsHelpFormatter)
+    parser.add_argument('--imass', help="index of the job to run (0-"+str(files.npoints-1)+")", type=int)
+    args=parser.parse_args()
+
+    (windex,pindex)=files.indexpair(args.imass)
+    wmass = files.wmasspoints[windex]
+    pmass = files.pmasspoints[pindex]
+    print("Creating workspace for m_w="+str(wmass)+" GeV and m_phi="+str(pmass)+" GeV")
     # find the grid points to match up to the chosen omega and phi masses
     txmin=txmax=tymin=tymax=-999.
     for i in range(len(files.gengridw)-1):
@@ -72,7 +82,7 @@ def main(wmass, pmass):
     print("The interpolated acc*eff is "+str(acceff.getValV()))
     
     # create label for output workspace
-    fileout = ROOT.TFile(files.sigworkspacefn(wmass,pmass),"RECREATE")
+    fileout = ROOT.TFile(files.sigworkspacefn,"RECREATE")
     w = ROOT.RooWorkspace("w","w")
 
     # loop over systematic sources
@@ -82,22 +92,22 @@ def main(wmass, pmass):
         for histindex,histname in enumerate(histnames):
 
             # get the 2D histograms
-            hA=files.getTH1(fnA, histname+syst)
-            hB=files.getTH1(fnB, histname+syst)
-            hC=files.getTH1(fnC, histname+syst)
-            hD=files.getTH1(fnD, histname+syst)
+            hA=common.get_TH1_from_file(fnA, histname+syst)
+            hB=common.get_TH1_from_file(fnB, histname+syst)
+            hC=common.get_TH1_from_file(fnC, histname+syst)
+            hD=common.get_TH1_from_file(fnD, histname+syst)
 
             # create RooDataHists
-            dhA=ROOT.RooDataHist(hA.GetName()+"A_dh","2D signal RooDataHist",ROOT.RooArgList(m2p,m2pg),hA)
-            dhB=ROOT.RooDataHist(hB.GetName()+"B_dh","2D signal RooDataHist",ROOT.RooArgList(m2p,m2pg),hB)
-            dhC=ROOT.RooDataHist(hC.GetName()+"C_dh","2D signal RooDataHist",ROOT.RooArgList(m2p,m2pg),hC)
-            dhD=ROOT.RooDataHist(hD.GetName()+"D_dh","2D signal RooDataHist",ROOT.RooArgList(m2p,m2pg),hD)
+            dhA=ROOT.RooDataHist(hA.GetName()+"A_dh","2D signal RooDataHist",ROOT.RooArgList(files.m2p,files.m2pg),hA)
+            dhB=ROOT.RooDataHist(hB.GetName()+"B_dh","2D signal RooDataHist",ROOT.RooArgList(files.m2p,files.m2pg),hB)
+            dhC=ROOT.RooDataHist(hC.GetName()+"C_dh","2D signal RooDataHist",ROOT.RooArgList(files.m2p,files.m2pg),hC)
+            dhD=ROOT.RooDataHist(hD.GetName()+"D_dh","2D signal RooDataHist",ROOT.RooArgList(files.m2p,files.m2pg),hD)
 
             # create RooAbsPdfs out of datahists
-            pdfA=ROOT.RooHistPdf(hA.GetName()+"A_pdf","2D signal pdf",ROOT.RooArgSet(m2p,m2pg), dhA)
-            pdfB=ROOT.RooHistPdf(hB.GetName()+"B_pdf","2D signal pdf",ROOT.RooArgSet(m2p,m2pg), dhB)
-            pdfC=ROOT.RooHistPdf(hC.GetName()+"C_pdf","2D signal pdf",ROOT.RooArgSet(m2p,m2pg), dhC)
-            pdfD=ROOT.RooHistPdf(hD.GetName()+"D_pdf","2D signal pdf",ROOT.RooArgSet(m2p,m2pg), dhD)
+            pdfA=ROOT.RooHistPdf(hA.GetName()+"A_pdf","2D signal pdf",ROOT.RooArgSet(files.m2p,files.m2pg), dhA)
+            pdfB=ROOT.RooHistPdf(hB.GetName()+"B_pdf","2D signal pdf",ROOT.RooArgSet(files.m2p,files.m2pg), dhB)
+            pdfC=ROOT.RooHistPdf(hC.GetName()+"C_pdf","2D signal pdf",ROOT.RooArgSet(files.m2p,files.m2pg), dhC)
+            pdfD=ROOT.RooHistPdf(hD.GetName()+"D_pdf","2D signal pdf",ROOT.RooArgSet(files.m2p,files.m2pg), dhD)
 
             # create a grid with each pdf at a corner
             bintx=ROOT.RooBinning(1,txmin,txmax)
@@ -109,13 +119,13 @@ def main(wmass, pmass):
             grid.addPdf(pdfD,1,1)
 
             # morph and create a new 2D histogram in its place
-            morph=ROOT.RooMomentMorphFuncNDFix("morph","morph",ROOT.RooArgList(tx,ty),ROOT.RooArgList(m2p,m2pg),grid,ROOT.RooMomentMorphFuncNDFix.Linear);
+            morph=ROOT.RooMomentMorphFuncNDFix("morph","morph",ROOT.RooArgList(tx,ty),ROOT.RooArgList(files.m2p,files.m2pg),grid,ROOT.RooMomentMorphFuncNDFix.Linear);
             morph.setPdfMode()
             tx.setVal(wmass)
             ty.setVal(pmass)
             morphhist=hA.Clone(hA.GetName()+"m")
             morphhist.Reset()
-            morphhist=morph.fillHistogram(morphhist,ROOT.RooArgList(m2p,m2pg))
+            morphhist=morph.fillHistogram(morphhist,ROOT.RooArgList(files.m2p,files.m2pg))
         
             # create PDFs for different m2p slices
             fileout.cd()
@@ -126,8 +136,8 @@ def main(wmass, pmass):
                 projy=morphhist.ProjectionY("_py"+label,bin,bin)
                 accnum = projy.Integral(1,projy.GetXaxis().GetNbins())
                 accden = morphhist.Integral(1,morphhist.GetXaxis().GetNbins(),1,morphhist.GetYaxis().GetNbins())
-                dh=ROOT.RooDataHist("dh"+label,"dh"+label,m2pg,projy)
-                sigpdf1d = ROOT.RooHistPdf("sigpdf_"+label,"signal PDF for a slice in m2p",m2pg,dh)
+                dh=ROOT.RooDataHist("dh"+label,"dh"+label,files.m2pg,projy)
+                sigpdf1d = ROOT.RooHistPdf("sigpdf_"+label,"signal PDF for a slice in files.m2p",files.m2pg,dh)
                 sliceacc = ROOT.RooRealVar("sliceacc_"+label,"acceptance in a given slice",accnum/accden)
                 sliceacc.setConstant(True)
                 print("The slice acceptance for "+label+" is "+str(sliceacc.getValV()))
@@ -145,12 +155,9 @@ def main(wmass, pmass):
 
     w.Print()
     w.Write()
+    (ROOT.TNamed("imass",str(args.imass))).Write()
+    (ROOT.TNamed("wmass",str(wmass))).Write()
+    (ROOT.TNamed("pmass",str(pmass))).Write()
     fileout.Close()
-###### main function ######
 
-if __name__ == "__main__":
-    if len(sys.argv)<3:
-        print("makesigworkspace.py wmass pmass")
-        exit(1)
     
-    main(float(sys.argv[1]), float(sys.argv[2]))

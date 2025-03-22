@@ -3,6 +3,7 @@
 import ROOT
 import files
 import argparse
+import common.common as common
 
 ###############################################################
 # start of the "main" function
@@ -22,8 +23,8 @@ if __name__ == "__main__":
     for etabin in files.etabins:
 
         # get the 2d data histogram
-        if args.region==files.regions[0]: datahist2d=files.getTH1(files.datafilename, "plots/recomass_sideband_"+etabin)
-        elif args.region==files.regions[1]: datahist2d=files.getTH1(files.datafilename, "plots/recomass_"+etabin)
+        if args.region==files.regions[0]: datahist2d=common.get_TH1_from_file(files.datafilename, "plots/recomass_sideband_"+etabin)
+        elif args.region==files.regions[1]: datahist2d=common.get_TH1_from_file(files.datafilename, "plots/recomass_"+etabin)
         
         # loop over the 2-prong mass slices
         for bin in files.m2pbins:
