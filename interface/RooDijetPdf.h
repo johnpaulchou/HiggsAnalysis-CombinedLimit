@@ -1,25 +1,13 @@
 //---------------------------------------------------------------------------
-#ifndef HiggsAnalysis_CombinedLimit_RooDijet3ParamBinPdf_h
-#define HiggsAnalysis_CombinedLimit_RooDijet3ParamBinPdf_h
+#ifndef HiggsAnalysis_CombinedLimit_RooDijetPdf_h
+#define HiggsAnalysis_CombinedLimit_RooDijetPdf_h
 //---------------------------------------------------------------------------
 #include "RooAbsPdf.h"
-#include "RooConstVar.h"
 #include "RooRealProxy.h"
 //---------------------------------------------------------------------------
-class RooRealVar;
 class RooAbsReal;
 
-#include "Riostream.h"
-#include "TMath.h"
 #include <TH1.h>
-#include "Math/SpecFuncMathCore.h"
-#include "Math/SpecFuncMathMore.h"
-#include "Math/Functor.h"
-#include "Math/WrappedFunction.h"
-#include "Math/IFunction.h"
-#include "Math/Integrator.h"
-
-#include "Math/IParamFunction.h"
 
 //---------------------------------------------------------------------------
 class RooDijetAbsPdf : public RooAbsPdf
@@ -50,8 +38,6 @@ protected:
   
   virtual Double_t evaluate() const override=0;
   ClassDefOverride(RooDijetAbsPdf,1) // Declare this for CINT
-  
-private:
 };
 
 class RooDijet1Pdf : public RooDijetAbsPdf

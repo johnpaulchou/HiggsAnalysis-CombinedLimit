@@ -1,20 +1,6 @@
 //---------------------------------------------------------------------------
 #include "RooFit.h"
 
-#include "Riostream.h"
-#include <TMath.h>
-#include <cassert>
-#include <cmath>
-#include <math.h>
-
-#include "RooRealVar.h"
-#include "RooConstVar.h"
-#include "Math/Functor.h"
-#include "Math/WrappedFunction.h"
-#include "Math/IFunction.h"
-#include "Math/Integrator.h"
-#include "Math/GSLIntegrator.h"
-
 #include "../interface/RooDijetPdf.h"
 
 using namespace std;
@@ -24,7 +10,6 @@ ClassImp(RooDijetAbsPdf)
 ClassImp(RooDijet1Pdf)
 ClassImp(RooDijet2Pdf)
 ClassImp(RooDijet3Pdf)
-
 //---------------------------------------------------------------------------
 Double_t RooDijet1Pdf::evaluate() const
 {
@@ -48,5 +33,5 @@ Double_t RooDijet3Pdf::evaluate() const
 }
 
 
-// //---------------------------------------------------------------------------
+//---------------------------------------------------------------------------
 
