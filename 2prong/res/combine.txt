@@ -1,0 +1,26 @@
+#2prong resonant-production analysis
+imax 1 number of bins
+jmax 1 number of processes minus 1
+kmax * number of nuisance parameters
+-------------------------------------------------------------------------------
+shapes      data_obs    BIN      bkgworkspace.root                    w:dataHist_BIN
+shapes      sig         BIN      WORKSPACEFILE                        w:sigpdf_BIN
+#shapes      bkg         BIN      bkgworkspace.root                    w:model_bkg_f1_BIN
+shapes      bkg         BIN      bkgworkspace.root                    w:multipdf_BIN
+-------------------------------------------------------------------------------
+bin             BIN
+observation     -1
+-------------------------------------------------------------------------------
+bin             BIN                BIN
+process         sig                bkg
+process         0                  1
+rate            59                 1.0
+---------------------------------------------
+lumi          lnN         1.016      1.0
+p1_BIN        flatParam
+p2_BIN        flatParam
+p3_BIN        flatParam
+p4_BIN        flatParam
+p5_BIN        flatParam
+p6_BIN        flatParam
+pdfindex_BIN  discrete
