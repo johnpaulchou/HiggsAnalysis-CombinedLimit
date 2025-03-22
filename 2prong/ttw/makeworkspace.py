@@ -2,24 +2,7 @@
 
 import ROOT
 import argparse
-
-# function to get a TH1 from a root file
-def getTH1(histname,filename):
-    rootfile = ROOT.TFile(filename, "READ")
-    if not rootfile or rootfile.IsZombie():
-        print("Error: Unable to open file '{filename}'.")
-        return None
-    
-    hist = rootfile.Get(histname)
-    if not hist or not isinstance(hist, ROOT.TH1) or hist is None:
-        print("Error: Histogram '", histname, "' not found or is not a valid TH1 object in the file '", filename ,"'.")
-        exit(1)
-        rootfile.Close()
-        return None
-    hist.SetDirectory(0)
-    rootfile.Close()
-    return hist
-
+import common.common as common
 
 # where to write things out
 fileoutname = "workspace.root"
@@ -89,15 +72,15 @@ if __name__ == "__main__":
 
             # create a RooDataHist from the data histogram
             newName = "data_"+btagbin+"_"+ptbin
-            dataTH1 = getTH1(dataName, filename)
+            dataTH1 = common.get_TH1_from_file(filename, dataName)
             dataHist = ROOT.RooDataHist(newName,newName,ROOT.RooArgList(m2p),dataTH1)
             getattr(w,"import")(dataHist)
 
             # get the template TH1
             if region==regions[0]:
-                templateTH1 = getTH1("singlemuon_symiso_0b_"+ptbin+"_loose", filename)
+                templateTH1 = common.get_TH1_from_file(filename, "singlemuon_symiso_0b_"+ptbin+"_loose")
             elif region==regions[1] or region==regions[2]:
-                templateTH1 = getTH1("singlemuon_asymnoniso_0b_"+ptbin+"_loose", filename)
+                templateTH1 = common.get_TH1_from_file(filename, "singlemuon_asymnoniso_0b_"+ptbin+"_loose")
                 
             # find any non-0 bins in the data that are 0 in the template
             # set it to 1.0 if it happens and print a warning
@@ -138,7 +121,7 @@ if __name__ == "__main__":
             # get the signal and its normalization (with systematics)
             for syst in systs:
                 sigName = sigtype+"_"+str(sigmass)+"_symiso_"+btagbin+"_"+ptbin+"_tight"+syst
-                sigTH1 = getTH1(sigName, filename)
+                sigTH1 = common.get_TH1_from_file(filename,sigName)
                 newName = "sig_"+btagbin+"_"+ptbin
                 sigDataHist = ROOT.RooDataHist(newName+"_hist"+syst,newName+"hist"+syst,ROOT.RooArgSet(m2p),sigTH1)
                 sigPdf = ROOT.RooHistPdf(newName+"_pdf"+syst,newName+"_pdf"+syst,ROOT.RooArgSet(m2p),sigDataHist,2)

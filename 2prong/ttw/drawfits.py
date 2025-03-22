@@ -1,226 +1,10 @@
 #!/bin/env python3
 
-import ctypes
-import array
-import ROOT
 import argparse
-import numpy as np
 import makeworkspace as ttw
-
-
-"""
-Retrieve the title of a TNamed object from a ROOT file
-
-Parameters:
-    - file_path: Path to the ROOT file containing the TNamed object
-    - tnamed_name: name of the TNamed object
-
-Returns:
-    - string
-"""
-def get_tnamed_title_from_file(file_path, tnamed_name):
-    # Open the ROOT file
-    root_file = ROOT.TFile.Open(file_path, "READ")
-    if not root_file or root_file.IsZombie():
-        raise RuntimeError(f"Cannot open file: {file_path}")
-
-    # Get the TNamed object
-    tnamed = root_file.Get(tnamed_name)
-    if not tnamed:
-        root_file.Close()
-        raise RuntimeError(f"Cannot find TNamed '{tnamed_name}' in file: {file_path}")
-
-    # get the title before closing the file
-    title = tnamed.GetTitle()
-    root_file.Close()
-
-    return title
-
-
-
-"""
-Retrieve a RooWorkspace from a ROOT file
-
-Parameters:
-    - file_path: Path to the ROOT file containing the workspace
-    - workspace_name: Name of the RooWorkspace in the file
-
-Returns:
-    - RooWorkspace object
-"""
-def get_workspace_from_file(file_path, workspace_name):
-    # Open the ROOT file
-    root_file = ROOT.TFile.Open(file_path, "READ")
-    if not root_file or root_file.IsZombie():
-        raise RuntimeError(f"Cannot open file: {file_path}")
-    
-    # Get the workspace
-    workspace = root_file.Get(workspace_name)
-    if not workspace:
-        root_file.Close()
-        raise RuntimeError(f"Cannot find workspace '{workspace_name}' in file: {file_path}")
-
-    # Clone to avoid dependence on file
-    ws_clone = workspace.Clone()
-
-    # Close the file
-    root_file.Close()
-
-    return ws_clone
-
-
-"""
-Retrieve a TGraphAsymmErrors from a RooDataHist inside a RooWorkspace
-    
-Parameters:
-    - workspace: RooWorkspace to retrieve RooAbsPdf
-    - datahist_name: Name of the specific RooDataHist to retrieve
-    
-Returns:
-    - TGraphAsymmErrors object and associated RooRealVar
-"""
-def get_datagraph_from_workspace(workspace, datahist_name):
-    # get the datahist
-    datahist = workspace.data(datahist_name)
-    if not datahist:
-        root_file.Close()
-        raise RuntimeError(f"Cannot find RooDataHist '{datahist_name}' in workspace '{workspace_name}'")
-    
-    # Get the variable(s) associated with the RooDataHist
-    var_set = datahist.get()
-    variable = var_set.first()
-    if not variable:
-        root_file.Close()
-        raise RuntimeError("Cannot find associated variable for the RooDataHist")
-
-    # get binning
-    binning = variable.getBinning()
-    
-    # create a TH1D first
-    hist = datahist.createHistogram("hist_"+btagbin+"_"+ptbin,variable)
-
-    # create the TGraphAsymmErrors
-    gr=ROOT.TGraphAsymmErrors(hist)
-
-    # compute the Poisson uncertainties and divide out by the bin width
-    alpha = 1 - 0.6827
-    for i in range(gr.GetN()):
-        N = gr.GetPointY(i)
-        width = binning.binWidth(i)
-        L = 0
-        if N>0: L=ROOT.Math.gamma_quantile(alpha/2,N,1.)
-        U =  ROOT.Math.gamma_quantile_c(alpha/2,N+1,1)
-        gr.SetPointEYlow(i, (N-L)/width)
-        gr.SetPointEYhigh(i, (U-N)/width)
-        gr.SetPointY(i, N/width)
-
-    # set the x-axis range
-    gr.GetXaxis().SetRangeUser(binning.binLow(0),binning.binHigh(binning.numBins()-1))
-    return gr, variable
-
-
-
-"""
-Convert a RooAbsPdf to a TH1D histogram with given normalization.
-    
-Parameters:
-    - pdf: RooAbsPdf object to convert
-    - binning: RooBinning that you want to use
-    - hist_name: Name of the output histogram
-    - normalization: Desired integral of the histogram (default: 1.0)
-
-Returns:
-    - TH1D histogram object
-"""
-def pdf_to_histogram(pdf, binning, hist_name, normalization=1.0):
-
-    # get the variable's binning
-    nbins = binning.numBins()
-    bin_edges = [binning.binLow(i) for i in range(nbins)]
-    bin_edges.append(binning.binHigh(nbins-1)) #append last bin high edge
-    c_array_type = ctypes.c_float * len(bin_edges)
-    c_array = c_array_type(*bin_edges)
-
-    # Create histogram
-    hist = ROOT.TH1D(hist_name, hist_name, nbins, c_array)
-
-    # Get the RooRealVar
-    obs = pdf.getVariables().first()
-
-    # Fill histogram by evaluating PDF at bin centers
-    for i in range(1, nbins + 1):
-        x = hist.GetBinCenter(i)
-        obs.setVal(x)
-        pdf_value = pdf.getVal(ROOT.RooArgSet(obs))
-        hist_val = pdf_value * normalization
-        hist.SetBinContent(i, hist_val)
-    
-    return hist
-
-
-
-"""
-Estimate the 1-sigma uncertainty envelope of a function using Monte Carlo sampling.
-
-Parameters:
-    - pdf: RooAbsPdf. The pdf to evaluate, which accepts parameters and x as inputs.
-    - fitresult: RooFitResult of the fit which we want to get the envelope for.
-    - binning: RooBinning that you want to use
-    - num_samples: Number of Monte Carlo samples to generate.
-
-Returns:
-    - list of uncertainties evaluated at the central value of the bins
-
-"""
-
-def monte_carlo_uncertainty_envelope(pdf, normalization, fitresult, binning, num_samples=1000):
-
-    # first thing is to copy the pdf so that we don't mess with the parameters
-    # then, get the variables and observable for the pdf, and create a argument set for the observable
-    pdf_copy = pdf.Clone(pdf.GetName()+"_copy")
-    variables = pdf_copy.getVariables()
-    observable = variables.first()
-    argset = ROOT.RooArgSet(observable)
-    
-    # get the parameters from the fit and then put their values into the means
-    params = fitresult.floatParsFinal()
-    param_means = [params[i].getVal() for i in range(params.getSize())]
-
-    # get the covariance matrix for the fit
-    cov=fitresult.covarianceMatrix()
-    size=cov.GetNrows()
-    param_cov=np.zeros((size, size))
-    for i in range(size):
-        for j in range(size):
-            param_cov[i, j] = cov[i][j]  # Access matrix elements
-
-    # get the central values of the bins we are evaluating the pdf at
-    x_values = [binning.binCenter(i) for i in range(binning.numBins())]
-
-    # Generate random samples of parameters
-    param_samples = np.random.multivariate_normal(param_means, param_cov, num_samples)
-    
-    # Initialize array to store function evaluations
-    func_evals = np.zeros((num_samples, len(x_values)))
-
-    # Evaluate the function for each parameter sample
-    for i, params in enumerate(param_samples):
-
-        # set the parameters
-        for j,parameter in enumerate(params):
-            variables[j+1].setVal(parameter)
-
-        # set the x value and evaluate
-        for k,x in enumerate(x_values):
-            variables[0].setVal(x)
-            func_evals[i, k] = pdf_copy.getVal(argset)*normalization
-
-    # Compute mean and standard deviation at each x
-    # mean_values = np.mean(func_evals, axis=0)
-    std_devs = np.std(func_evals, axis=0)
-    return std_devs
-
-
+import common.common as common
+import common.tdrstyle as tdrstyle
+import ROOT
 
 ###############################################################
 # start of the "main" function
@@ -245,26 +29,13 @@ if __name__ == "__main__":
     assert len(btagtitles)==len(ttw.btagbins), "btagtitles and btagbins lengths don't match"
 
     # get the workspace
-    ws = get_workspace_from_file(ttw.fileoutname, ttw.workspacename)
+    ws = common.get_workspace_from_file(ttw.fileoutname, ttw.workspacename)
 
     # get the parameters
-    sigmass = get_tnamed_title_from_file(ttw.fileoutname, "sigmass")
-    sigtype = get_tnamed_title_from_file(ttw.fileoutname, "sigtype")
-    region  = get_tnamed_title_from_file(ttw.fileoutname, "region")
+    sigmass = common.get_tnamed_title_from_file(ttw.fileoutname, "sigmass")
+    sigtype = common.get_tnamed_title_from_file(ttw.fileoutname, "sigtype")
+    region  = common.get_tnamed_title_from_file(ttw.fileoutname, "region")
     
-    # global style settings
-    colors = [ROOT.TColor.GetColor("#3f90da"),
-              ROOT.TColor.GetColor("#ffa90e"),
-              ROOT.TColor.GetColor("#bd1f01"),
-              ROOT.TColor.GetColor("#94a4a2"),
-              ROOT.TColor.GetColor("#832db6"),
-              ROOT.TColor.GetColor("#a96b59"),
-              ROOT.TColor.GetColor("#e76300"),
-              ROOT.TColor.GetColor("#b9ac70"),
-              ROOT.TColor.GetColor("#717581"),
-              ROOT.TColor.GetColor("#92dadd"),
-              ROOT.TColor.GetColor("#607641"),
-              ROOT.TColor.GetColor("#F5BB54")]
     ROOT.gStyle.SetErrorX(0)
     ROOT.gStyle.SetTitleFont(42)
     ROOT.gStyle.SetTitleFont(42, "XYZ")
@@ -292,7 +63,7 @@ if __name__ == "__main__":
             pullpad.Draw()
 
             # get the roodatahist and corresponding variable, then create a TH1 from it
-            datagraph,var=get_datagraph_from_workspace(ws, "data_"+btagbin+"_"+ptbin)
+            datagraph,var=common.get_datagraph_from_workspace(ws, "data_"+btagbin+"_"+ptbin)
             
             # get the template and signal pdfs and their respective normalizations
             pdf0=ws.pdf("temp_"+btagbin+"_"+ptbin+"_pdf0")
@@ -305,17 +76,17 @@ if __name__ == "__main__":
             # turn the PDFs into histograms
             pdfhists = []
             pdfhisttitles = []
-            pdfhists.append(pdf_to_histogram(pdf0, var.getBinning(), "temp_"+btagbin+"_"+ptbin+"_pdf0hist", pdf0norm.getVal()))
-            pdfhists.append(pdf_to_histogram(pdf1, var.getBinning(), "temp_"+btagbin+"_"+ptbin+"_pdf1hist", pdf1norm.getVal()))
+            pdfhists.append(common.pdf_to_histogram(pdf0, var.getBinning(), "temp_"+btagbin+"_"+ptbin+"_pdf0hist", pdf0norm.getVal()))
+            pdfhists.append(common.pdf_to_histogram(pdf1, var.getBinning(), "temp_"+btagbin+"_"+ptbin+"_pdf1hist", pdf1norm.getVal()))
             pdfhisttitles.append("background")
             pdfhisttitles.append("post-fit bkg.")
-            sighist = pdf_to_histogram(sig, var.getBinning(), "sig_"+btagbin+"_"+ptbin+"_pdfhist", signorm.getVal()*args.sigScale) # scale signal to an arbitrary value
+            sighist = common.pdf_to_histogram(sig, var.getBinning(), "sig_"+btagbin+"_"+ptbin+"_pdfhist", signorm.getVal()*args.sigScale) # scale signal to an arbitrary value
 
             # compute the uncertainty on the background fit (right now, this hard-coded for pdf1)
             if args.drawBkgUncertainty:
                 fitresult=ws.obj("fitresult_temp_"+btagbin+"_"+ptbin+"_pdf1_data_"+btagbin+"_"+ptbin)
                 if not fitresult: raise RuntimeError(f"Cannot get fitresult")
-                bkg_uncertainties=monte_carlo_uncertainty_envelope(pdf1, pdf1norm.getVal(), fitresult, var.getBinning())
+                bkg_uncertainties=common.monte_carlo_uncertainty_envelope(pdf1, pdf1norm.getVal(), fitresult, var.getBinning())
             
             # compute the pull graph and chi^2
             pull=datagraph.Clone(datagraph.GetName()+"_pull")
@@ -397,10 +168,10 @@ if __name__ == "__main__":
             pull.GetXaxis().SetRangeUser(var.getBinning().binLow(0),var.getBinning().binHigh(var.getBinning().numBins()-1))
             
             for pdfhistindex, pdfhist in enumerate(pdfhists):
-                pdfhists[pdfhistindex].SetLineColor(colors[pdfhistindex])
+                pdfhists[pdfhistindex].SetLineColor(tdrstyle.colors[pdfhistindex])
                 pdfhists[pdfhistindex].SetFillColor(0)
-            sighist.SetLineColor(colors[sigcolorindex])
-            sighist.SetFillColor(colors[sigcolorindex])
+            sighist.SetLineColor(tdrstyle.colors[sigcolorindex])
+            sighist.SetFillColor(tdrstyle.colors[sigcolorindex])
 
             # Draw things
             pad.cd()
@@ -473,7 +244,7 @@ if __name__ == "__main__":
             pullpad.cd()
             pull.Draw("APZ")
             if args.drawSignal:
-                sigpullhist.SetLineColor(colors[sigcolorindex])
+                sigpullhist.SetLineColor(tdrstyle.colors[sigcolorindex])
                 sigpullhist.Draw("same")
             line = ROOT.TLine()
             line.SetNDC(False)
@@ -482,13 +253,13 @@ if __name__ == "__main__":
             line.SetY1(0)
             line.SetY2(0)
             line.SetLineWidth(1)
-            line.SetLineColor(colors[3])
+            line.SetLineColor(tdrstyle.colors[3])
             line.SetLineStyle(3)
             line.Draw()
             if args.drawSpline:
                 spline=pdf1.getSpline()
                 spline.SetLineWidth(2)
-                spline.SetLineColor(colors[4])
+                spline.SetLineColor(tdrstyle.colors[4])
                 spline.Draw("same")
 
             if args.drawBkgUncertainty:
