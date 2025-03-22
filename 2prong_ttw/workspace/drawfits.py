@@ -7,8 +7,6 @@ import tdrstyle
 import argparse
 import numpy as np
 import makeworkspace as ttw
-import sys
-import io
 
 
 """
@@ -462,12 +460,11 @@ if __name__ == "__main__":
                     leg.AddEntry(pdfhist, pdfhisttitles[pdfhistindex], "l")
             if args.drawBkgUncertainty:
                 leg.AddEntry(bkguncertaintypull, "bkg. uncertainty","f")
-
             leg.Draw()
 
             # draw chisq
             if args.drawChisq:
-                chisqstr="#chi^{2}/d.o.f.="+"{0:0.0f}/".format(chisq)+str(ndof)+"={0:0.2f}".format(chisq/ndof)
+                chisqstr="#chi^{2}/d.o.f.={0:0.2f}".format(chisq/ndof)
                 chisqtxt=ROOT.TLatex()
                 chisqtxt.SetTextFont(42)
                 chisqtxt.SetTextSize(0.04)

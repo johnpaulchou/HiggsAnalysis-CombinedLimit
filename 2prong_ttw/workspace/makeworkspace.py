@@ -35,10 +35,16 @@ m2p = ROOT.RooRealVar("m2p","Invariant mass of the 2-prong",0.25,5.53)
 # need to specify which signal we're considering
 sigmasses = ["M500", "M750", "M850", "M1000", "M1500", "M2000", "M2500", "M3000", "M4000" ]
 
-#systematic uncertainties
+# systematic uncertainties
 systs = ["", "_MuonRecoUp", "_MuonRecoDown", "_MuonIdUp", "_MuonIdDown", "_MuonIsoUp", "_MuonIsoDown", "_MuonHltUp", "_MuonHltDown",
          "_BtagLightCorrelatedUp", "_BtagLightCorrelatedDown", "_BtagBCCorrelatedUp", "_BtagBCCorrelatedDown", "_BtagLightUncorrelatedUp", "_BtagLightUncorrelatedDown",
          "_BtagBCUncorrelatedUp", "_BtagBCUncorrelatedDown"]
+
+# regions to evalute
+regions = ["symiso","asymnoniso","asymnoniso_unscaled"]
+
+# signal types
+sigtypes = ["eta","etaprime"]
 
 # where to read things from
 filename="../input/summed_hists_19-03-2025.root"
@@ -52,8 +58,8 @@ if __name__ == "__main__":
     # setup and use the parser
     parser = argparse.ArgumentParser(formatter_class=argparse.ArgumentDefaultsHelpFormatter)
     parser.add_argument("--imass",help="signal mass index (0-"+str(len(sigmasses)-1)+")", choices=range(len(sigmasses)), type=int)
-    parser.add_argument("--region",help="region that we're working in",choices=["symiso","asymnoniso","asymnoniso_unscaled"], default="asymnoniso")
-    parser.add_argument("--sigtype",help="signal type that we're using",choices=["eta","etaprime"],default="eta")
+    parser.add_argument("--region",help="region that we're working in",choices=regions, default=regions[1])
+    parser.add_argument("--sigtype",help="signal type that we're using",choices=sigtypes,default=sigtypes[0])
     args=parser.parse_args()
     sigmass = sigmasses[args.imass]
     sigtype = args.sigtype
@@ -74,11 +80,11 @@ if __name__ == "__main__":
         for btagbin in btagbins:
 
             # get the data
-            if region=="symiso":
+            if region==regions[0]:
                 dataName = "singlemuon_symiso_"+btagbin+"_"+ptbin+"_tight"
-            elif region=="asymnoniso":
+            elif region==regions[1]:
                 dataName = "singlemuon_asymnoniso_"+btagbin+"_"+ptbin+"_tightscaledtosymiso"
-            elif region=="asymnoniso_unscaled":
+            elif region==regions[2]:
                 dataName = "singlemuon_asymnoniso_"+btagbin+"_"+ptbin+"_tight"
 
             # create a RooDataHist from the data histogram
@@ -88,9 +94,9 @@ if __name__ == "__main__":
             getattr(w,"import")(dataHist)
 
             # get the template TH1
-            if region=="symiso":
+            if region==regions[0]:
                 templateTH1 = getTH1("singlemuon_symiso_0b_"+ptbin+"_loose", filename)
-            elif region=="asymnoniso" or region=="asymnoniso_unscaled":
+            elif region==regions[1] or region==regions[2]:
                 templateTH1 = getTH1("singlemuon_asymnoniso_0b_"+ptbin+"_loose", filename)
                 
             # find any non-0 bins in the data that are 0 in the template
