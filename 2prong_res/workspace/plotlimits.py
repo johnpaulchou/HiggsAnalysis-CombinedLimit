@@ -36,7 +36,7 @@ def parsefile(filename, hSig, hObs, hExp):
 # start by collecting the data from the files listed
 if __name__ == "__main__":
     if len(sys.argv)<2:
-        print("files.py logfiles")
+        print("plotlimits.py logfiles")
         exit(1)
 
     # create histograms

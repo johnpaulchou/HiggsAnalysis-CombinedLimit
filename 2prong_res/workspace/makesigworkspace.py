@@ -87,10 +87,6 @@ def main(wmass, pmass):
             hC=files.getTH1(fnC, histname+syst)
             hD=files.getTH1(fnD, histname+syst)
 
-            # create the observables (do this based on the data's histogram boundaries)
-            m2p = ROOT.RooRealVar("m2p","Invariant mass of the 2-prong",hA.GetXaxis().GetBinLowEdge(1),hA.GetXaxis().GetBinUpEdge(hA.GetXaxis().GetNbins()))
-            m2pg = ROOT.RooRealVar("m2pg","Invariant mass of the 2-prong and photon",hA.GetYaxis().GetBinLowEdge(1),hA.GetYaxis().GetBinUpEdge(hA.GetYaxis().GetNbins()))
-
             # create RooDataHists
             dhA=ROOT.RooDataHist(hA.GetName()+"A_dh","2D signal RooDataHist",ROOT.RooArgList(m2p,m2pg),hA)
             dhB=ROOT.RooDataHist(hB.GetName()+"B_dh","2D signal RooDataHist",ROOT.RooArgList(m2p,m2pg),hB)

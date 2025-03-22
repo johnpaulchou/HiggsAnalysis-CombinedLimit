@@ -205,14 +205,20 @@ for etabin in ws.etabins:
         lumix=0.91
         if len(chunk)==1:
             lumix=0.13
-        lumitxt.DrawLatexNDC(lumix,0.935,"59 fb^{-1} (13 TeV)")
+#        lumitxt.DrawLatexNDC(lumix,0.935,"59 fb^{-1} (13 TeV)")
+#        lumitxt.DrawLatexNDC(lumix,0.935,"41 fb^{-1} (13 TeV)")
+#        lumitxt.DrawLatexNDC(lumix,0.935,"19.5 fb^{-1} (13 TeV)")
+        lumitxt.DrawLatexNDC(lumix,0.935,"16.8 fb^{-1} (13 TeV)")
 
         # note if sideband
         if ws.doSideband:
             sbtxt = ROOT.TLatex()
             sbtxt.SetTextFont(42)
             sbtxt.SetTextSize(0.05)
-            sbtxt.DrawLatexNDC(0.5,0.935,"Sideband Region")
+#            sbtxt.DrawLatexNDC(0.5,0.935,"Sideband Region (2018)")
+#            sbtxt.DrawLatexNDC(0.5,0.935,"Sideband Region (2017)")
+#            sbtxt.DrawLatexNDC(0.5,0.935,"Sideband Region (2016 Pre-VFP)")
+            sbtxt.DrawLatexNDC(0.5,0.935,"Sideband Region (2016 Post-VFP)")
         
         can.Update()
         can.Draw()
