@@ -1,9 +1,9 @@
 #!/bin/env python3
 
 import ROOT
-import numpy
 import sys
 import argparse
+import numpy
 
 # regions to consider
 regions = ["sideband","signal"]
@@ -27,6 +27,9 @@ workspacename="w"
 #datafilename = "./input/HISTO_photon2017.root"
 #datafilename = "./input/HISTO_photon2016pre.root"
 datafilename = "./input/HISTO_photon2016post.root"
+
+# luminosity for the dataset
+luminosity=59.
 
 # set up the grid of generated points and their corresponding input files
 gengridw = ( (1.0, "1p0"), (2.0, "2p0") )
@@ -54,23 +57,16 @@ def index(wmassindex, pmassindex):
     assert(pmassindex>=0 and pmassindex<len(pmasspoints))
     return wmassindex+pmassindex*len(wmasspoints)
 
-
-"""
-###############################################################
-# start of the "main" function
-# basic function is to return the wmass and pmass from a "job ID" running from 0 to npoints-1
-###############################################################
-
-if __name__ == "__main__":
-
-    # setup and use the parser
-    parser = argparse.ArgumentParser(formatter_class=argparse.ArgumentDefaultsHelpFormatter)
-    parser.add_argument('jobid', help="index of the job to run (0-"+str(npoints-1)+")", type=int)
-    args=parser.parse_args()
-    jobid=args.jobid
-    (windex,pindex)=indexpair(jobid)
-    wmass = wmasspoints[windex]
-    pmass = pmasspoints[pindex]
-    print(wmasstostr(wmass)+" "+pmasstostr(pmass))
-
-"""
+# x-section as a function of m_phi from an interpolation of the phi masses
+def get_xsection(phimass):
+    theory_xs = [(450., 585.983), (500., 353.898), (625., 117.508), (750., 45.9397), (875., 20.1308),
+                 (1000., 9.59447), (1125., 4.88278), (1250., 2.61745), (1375., 1.46371),
+                 (1500., 0.847454), (1625., 0.505322), (1750., 0.309008), (1875., 0.192939),
+                 (2000., 0.122826), (2125., 0.0795248), (2250., 0.0522742), (2375., 0.0348093),
+                 (2500., 0.0235639), (2625., 0.0161926), (2750., 0.0109283), (2875., 0.00759881)]
+    assert(phimass>=theory_xs[0][0] and phimass<=theory_xs[len(theory_xs)-1][0])
+    for i in range(len(theory_xs) - 1):
+        x0, y0 = theory_xs[i]
+        x1, y1 = theory_xs[i + 1]
+        if x0 <= phimass <= x1:
+            return y0 + (y1 - y0) * (phimass - x0) / (x1 - x0)

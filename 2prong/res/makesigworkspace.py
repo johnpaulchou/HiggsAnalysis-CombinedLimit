@@ -3,7 +3,6 @@
 import ROOT
 import sys
 import files
-from scipy.interpolate import interp1d
 import common.common as common
 import argparse
 
@@ -54,26 +53,16 @@ if __name__ == "__main__":
     tx.setVal(wmass)
     ty.setVal(pmass)
 
-    # list of barrel and endcap histnames
-    histnames=('plots/recomass_barrel','plots/recomass_endcap')
-
-    # interpolate the cross section
-    theory_xs = [(450., 585.983), (500., 353.898), (625., 117.508), (750., 45.9397), (875., 20.1308),
-                 (1000., 9.59447), (1125., 4.88278), (1250., 2.61745), (1375., 1.46371),
-                 (1500., 0.847454), (1625., 0.505322), (1750., 0.309008), (1875., 0.192939),
-                 (2000., 0.122826), (2125., 0.0795248), (2250., 0.0522742), (2375., 0.0348093),
-                 (2500., 0.0235639), (2625., 0.0161926), (2750., 0.0109283), (2875., 0.00759881)]
-    x=list(zip(*theory_xs))
-    interp=interp1d(x[0], x[1])
-    xsec=ROOT.RooRealVar("xsec","Interpolated theory x-section",interp(pmass))
+    # get the cross section
+    xsec=ROOT.RooRealVar("xsec","Interpolated theory x-section",files.get_xsection(pmass))
     xsec.setConstant(True)
     print("The interpolated cross section is "+str(xsec.getValV())+" fb.")
 
     # interpolate the acceptance*efficiency
-    accA=getAcc(fnA, histnames, "plots/cutflow")
-    accB=getAcc(fnB, histnames, "plots/cutflow")
-    accC=getAcc(fnC, histnames, "plots/cutflow")
-    accD=getAcc(fnD, histnames, "plots/cutflow")
+    accA=getAcc(fnA, ('plots/recomass_barrel','plots/recomass_endcap'), "plots/cutflow")
+    accB=getAcc(fnB, ('plots/recomass_barrel','plots/recomass_endcap'), "plots/cutflow")
+    accC=getAcc(fnC, ('plots/recomass_barrel','plots/recomass_endcap'), "plots/cutflow")
+    accD=getAcc(fnD, ('plots/recomass_barrel','plots/recomass_endcap'), "plots/cutflow")
     z5=(accC-accA)/(tymax-tymin)*pmass+(accA*tymax-accC*tymin)/(tymax-tymin)
     z6=(accD-accB)/(tymax-tymin)*pmass+(accB*tymax-accD*tymin)/(tymax-tymin)
     acc=(z6-z5)/(txmax-txmin)*wmass+(z5*txmax-z6*txmin)/(txmax-txmin)
@@ -88,14 +77,14 @@ if __name__ == "__main__":
     # loop over systematic sources
     for syst in files.systs:
 
-        # loop over barrel/endcap histograms
-        for histindex,histname in enumerate(histnames):
+        # loop over eta regions
+        for etabin in files.etabins:
 
             # get the 2D histograms
-            hA=common.get_TH1_from_file(fnA, histname+syst)
-            hB=common.get_TH1_from_file(fnB, histname+syst)
-            hC=common.get_TH1_from_file(fnC, histname+syst)
-            hD=common.get_TH1_from_file(fnD, histname+syst)
+            hA=common.get_TH1_from_file(fnA, "plots/recomass_"+etabin+syst)
+            hB=common.get_TH1_from_file(fnB, "plots/recomass_"+etabin+syst)
+            hC=common.get_TH1_from_file(fnC, "plots/recomass_"+etabin+syst)
+            hD=common.get_TH1_from_file(fnD, "plots/recomass_"+etabin+syst)
 
             # create RooDataHists
             dhA=ROOT.RooDataHist(hA.GetName()+"A_dh","2D signal RooDataHist",ROOT.RooArgList(files.m2p,files.m2pg),hA)
@@ -130,9 +119,7 @@ if __name__ == "__main__":
             # create PDFs for different m2p slices
             fileout.cd()
             for bin in range(1,morphhist.GetXaxis().GetNbins()+1):
-                label = "bin"+str(bin)
-                if histindex==0: label = label+"B"
-                else: label = label+"E"
+                label = "bin"+str(bin)+etabin
                 projy=morphhist.ProjectionY("_py"+label,bin,bin)
                 accnum = projy.Integral(1,projy.GetXaxis().GetNbins())
                 accden = morphhist.Integral(1,morphhist.GetXaxis().GetNbins(),1,morphhist.GetYaxis().GetNbins())

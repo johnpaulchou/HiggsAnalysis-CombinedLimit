@@ -28,10 +28,7 @@ if __name__ == "__main__":
         
         # loop over the 2-prong mass slices
         for bin in files.m2pbins:
-            label = "bin"+str(bin)
-            if etabin==files.etabins[0]: label = label + "B"
-            elif etabin==files.etabins[1]: label = label + "E"
-            else: exit(1)
+            label = "bin"+str(bin)+etabin
             datahist1d = datahist2d.ProjectionY("_py"+label,bin,bin)
             datanorm=datahist1d.Integral(1,datahist1d.GetNbinsX())
 
