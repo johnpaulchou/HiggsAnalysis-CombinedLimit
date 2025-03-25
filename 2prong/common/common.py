@@ -107,14 +107,12 @@ def get_datagraph_from_workspace(workspace, datahist_name):
     # get the datahist
     datahist = workspace.data(datahist_name)
     if not datahist:
-        root_file.Close()
-        raise RuntimeError(f"Cannot find RooDataHist '{datahist_name}' in workspace '{workspace_name}'")
+        raise RuntimeError(f"Cannot find RooDataHist '{datahist_name}' in workspace '{workspace.GetName()}'")
     
     # Get the variable(s) associated with the RooDataHist
     var_set = datahist.get()
     variable = var_set.first()
     if not variable:
-        root_file.Close()
         raise RuntimeError("Cannot find associated variable for the RooDataHist")
 
     # get binning

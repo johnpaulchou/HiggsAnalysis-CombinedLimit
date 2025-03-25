@@ -118,7 +118,7 @@ if __name__ == "__main__":
         
             # create PDFs for different m2p slices
             fileout.cd()
-            for bin in range(1,morphhist.GetXaxis().GetNbins()+1):
+            for bin in files.m2pbins:
                 label = "bin"+str(bin)+etabin
                 projy=morphhist.ProjectionY("_py"+label,bin,bin)
                 accnum = projy.Integral(1,projy.GetXaxis().GetNbins())

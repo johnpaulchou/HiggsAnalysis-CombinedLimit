@@ -19,7 +19,7 @@ if __name__ == "__main__":
     parser.add_argument("--drawChisq",help="Print the chi^2 on the plots and create the chi^2 probability histogram.",action=argparse.BooleanOptionalAction,default=True)
     parser.add_argument("--sigScale",help="How to scale the signal, if drawn.",type=float,default=1.0)
     parser.add_argument("--bkgIndex",help="Which background to compute the pull and chi^2 with respect to and/or plot the signal on top of.",type=int,choices=[0,1],default=1)
-    parser.add_argument("--drawBkgUncertainty",help="Draw the uncertainty on the background fit. Note this takes a long time and only works when bkgIndex=1",action=argparse.BooleanOptionalAction,default=False)
+    parser.add_argument("--drawBkgUncertainty",help="Draw the uncertainty on the background fit. Note this takes can be slow and only works when bkgIndex=1",action=argparse.BooleanOptionalAction,default=False)
     args=parser.parse_args()
 
     # setup bin titles
