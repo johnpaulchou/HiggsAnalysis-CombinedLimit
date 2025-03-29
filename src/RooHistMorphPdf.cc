@@ -13,7 +13,7 @@ RooHistMorphPdf::RooHistMorphPdf(const char *name, const char *title, RooAbsReal
   // clone the histogram that is passed
   assert(hist);
   TString newname(name);
-  newname += "_hist";
+  newname += "_RooHistMorphPdf";
   _hist=dynamic_cast<TH2*>(hist->Clone(newname));
 }
 
