@@ -5,6 +5,7 @@ kmax * number of nuisance parameters
 -------------------------------------------------------------------------------
 shapes      data_obs    BIN      BKGWS                    w:dataHist_BIN
 shapes      sig         BIN      SIGWS                    w:sigpdf_BIN
+#shapes      bkg         BIN      BKGWS                    w:model_bkg_f3_BIN
 shapes      bkg         BIN      BKGWS                    w:multipdf_BIN
 -------------------------------------------------------------------------------
 bin             BIN

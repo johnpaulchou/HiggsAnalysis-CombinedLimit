@@ -8,10 +8,11 @@ import numpy
 # regions to consider
 regions = ["sideband","signal"]
 etabins = ["barrel","endcap"]
-m2pbins = range(5,26)
+#m2pbins = range(4,24)
+m2pbins = range(10,15)
 
 # setup observables
-m2pg = ROOT.RooRealVar("m2pg","Invariant mass of the 2-prong and photon",500,4020)
+m2pg = ROOT.RooRealVar("m2pg","Invariant mass of the 2-prong and photon",500,3998)
 m2p = ROOT.RooRealVar("m2p","Invariant mass of the 2-prong",0.4,5.33)
 
 # list of systematics
@@ -26,10 +27,11 @@ workspacename="w"
 #datafilename = "./input/egamma18.root"
 #datafilename = "./input/HISTO_photon2017.root"
 #datafilename = "./input/HISTO_photon2016pre.root"
-datafilename = "./input/HISTO_photon2016post.root"
+#datafilename = "./input/HISTO_photon2016post.root"
+datafilename = "./input/photon_full.root"
 
 # luminosity for the dataset
-luminosity=59.
+luminosity=138
 
 # set up the grid of generated points and their corresponding input files
 gengridw = ( (1.0, "1p0"), (2.0, "2p0") )
@@ -40,8 +42,8 @@ for i in range(len(gengridw)):
         genfilenames[i][j]="./input/signal_2x2box_"+gengridp[j][1]+"_"+gengridw[i][1]+"_200k_events.root"
 
 # omega and phi mass points to run over
-wmasspoints = numpy.arange(1.0, 2.0+0.1, 0.1)
-pmasspoints = numpy.arange(1000, 2500+100, 100)
+wmasspoints = numpy.linspace(1,2,11)
+pmasspoints = numpy.linspace(1000,2500,16)
 npoints = len(wmasspoints)*len(pmasspoints)
 
 # convert a single index into a wmassindex and a pmassindex

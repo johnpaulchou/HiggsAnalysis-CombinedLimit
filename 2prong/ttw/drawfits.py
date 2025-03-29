@@ -114,8 +114,9 @@ if __name__ == "__main__":
 
                 # compute sigpullhist stuff
                 sig=sigpullhist.GetBinContent(i+1) # needs to be offset by one here
-                if N>(sig+pred):  sigpullhist.SetBinContent(i+1,sig/errlo)
-                else:             sigpullhist.SetBinContent(i+1,sig/errup)
+                if N<pred:         sigpullhist.SetBinContent(i+1,sig/errup)
+                elif N>(pred+sig): sigpullhist.SetBinContent(i+1,sig/errlo)
+                else:              sigpullhist.SetBinContent(i+1, (N-pred)/errlo+(sig+pred-N)/errup)
 
                 # compute the background error pull
                 if args.drawBkgUncertainty:

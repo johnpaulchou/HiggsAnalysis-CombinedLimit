@@ -141,6 +141,27 @@ def get_datagraph_from_workspace(workspace, datahist_name):
     return gr, variable
 
 
+"""
+Create a set of bin boundaries based off a RooBinning
+
+Parameters:
+    - binning: RooBinning that you want to use
+
+Returns:
+    - c_array_type with the proper bin edges
+"""
+def get_carray_from_binning(binning):
+     # get the variable's binning
+    nbins = binning.numBins()
+    bin_edges = [binning.binLow(i) for i in range(nbins)]
+    bin_edges.append(binning.binHigh(nbins-1)) #append last bin high edge
+    c_array_type = ctypes.c_float * len(bin_edges)
+    c_array = c_array_type(*bin_edges)
+    return c_array
+
+
+
+
 
 """
 Convert a RooAbsPdf to a TH1D histogram with given normalization.
@@ -156,21 +177,14 @@ Returns:
 """
 def pdf_to_histogram(pdf, binning, hist_name, normalization=1.0):
 
-    # get the variable's binning
-    nbins = binning.numBins()
-    bin_edges = [binning.binLow(i) for i in range(nbins)]
-    bin_edges.append(binning.binHigh(nbins-1)) #append last bin high edge
-    c_array_type = ctypes.c_float * len(bin_edges)
-    c_array = c_array_type(*bin_edges)
-
     # Create histogram
-    hist = ROOT.TH1D(hist_name, hist_name, nbins, c_array)
+    hist = ROOT.TH1D(hist_name, hist_name, binning.numBins(), get_carray_from_binning(binning))
 
     # Get the RooRealVar
     obs = pdf.getVariables().first()
 
     # Fill histogram by evaluating PDF at bin centers
-    for i in range(1, nbins + 1):
+    for i in range(1, binning.numBins() + 1):
         x = hist.GetBinCenter(i)
         obs.setVal(x)
         pdf_value = pdf.getVal(ROOT.RooArgSet(obs))

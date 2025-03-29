@@ -27,12 +27,25 @@ if __name__ == "__main__":
     imass = common.get_tnamed_title_from_file(files.sigworkspacefn, "imass")
     wmass = common.get_tnamed_title_from_file(files.sigworkspacefn, "wmass")
     pmass = common.get_tnamed_title_from_file(files.sigworkspacefn, "pmass")
-    
+
+    # general style commands
     ROOT.gStyle.SetErrorX(0)
     ROOT.gStyle.SetTitleFont(42)
     ROOT.gStyle.SetTitleFont(42, "XYZ")
     ROOT.gStyle.SetHistLineWidth(2)
-    
+
+    # create S/S+B-weighted histograms
+    # first I need to grab a graph so I can use the same binning
+    if args.drawSignal:
+        datagraph_ssb,var_ssb=common.get_datagraph_from_workspace(bkgws, "dataHist_bin"+str(files.m2pbins[0])+files.etabins[0])
+        datagraph_ssb=datagraph_ssb.Clone("datagraph_ssb")
+        for i in range(datagraph_ssb.GetN()):       # zero out the y values and errors
+            datagraph_ssb.SetPointY(i,0.)
+            datagraph_ssb.SetPointEYhigh(i,0.)
+            datagraph_ssb.SetPointEYlow(i,0.)
+        sighist_ssb=ROOT.TH1D("sighist_ssb","sighist_ssb",var_ssb.getBinning().numBins(), common.get_carray_from_binning(var_ssb.getBinning()))
+        bkghist_ssb=ROOT.TH1D("bkghist_ssb","bkghist_ssb",var_ssb.getBinning().numBins(), common.get_carray_from_binning(var_ssb.getBinning()))    
+
     # loop over etabins
     for etabin in files.etabins:
         
@@ -73,6 +86,41 @@ if __name__ == "__main__":
             pdfhisttitles.append("f2")
             pdfhisttitles.append("f3")
 
+            print("p1="+str(bkgws.var("p1_bin"+str(m2pbin)+etabin).getVal()))
+            print("p2="+str(bkgws.var("p2_bin"+str(m2pbin)+etabin).getVal()))
+            print("p3="+str(bkgws.var("p3_bin"+str(m2pbin)+etabin).getVal()))
+            print("p4="+str(bkgws.var("p4_bin"+str(m2pbin)+etabin).getVal()))
+            print("p5="+str(bkgws.var("p5_bin"+str(m2pbin)+etabin).getVal()))
+            print("p6="+str(bkgws.var("p6_bin"+str(m2pbin)+etabin).getVal()))
+
+#            for bin in range(31,35):
+#                bkgInt=bkgInt+pdfhists[0].GetBinContent(bin)*pdfhists[0].GetBinWidth(bin)
+#            for bin in range(31,35):
+#                sigInt=sigInt+sighist.GetBinContent(bin)*sighist.GetBinWidth(bin)
+#            for bin in range(31,35):
+#                dataInt=dataInt+datagraph.GetPointY(bin-1)*pdfhists[0].GetBinWidth(bin)
+
+            # compute S/S+B weighted histograms
+            if args.drawSignal:
+                sigsum=bkgsum=0
+                for bin in range(1,sighist_ssb.GetNbinsX()+1):
+                    sigsum=sigsum+sighist.GetBinContent(bin)
+                    bkgsum=bkgsum+pdfhists[args.bkgIndex].GetBinContent(bin)
+                weight = sigsum/(sigsum+bkgsum)
+                
+                for bin in range(1,sighist_ssb.GetNbinsX()+1):
+                    sigval = sighist.GetBinContent(bin)
+                    bkgval = pdfhists[args.bkgIndex].GetBinContent(bin)
+                    dataval = datagraph.GetPointY(bin-1)
+                    dataval_up = datagraph.GetErrorYhigh(bin-1)
+                    dataval_lo = datagraph.GetErrorYlow(bin-1)
+                    sighist_ssb.SetBinContent(bin, sighist_ssb.GetBinContent(bin)+sigval*weight)
+                    bkghist_ssb.SetBinContent(bin, bkghist_ssb.GetBinContent(bin)+bkgval*weight)
+                    datagraph_ssb.SetPointY(bin-1, datagraph_ssb.GetPointY(bin-1)+dataval*weight)
+                    datagraph_ssb.SetPointEYhigh(bin-1, (datagraph_ssb.GetErrorYhigh(bin-1)**2+(dataval_up*weight)**2)**.5)
+                    datagraph_ssb.SetPointEYlow(bin-1, (datagraph_ssb.GetErrorYlow(bin-1)**2+(dataval_lo*weight)**2)**.5)
+                    
+                
             # compute the uncertainty on the background fit
             if args.drawBkgUncertainty:
                 fitresult=bkgws.obj("fitresult_"+pdfs[args.bkgIndex].GetName()+"_dataHist_bin"+str(m2pbin)+etabin)
@@ -107,9 +155,11 @@ if __name__ == "__main__":
 
                 # compute sigpullhist stuff
                 sig=sigpullhist.GetBinContent(i+1) # needs to be offset by one here
-                if N>(sig+pred):  sigpullhist.SetBinContent(i+1,sig/errlo)
-                else:             sigpullhist.SetBinContent(i+1,sig/errup)
+                if N<pred:         sigpullhist.SetBinContent(i+1,sig/errup)
+                elif N>(pred+sig): sigpullhist.SetBinContent(i+1,sig/errlo)
+                else:              sigpullhist.SetBinContent(i+1, (N-pred)/errlo+(sig+pred-N)/errup)
 
+                
                 # compute the background error pull
                 if args.drawBkgUncertainty:
                     bkguncertaintypull.SetPoint(i,var.getBinning().binCenter(i),0.0)
@@ -123,7 +173,7 @@ if __name__ == "__main__":
             # Draw the data
             pad.cd()
             pad.SetLogy(1)
-            datagraph.SetMaximum(1e1)
+            datagraph.SetMaximum(3e1)
             datagraph.SetMinimum(1e-3)
             datagraph.GetXaxis().SetLabelSize(0)
             datagraph.SetMarkerSize(0.3)
@@ -252,3 +302,107 @@ if __name__ == "__main__":
             can.Modified()
             can.Update()
             can.SaveAs("./plots/"+can.GetName()+".pdf")
+
+    # draw the S/S+B weighted signal plot
+    if args.drawSignal:
+        ssbcan=ROOT.TCanvas("ssb","ssb weighted",300,300)
+        ssbcan.cd()
+        ssbpad = ROOT.TPad("ssbpad","ssbpad",0,0.25,1,1)
+        ssbpad.SetMargin(0.15,0.08,0.02,0.1) #L, R, B, T
+        ssbpad.Draw()
+        ssbpullpad = ROOT.TPad("ssbpullpad","pullpad",0,0,1,0.25)
+        ssbpullpad.SetMargin(0.15,0.08,0.3,0.02) #L, R, B, T
+        ssbpullpad.SetTickx()
+        ssbpullpad.Draw()
+
+        ssbpad.cd()
+        datagraph_ssb.GetXaxis().SetLabelSize(0)
+        datagraph_ssb.SetMarkerSize(0.3)
+        datagraph_ssb.SetMarkerStyle(20)
+        datagraph_ssb.SetLineWidth(2)
+        datagraph_ssb.GetXaxis().SetTitle("")
+        datagraph_ssb.GetXaxis().SetRangeUser(var.getBinning().binLow(0),var.getBinning().binHigh(var.getBinning().numBins()-1))
+        datagraph_ssb.SetStats(0)
+        datagraph_ssb.SetMaximum(1e-1)
+        datagraph_ssb.SetMinimum(2e-6)
+        datagraph_ssb.SetTitle("")
+        datagraph_ssb.GetYaxis().SetTitle("S/S+B weighted events/GeV")
+        datagraph_ssb.GetYaxis().SetTitleSize(0.05)
+        datagraph_ssb.GetYaxis().SetTitleOffset(1.2)
+        datagraph_ssb.GetYaxis().SetLabelSize(0.04)
+        datagraph_ssb.SetMarkerColor(ROOT.kBlack)
+        datagraph_ssb.SetLineColor(ROOT.kBlack)
+        datagraph_ssb.Draw("APZ")
+
+        sighist_ssb.SetLineColor(tdrstyle.colors[len(pdfhists)+1])
+        sighist_ssb.SetFillColor(0)
+        sighist_ssb.SetLineWidth(2)
+        bkghist_ssb.SetLineColor(tdrstyle.colors[args.bkgIndex])
+        bkghist_ssb.SetFillColor(0)
+        bkghist_ssb.SetLineWidth(2)
+        bkghist_ssb.Draw("C same")
+        stack_ssb=ROOT.THStack("stack_ssb","")
+        stack_ssb.Add(bkghist_ssb)
+        stack_ssb.Add(sighist_ssb)
+        stack_ssb.Draw("C same")
+        datagraph_ssb.Draw("PZ")
+        ssbpad.SetLogy(1)
+        ssbpad.RedrawAxis() # redraw the tick marks
+
+        cmstxt.DrawLatexNDC(0.15,0.915,"CMS")
+        extratxt.DrawLatexNDC(0.25,0.915,"Preliminary")
+        lumitxt.DrawLatexNDC(0.68,0.915,str(files.luminosity)+" fb^{-1} (13 TeV)")
+
+        # compute the pulls
+        pull_ssb=datagraph_ssb.Clone(datagraph_ssb.GetName()+"_pull")
+        sigpullhist_ssb = sighist_ssb.Clone(sighist_ssb.GetName()+"_pull")
+
+        for i in range(pull_ssb.GetN()):
+            N = datagraph_ssb.GetPointY(i)
+            errup=datagraph_ssb.GetErrorYhigh(i)
+            errlo=datagraph_ssb.GetErrorYlow(i)
+            pred=bkghist_ssb.GetBinContent(i+1) # needs to be offset by one here
+
+            # compute central point
+            if N<pred:   pullval=(N-pred)/errup
+            elif N>pred: pullval=(N-pred)/errlo
+            else:        pullval=0
+            pull_ssb.SetPointY(i, pullval)
+            pull_ssb.SetPointEYhigh(i,1)
+            pull_ssb.SetPointEYlow(i,1)
+
+            # compute sigpullhist stuff
+            sig=sigpullhist_ssb.GetBinContent(i+1) # needs to be offset by one here
+            if N<pred:         sigpullhist_ssb.SetBinContent(i+1,sig/errup)
+            elif N>(pred+sig): sigpullhist_ssb.SetBinContent(i+1,sig/errlo)
+            else:              sigpullhist_ssb.SetBinContent(i+1, (N-pred)/errlo+(sig+pred-N)/errup)
+
+        ssbpullpad.cd()
+        pull_ssb.SetMarkerSize(0.3)
+        pull_ssb.SetMarkerStyle(20)
+        pull_ssb.SetLineWidth(2)
+        pull_ssb.GetXaxis().SetTitle("M(2p+#gamma) [GeV]")
+        pull_ssb.GetXaxis().SetLabelSize(0.13)
+        pull_ssb.GetXaxis().SetTitleSize(0.13)
+        pull_ssb.GetXaxis().SetTitleOffset(0.85)
+        pull_ssb.SetStats(0)
+        pull_ssb.SetTitle("")
+        pull_ssb.GetYaxis().SetTitle("#frac{data-pred.}{error}")
+        pull_ssb.GetYaxis().SetTitleSize(0.13)
+        pull_ssb.GetYaxis().SetLabelSize(0.13)
+        pull_ssb.GetYaxis().SetTitleOffset(0.33)
+        pull_ssb.GetYaxis().SetNdivisions(5, 5, 0)
+        pull_ssb.GetYaxis().CenterTitle(True)
+        pull_ssb.SetMarkerColor(ROOT.kBlack)
+        pull_ssb.SetLineColor(ROOT.kBlack)
+        pull_ssb.GetXaxis().SetRangeUser(var.getBinning().binLow(0),var.getBinning().binHigh(var.getBinning().numBins()-1))
+        pull_ssb.SetMinimum(-3)
+        pull_ssb.SetMaximum(3)
+        pull_ssb.Draw("APZ")
+        sigpullhist_ssb.SetLineColor(tdrstyle.colors[len(pdfhists)+1])
+        sigpullhist_ssb.Draw("same")
+
+        
+        ssbcan.SaveAs("./plots/"+ssbcan.GetName()+".pdf")
+        
+#    print(str(bkgInt)+" "+str(sigInt)+" "+str(dataInt))

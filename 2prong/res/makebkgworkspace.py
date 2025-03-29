@@ -37,8 +37,8 @@ if __name__ == "__main__":
 
             strategy=2
             # set up the three background function models
-            p1 = ROOT.RooRealVar("p1_"+label,"p1",-10,-50,0)
-            p2 = ROOT.RooRealVar("p2_"+label,"p2",-1,-20,0)
+            p1 = ROOT.RooRealVar("p1_"+label,"p1",-10,-25,-5)
+            p2 = ROOT.RooRealVar("p2_"+label,"p2",-1,-3,-.1)
             sqrts = ROOT.RooRealVar("sqrts","sqrts",13000.)
             f1 = ROOT.RooDijet1Pdf("model_bkg_f1_"+label,"f1",files.m2pg,p1,p2,sqrts)
             p3 = ROOT.RooRealVar("p3_"+label,"p3",-5,-200,0)
@@ -84,7 +84,6 @@ if __name__ == "__main__":
             getattr(w, "import")(r3)
 
     # write the workspace and region to the file
-    w.Print()
     fileout.cd()
     w.Write()
     (ROOT.TNamed("region",args.region)).Write()
