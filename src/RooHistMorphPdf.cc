@@ -1,6 +1,7 @@
 //---------------------------------------------------------------------------
 #include "RooFit.h"
 #include <cassert>
+#include "TSpline.h"
 
 #include "../interface/RooHistMorphPdf.h"
 
@@ -26,8 +27,7 @@ RooHistMorphPdf::RooHistMorphPdf(const RooHistMorphPdf& other, const char* name)
 
 double RooHistMorphPdf::evaluate() const
 {
-  int binx=_hist->GetXaxis()->FindBin(_x);
-  int biny=_hist->GetYaxis()->FindBin(_p);
+  /*
   double bincenter=_hist->GetYaxis()->GetBinCenter(biny);
   if(_p<bincenter) { // if we're on the low side of things...
     double z0=_hist->GetBinContent(binx, biny-1);
@@ -45,7 +45,24 @@ double RooHistMorphPdf::evaluate() const
 
   } else { // if we're smack dab in the middle...
     return _hist->GetBinContent(binx, biny);
+    } */
+
+  
+  int binx=_hist->GetXaxis()->FindBin(_x);
+
+  // create the spline
+  int n= _hist->GetNbinsY();
+  Double_t *x=new Double_t[n];
+  Double_t *y=new Double_t[n];
+  for(int i=1; i<=n; i++) {
+    x[i-1]=_hist->GetYaxis()->GetBinCenter(i);
+    y[i-1]=_hist->GetBinContent(binx, i);
   }
+  TSpline3 spline("spline",x,y,n);
+  double val=spline.Eval(_p);
+  delete x;
+  delete y;
+  return val;
 }
 
 
