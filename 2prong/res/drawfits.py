@@ -65,10 +65,13 @@ if __name__ == "__main__":
 
             # get the roodatahist and corresponding variable, then create a TH1 from it
             datagraph,var=common.get_datagraph_from_workspace(bkgws, "dataHist_bin"+str(m2pbin)+etabin)
+            sigobs=sigws.var("m2pg")
+            bkgobs=bkgws.var("m2pg")
+                
             # get the pdfs and their respective normalizations, and turn them into histograms
             sigpdf=sigws.pdf("sigpdf_bin"+str(m2pbin)+etabin)
             sigpdfnorm=sigws.obj("sigpdf_bin"+str(m2pbin)+etabin+"_norm")
-            sighist=common.pdf_to_histogram(sigpdf, var.getBinning(), "hsig_"+str(m2pbin)+etabin, sigpdfnorm.getVal()*args.sigScale*files.luminosity)
+            sighist=common.pdf_to_histogram(sigpdf, sigobs, var.getBinning(), "hsig_"+str(m2pbin)+etabin, sigpdfnorm.getVal()*args.sigScale*files.luminosity)
             pdfs = []
             pdfnorms = []
             pdfhists = []
@@ -79,9 +82,9 @@ if __name__ == "__main__":
             pdfnorms.append(bkgws.var("model_bkg_f1_bin"+str(m2pbin)+etabin+"_norm"))
             pdfnorms.append(bkgws.var("model_bkg_f2_bin"+str(m2pbin)+etabin+"_norm"))
             pdfnorms.append(bkgws.var("model_bkg_f3_bin"+str(m2pbin)+etabin+"_norm"))
-            pdfhists.append(common.pdf_to_histogram(pdfs[0], var.getBinning(), "hpdf1_"+str(m2pbin)+etabin, pdfnorms[0].getVal()))
-            pdfhists.append(common.pdf_to_histogram(pdfs[1], var.getBinning(), "hpdf2_"+str(m2pbin)+etabin, pdfnorms[1].getVal()))
-            pdfhists.append(common.pdf_to_histogram(pdfs[2], var.getBinning(), "hpdf3_"+str(m2pbin)+etabin, pdfnorms[2].getVal()))
+            pdfhists.append(common.pdf_to_histogram(pdfs[0], bkgobs, var.getBinning(), "hpdf1_"+str(m2pbin)+etabin, pdfnorms[0].getVal()))
+            pdfhists.append(common.pdf_to_histogram(pdfs[1], bkgobs, var.getBinning(), "hpdf2_"+str(m2pbin)+etabin, pdfnorms[1].getVal()))
+            pdfhists.append(common.pdf_to_histogram(pdfs[2], bkgobs, var.getBinning(), "hpdf3_"+str(m2pbin)+etabin, pdfnorms[2].getVal()))
             pdfhisttitles.append("f1")
             pdfhisttitles.append("f2")
             pdfhisttitles.append("f3")

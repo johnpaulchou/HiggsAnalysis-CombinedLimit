@@ -62,8 +62,9 @@ if __name__ == "__main__":
             pullpad.SetTickx()
             pullpad.Draw()
 
-            # get the roodatahist and corresponding variable, then create a TH1 from it
+            # get the roodatahist and corresponding variable
             datagraph,var=common.get_datagraph_from_workspace(ws, "data_"+btagbin+"_"+ptbin)
+            obs=ws.var("m2p")
             
             # get the template and signal pdfs and their respective normalizations
             pdf0=ws.pdf("temp_"+btagbin+"_"+ptbin+"_pdf0")
@@ -76,11 +77,11 @@ if __name__ == "__main__":
             # turn the PDFs into histograms
             pdfhists = []
             pdfhisttitles = []
-            pdfhists.append(common.pdf_to_histogram(pdf0, var.getBinning(), "temp_"+btagbin+"_"+ptbin+"_pdf0hist", pdf0norm.getVal()))
-            pdfhists.append(common.pdf_to_histogram(pdf1, var.getBinning(), "temp_"+btagbin+"_"+ptbin+"_pdf1hist", pdf1norm.getVal()))
+            pdfhists.append(common.pdf_to_histogram(pdf0, obs, var.getBinning(), "temp_"+btagbin+"_"+ptbin+"_pdf0hist", pdf0norm.getVal()))
+            pdfhists.append(common.pdf_to_histogram(pdf1, obs, var.getBinning(), "temp_"+btagbin+"_"+ptbin+"_pdf1hist", pdf1norm.getVal()))
             pdfhisttitles.append("background")
             pdfhisttitles.append("post-fit bkg.")
-            sighist = common.pdf_to_histogram(sig, var.getBinning(), "sig_"+btagbin+"_"+ptbin+"_pdfhist", signorm.getVal()*args.sigScale) # scale signal to an arbitrary value
+            sighist = common.pdf_to_histogram(sig, obs, var.getBinning(), "sig_"+btagbin+"_"+ptbin+"_pdfhist", signorm.getVal()*args.sigScale) # scale signal to an arbitrary value
 
             # compute the uncertainty on the background fit (right now, this hard-coded for pdf1)
             if args.drawBkgUncertainty:
@@ -116,7 +117,8 @@ if __name__ == "__main__":
                 sig=sigpullhist.GetBinContent(i+1) # needs to be offset by one here
                 if N<pred:         sigpullhist.SetBinContent(i+1,sig/errup)
                 elif N>(pred+sig): sigpullhist.SetBinContent(i+1,sig/errlo)
-                else:              sigpullhist.SetBinContent(i+1, (N-pred)/errlo+(sig+pred-N)/errup)
+                elif errlo>0:      sigpullhist.SetBinContent(i+1, (N-pred)/errlo+(sig+pred-N)/errup)
+                else:              sigpullhist.SetBinContent(i+1, (sig+pred-N)/errup)
 
                 # compute the background error pull
                 if args.drawBkgUncertainty:
