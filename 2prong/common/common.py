@@ -84,13 +84,10 @@ def get_workspace_from_file(file_path, workspace_name):
         root_file.Close()
         raise RuntimeError(f"Cannot find workspace '{workspace_name}' in file: {file_path}")
 
-    # Clone to avoid dependence on file
-    ws_clone = workspace.Clone()
-
     # Close the file
     root_file.Close()
 
-    return ws_clone
+    return workspace
 
 
 """
@@ -175,20 +172,17 @@ Parameters:
 Returns:
     - TH1D histogram object
 """
-def pdf_to_histogram(pdf, binning, hist_name, normalization=1.0):
+def pdf_to_histogram(pdf, var, binning, hist_name, normalization=1.0):
 
     # Create histogram
     hist = ROOT.TH1D(hist_name, hist_name, binning.numBins(), get_carray_from_binning(binning))
 
-    # Get the RooRealVar
-    obs = pdf.getVariables().first()
-
     # Fill histogram by evaluating PDF at bin centers
     for i in range(1, binning.numBins() + 1):
         x = hist.GetBinCenter(i)
-        obs.setVal(x)
-        pdf_value = pdf.getVal(ROOT.RooArgSet(obs))
-        hist_val = pdf_value * normalization
+        var.setVal(x)
+        pdf_val = pdf.getVal(ROOT.RooArgSet(var))
+        hist_val = pdf_val * normalization
         hist.SetBinContent(i, hist_val)
     
     return hist

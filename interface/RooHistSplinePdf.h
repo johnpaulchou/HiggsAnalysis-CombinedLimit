@@ -12,11 +12,12 @@ class RooHistSplinePdf : public RooHistPdf
 public:
   RooHistSplinePdf() {}
   RooHistSplinePdf(const char *name, const char *title, const RooArgSet& vars,
-		   const RooDataHist& dhist, Int_t intOrder, const RooArgList &coefList);
+		   const RooDataHist& dhist, Int_t intOrder, const RooArgList &coefList, bool fixEndpoints=true);
 
   RooHistSplinePdf(const RooHistSplinePdf &other, const char *name = nullptr) :
     RooHistPdf(other, name),
-    _coefList("coefList", this, other._coefList)
+    _coefList("coefList", this, other._coefList),
+    _fixEndpoints(other._fixEndpoints)
   {
   }
 
@@ -32,6 +33,7 @@ public:
 protected:
  
   RooListProxy _coefList;
+  bool _fixEndpoints;
   
   virtual double evaluate() const override;
   

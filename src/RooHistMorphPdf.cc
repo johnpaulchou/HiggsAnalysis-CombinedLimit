@@ -23,31 +23,11 @@ RooHistMorphPdf::RooHistMorphPdf(const RooHistMorphPdf& other, const char* name)
   TString newname(name);
   newname += "_hist";
   _hist=dynamic_cast<TH2*>(other._hist->Clone(newname));
+  _hist->SetDirectory(0);
 }
 
 double RooHistMorphPdf::evaluate() const
 {
-  /*
-  double bincenter=_hist->GetYaxis()->GetBinCenter(biny);
-  if(_p<bincenter) { // if we're on the low side of things...
-    double z0=_hist->GetBinContent(binx, biny-1);
-    double y0=_hist->GetYaxis()->GetBinCenter(biny-1);
-    double z1=_hist->GetBinContent(binx, biny);
-    double y1=bincenter;
-    return (z1-z0)*(_p-y0)/(y1-y0)+z0;
-    
-  } else if(_p<bincenter) { // if we're on the high side of things...
-    double z0=_hist->GetBinContent(binx, biny);
-    double y0=bincenter;
-    double z1=_hist->GetBinContent(binx, biny+1);
-    double y1=_hist->GetYaxis()->GetBinCenter(biny+1);
-    return (z1-z0)*(_p-y0)/(y1-y0)+z0;
-
-  } else { // if we're smack dab in the middle...
-    return _hist->GetBinContent(binx, biny);
-    } */
-
-  
   int binx=_hist->GetXaxis()->FindBin(_x);
 
   // create the spline
@@ -60,6 +40,7 @@ double RooHistMorphPdf::evaluate() const
   }
   TSpline3 spline("spline",x,y,n);
   double val=spline.Eval(_p);
+  if(val<0) val=0;
   delete x;
   delete y;
   return val;

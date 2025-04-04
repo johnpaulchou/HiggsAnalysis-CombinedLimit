@@ -21,6 +21,7 @@ public:
   // all integrals need to be calculated numerically
   Int_t getAnalyticalIntegral(RooArgSet& allVars, RooArgSet& analVars, const char* rangeName=0) const override { return 0; }
    virtual TObject* clone(const char* newname) const override { return new RooHistMorphPdf(*this,newname); }
+  TH2* getHist(void) { return _hist; }
 
 protected:
   RooRealProxy _x;   // dependent variable

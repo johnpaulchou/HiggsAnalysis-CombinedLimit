@@ -13,9 +13,10 @@ using namespace RooFit;
 ClassImp(RooHistSplinePdf)
 
 RooHistSplinePdf::RooHistSplinePdf(const char *name, const char *title, const RooArgSet& vars,
-				   const RooDataHist& dhist, Int_t intOrder, const RooArgList &coefList)
+				   const RooDataHist& dhist, Int_t intOrder, const RooArgList &coefList, bool fixEndpoints)
 : RooHistPdf(name, title, vars, dhist, intOrder),
-  _coefList("coefList", "List of coefficients", this) {
+  _coefList("coefList", "List of coefficients", this),
+  _fixEndpoints(fixEndpoints) {
 
   if(_histObsList.size()!=1 || _pdfObsList.size()!=1) {
     coutE(InputArguments) << "RooHistSplinePdf::ctor(" << GetName()
@@ -39,21 +40,29 @@ TSpline3 RooHistSplinePdf::getSpline(void) const
   Double_t *y=new Double_t[n+2];
 
   // create the spline points
-  y[0]=y[n+1]=0.0;
-  x[0]=min;
-  x[n+1]=max;
-  for(int i=1; i<=n; i++) {
-    x[i]=i*(max-min)/(n+1)+min;
-    y[i]=static_cast<RooAbsReal &>(_coefList[i-1]).getVal();
+  if(_fixEndpoints) {
+    y[0]=y[n+1]=0.0;
+    x[0]=min;
+    x[n+1]=max;
+    for(int i=1; i<=n; i++) {
+      x[i]=i*(max-min)/(n+1)+min;
+      y[i]=static_cast<RooAbsReal &>(_coefList[i-1]).getVal();
+    }
+    TSpline3 s("spline",x,y,n+2);
+    delete x;
+    delete y;
+    return s;
+
+  } else {
+    for(int i=0; i<n; i++) {
+      x[i]=i*(max-min)/(n-1)+min;
+      y[i]=static_cast<RooAbsReal &>(_coefList[i]).getVal();
+    }
+    TSpline3 s("spline",x,y,n);
+    delete x;
+    delete y;
+    return s;
   }
-
-  // create the spline, evaluate it, and multiply
-  TSpline3 spline("spline",x,y,n+2);
-
-  delete x;
-  delete y;
-  
-  return spline;
 }
 
 double RooHistSplinePdf::evaluate() const
