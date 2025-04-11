@@ -100,11 +100,14 @@ Parameters:
 Returns:
     - TGraphAsymmErrors object and associated RooRealVar
 """
-def get_datagraph_from_workspace(workspace, datahist_name):
+def get_datagraph_from_workspace(workspace, datahist_name, category=""):
     # get the datahist
     datahist = workspace.data(datahist_name)
     if not datahist:
         raise RuntimeError(f"Cannot find RooDataHist '{datahist_name}' in workspace '{workspace.GetName()}'")
+
+    # if the category is not empty, reduce the dataset
+    datahist = datahist.reduce(category)
     
     # Get the variable(s) associated with the RooDataHist
     var_set = datahist.get()
@@ -121,6 +124,9 @@ def get_datagraph_from_workspace(workspace, datahist_name):
     # create the TGraphAsymmErrors
     gr=ROOT.TGraphAsymmErrors(hist)
 
+    # delete the temporary histogram
+    del hist
+    
     # compute the Poisson uncertainties and divide out by the bin width
     alpha = 1 - 0.6827
     for i in range(gr.GetN()):
