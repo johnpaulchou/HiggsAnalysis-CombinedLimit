@@ -8,8 +8,8 @@ import numpy
 # regions to consider
 regions = ["sideband","signal"]
 etabins = ["barrel","endcap"]
-#m2pbins = range(4,24)
-m2pbins = range(10,15)
+m2pbins = range(4,24)
+#m2pbins = range(10,15)
 
 # setup observables
 m2pg = ROOT.RooRealVar("m2pg","Invariant mass of the 2-prong and photon",500,3998)

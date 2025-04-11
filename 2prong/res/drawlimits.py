@@ -1,28 +1,30 @@
 #!/bin/env python3
 
 import ROOT
-import tdrstyle
+import common.tdrstyle as tdrstyle
 import re
 import files
 import sys
 import math
+import files
+import os
 
 tdrstyle.setTDRStyle()
 
 
 def parsefile(filename, hSig, hObs, hExp):
-    wmass = -1
-    pmass = -1
     sig = -1
     obs = -1
     exp = -1
+    result=re.findall(r'\d+', os.path.basename(filename))
+    jobid=int(result[1])
+    windex,pindex=files.indexpair(jobid)
+    wmass=files.wmasspoints[windex]
+    pmass=files.pmasspoints[pindex]
     with open(filename, 'r') as file:
         for line in file:
             split = line.strip().split(' ')
-            if split[0]=="Running" and split[1]=="over" and split[2]=="omega,":
-                wmass = float(split[6])
-                pmass = float(split[7])
-            elif split[0]=="Significance:":
+            if split[0]=="Significance:":
                 sig = float(split[1])
             elif split[0]=="Observed" and split[1]=="Limit:":
                 obs = float(split[4])
@@ -32,7 +34,6 @@ def parsefile(filename, hSig, hObs, hExp):
     if obs>-1: hObs.Fill(wmass,pmass,math.log10(obs))
     if exp>-1: hExp.Fill(wmass,pmass,math.log10(exp))
 
-                
 # start by collecting the data from the files listed
 if __name__ == "__main__":
     if len(sys.argv)<2:
@@ -77,7 +78,7 @@ if __name__ == "__main__":
     hObs.GetXaxis().SetTitle("m_{#omega} [GeV]")
     hObs.GetYaxis().SetTitle("m_{#phi} [GeV]")
     hObs.GetZaxis().SetTitle("Observed log_{10}r_{95}")
-    hObs.SetMinimum(-0.6)
+    hObs.SetMinimum(-1.0)
     hObs.SetMaximum(2.0)
     
     cmstxt = ROOT.TLatex()
@@ -91,7 +92,7 @@ if __name__ == "__main__":
     lumitxt = ROOT.TLatex()
     lumitxt.SetTextFont(42)
     lumitxt.SetTextSize(0.05)
-    lumitxt.DrawLatexNDC(0.63,0.87,"59 fb^{-1} (13 TeV)")
+    lumitxt.DrawLatexNDC(0.63,0.87,"138 fb^{-1} (13 TeV)")
     
     can1.Update()
     can1.Draw()
@@ -113,7 +114,7 @@ if __name__ == "__main__":
     hExp.GetXaxis().SetTitle("m_{#omega} [GeV]")
     hExp.GetYaxis().SetTitle("m_{#phi} [GeV]")
     hExp.GetZaxis().SetTitle("Expected log_{10}r_{95}")
-    hExp.SetMinimum(-0.6)
+    hExp.SetMinimum(-1.0)
     hExp.SetMaximum(2.0)
 
     cmstxt = ROOT.TLatex()
@@ -127,7 +128,7 @@ if __name__ == "__main__":
     lumitxt = ROOT.TLatex()
     lumitxt.SetTextFont(42)
     lumitxt.SetTextSize(0.05)
-    lumitxt.DrawLatexNDC(0.63,0.87,"59 fb^{-1} (13 TeV)")
+    lumitxt.DrawLatexNDC(0.63,0.87,"138 fb^{-1} (13 TeV)")
     
     can2.Update()
     can2.Draw()
@@ -150,7 +151,7 @@ if __name__ == "__main__":
     hSig.GetYaxis().SetTitle("m_{#phi} [GeV]")
     hSig.GetZaxis().SetTitle("Significance (z-score)")
     hSig.SetMinimum(-0.1)
-    hSig.SetMaximum(2.5)
+    hSig.SetMaximum(5.0)
 
     cmstxt = ROOT.TLatex()
     cmstxt.SetTextFont(61)
@@ -163,7 +164,7 @@ if __name__ == "__main__":
     lumitxt = ROOT.TLatex()
     lumitxt.SetTextFont(42)
     lumitxt.SetTextSize(0.05)
-    lumitxt.DrawLatexNDC(0.63,0.87,"59 fb^{-1} (13 TeV)")
+    lumitxt.DrawLatexNDC(0.63,0.87,"138 fb^{-1} (13 TeV)")
     
     can3.Update()
     can3.Draw()

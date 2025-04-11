@@ -96,13 +96,6 @@ if __name__ == "__main__":
             print("p5="+str(bkgws.var("p5_bin"+str(m2pbin)+etabin).getVal()))
             print("p6="+str(bkgws.var("p6_bin"+str(m2pbin)+etabin).getVal()))
 
-#            for bin in range(31,35):
-#                bkgInt=bkgInt+pdfhists[0].GetBinContent(bin)*pdfhists[0].GetBinWidth(bin)
-#            for bin in range(31,35):
-#                sigInt=sigInt+sighist.GetBinContent(bin)*sighist.GetBinWidth(bin)
-#            for bin in range(31,35):
-#                dataInt=dataInt+datagraph.GetPointY(bin-1)*pdfhists[0].GetBinWidth(bin)
-
             # compute S/S+B weighted histograms
             if args.drawSignal:
                 sigsum=bkgsum=0
