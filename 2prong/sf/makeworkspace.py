@@ -8,12 +8,8 @@ import common.common as common
 fileoutname = "workspace.root"
 workspacename = "w"
 
-# binning labels
+# binning labels (these are inconsistent with the cuts, as per Brandon's advice)
 ptbins = ["pt20", "pt40", "pt60", "pt80"]
-
-# shift and stretch labels
-shifts = [ "_0p8", "_0p9", "", "_1p1", "_1p2" ]
-stretches = [ "", "_10per", "_20per", "_30per" ]
 
 # set the observable range
 minm2p = 0.0
@@ -29,17 +25,6 @@ def getDataFilename(year):
 def getSignalFilename(year):
 #    return "./input/dysig_newptbins_"+str(year)+".root"
     return "./input/dysig_wsmear_"+str(year)+".root"
-
-
-# create out of a collection of TH1D's a TH2D that contains the shifts along the y-axis
-minscalepar=0.8
-maxscalepar=1.2
-def createTH2(name, TH1s):
-    newTH2 = ROOT.TH2D(name, name, TH1s[0].GetNbinsX(),TH1s[0].GetXaxis().GetXmin(),TH1s[0].GetXaxis().GetXmax(),len(shifts),minscalepar-0.05,maxscalepar+0.05)
-    for ybin in range(1,newTH2.GetNbinsY()+1):
-        for xbin in range(1,newTH2.GetNbinsX()+1):
-            newTH2.SetBinContent(xbin,ybin,TH1s[ybin-1].GetBinContent(xbin))
-    return newTH2
 
 
 ###############################################################
@@ -87,27 +72,11 @@ if __name__ == "__main__":
         datanorm = dataTH1.Integral(dataTH1.GetXaxis().FindBin(minm2p),dataTH1.GetXaxis().FindBin(maxm2p))
         bkgpdfnorm = ROOT.RooRealVar(newName+"_pdf_norm", "Number of background events", datanorm, 0, 3*datanorm)
 
-        """
-        # get the signal
-        histos=[]
-        for shift in shifts:
-            histo=common.get_TH1_from_file(signalfilename,"plots/SIGNAL_TPM_TauCand_massPi0"+shift+"_"+ptbin+"_ZWIN")
-            histo.Scale(sigScale)
-            histos.append(histo)
-        newName = "signal_"+ptbin
-        signalTH2=createTH2(newName+"_2D",histos)
-        signalIntegral=signalTH2.ProjectionX(newName+"px",int(len(shifts)/2),int(len(shifts)/2)).Integral()
-        signalpdf = ROOT.RooHistMorphPdf(newName+"_pdf","signal_pdf",m2p,scalePar,signalTH2)
-        signalpdfnorm = ROOT.RooRealVar(newName+"_pdf_norm", "normalization",signalIntegral)
-        """
-
         shiftPar = ROOT.RooRealVar("shiftPar","scale Parameter",-0.2,0.2)
-#        shiftPar = ROOT.RooRealVar("shiftPar","scale Parameter",0.0)
         stretchPar = ROOT.RooRealVar("stretchPar","resolution Parameter",0.9,1.3)
-#        stretchPar = ROOT.RooRealVar("stretchPar","resolution Parameter",1.0)
         fixedPar = ROOT.RooRealVar("fixedPar","Fixed point",1.4)
 
-        
+        # get the signal histogram and "trim" the edges (as per Steffie's suggestion)
         signalTH1=common.get_TH1_from_file(signalfilename,"plots/SIGNAL_TPM_TauCand_massPi0_"+ptbin+"_ZWIN")
         signalTH1.SetBinContent(1,0.0)
         signalTH1.SetBinContent(2,0.0)
@@ -121,8 +90,6 @@ if __name__ == "__main__":
         signalDataHist = ROOT.RooDataHist(newName+"_dh",newName+"_dh",ROOT.RooArgList(m2p),signalTH1)
         signalpdf = ROOT.RooHistShiftStretchPdf(newName+"_pdf","signal_pdf",ROOT.RooArgList(m2p),signalDataHist, 2, shiftPar, stretchPar, fixedPar)
         signalpdfnorm = ROOT.RooRealVar(newName+"_pdf_norm", "normalization",signalIntegral)
-        
-        
 
         getattr(w,"import")(dataHist)
         getattr(w,"import")(signalpdf)
