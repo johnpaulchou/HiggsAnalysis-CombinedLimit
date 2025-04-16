@@ -11,11 +11,12 @@ workspacename = "w"
 # binning labels
 ptbins = ["pt20", "pt40", "pt60", "pt80"]
 
-# shift labels
+# shift and stretch labels
 shifts = [ "_0p8", "_0p9", "", "_1p1", "_1p2" ]
+stretches = [ "", "_10per", "_20per", "_30per" ]
 
 # set the observable range
-minm2p = 0.5
+minm2p = 0.0
 maxm2p = 3.5
 
 # signal scale (from Brandon)
@@ -23,9 +24,11 @@ sigScale=1.8433
 
 # where to read things from
 def getDataFilename(year):
-    return "./input/data_newptbins_"+str(year)+".root"
+#    return "./input/data_newptbins_"+str(year)+".root"
+    return "./input/data_wsmear_"+str(year)+".root"
 def getSignalFilename(year):
-    return "./input/dysig_newptbins_"+str(year)+".root"
+#    return "./input/dysig_newptbins_"+str(year)+".root"
+    return "./input/dysig_wsmear_"+str(year)+".root"
 
 
 # create out of a collection of TH1D's a TH2D that contains the shifts along the y-axis
@@ -59,7 +62,6 @@ if __name__ == "__main__":
     signalfilename=getSignalFilename(args.year)
     
     # create the scale parameter and observable
-    scalePar = ROOT.RooRealVar("scalePar","scale Parameter",minscalepar,maxscalepar)
     m2p = ROOT.RooRealVar("m2p","Invariant mass of the 2-prong",minm2p,maxm2p)
 
     # loop over the bins
@@ -70,8 +72,10 @@ if __name__ == "__main__":
         dataTH1 = common.get_TH1_from_file(datafilename, "plots/SIGNAL_TPM_TauCand_massPi0_"+ptbin+"_ZWIN")
         dataHist = ROOT.RooDataHist(newName,newName,ROOT.RooArgList(m2p),dataTH1)
 
-        # get the template
+        # get the background template
         templateTH1 = common.get_TH1_from_file(datafilename, "plots/ANTI_TPM_TauCand_massPi0_"+ptbin+"_ZWIN")
+        if templateTH1.GetBinContent(1)==0: templateTH1.SetBinContent(1,1.0)
+        if templateTH1.GetBinContent(2)==0: templateTH1.SetBinContent(2,1.0)
         newName = "temp_"+ptbin
         templateDataHist = ROOT.RooDataHist(newName+"_dh",newName+"_dh",ROOT.RooArgList(m2p),templateTH1)
         a1=ROOT.RooRealVar(newName+"_a1",newName+"_a1",0,-0.6,0.6)
@@ -83,6 +87,7 @@ if __name__ == "__main__":
         datanorm = dataTH1.Integral(dataTH1.GetXaxis().FindBin(minm2p),dataTH1.GetXaxis().FindBin(maxm2p))
         bkgpdfnorm = ROOT.RooRealVar(newName+"_pdf_norm", "Number of background events", datanorm, 0, 3*datanorm)
 
+        """
         # get the signal
         histos=[]
         for shift in shifts:
@@ -94,6 +99,30 @@ if __name__ == "__main__":
         signalIntegral=signalTH2.ProjectionX(newName+"px",int(len(shifts)/2),int(len(shifts)/2)).Integral()
         signalpdf = ROOT.RooHistMorphPdf(newName+"_pdf","signal_pdf",m2p,scalePar,signalTH2)
         signalpdfnorm = ROOT.RooRealVar(newName+"_pdf_norm", "normalization",signalIntegral)
+        """
+
+        shiftPar = ROOT.RooRealVar("shiftPar","scale Parameter",-0.2,0.2)
+#        shiftPar = ROOT.RooRealVar("shiftPar","scale Parameter",0.0)
+        stretchPar = ROOT.RooRealVar("stretchPar","resolution Parameter",0.9,1.3)
+#        stretchPar = ROOT.RooRealVar("stretchPar","resolution Parameter",1.0)
+        fixedPar = ROOT.RooRealVar("fixedPar","Fixed point",1.4)
+
+        
+        signalTH1=common.get_TH1_from_file(signalfilename,"plots/SIGNAL_TPM_TauCand_massPi0_"+ptbin+"_ZWIN")
+        signalTH1.SetBinContent(1,0.0)
+        signalTH1.SetBinContent(2,0.0)
+        signalTH1.SetBinContent(13,0.0)
+        signalTH1.SetBinContent(14,0.0)
+
+
+        signalTH1.Scale(sigScale)
+        newName = "signal_"+ptbin
+        signalIntegral=signalTH1.Integral()
+        signalDataHist = ROOT.RooDataHist(newName+"_dh",newName+"_dh",ROOT.RooArgList(m2p),signalTH1)
+        signalpdf = ROOT.RooHistShiftStretchPdf(newName+"_pdf","signal_pdf",ROOT.RooArgList(m2p),signalDataHist, 2, shiftPar, stretchPar, fixedPar)
+        signalpdfnorm = ROOT.RooRealVar(newName+"_pdf_norm", "normalization",signalIntegral)
+        
+        
 
         getattr(w,"import")(dataHist)
         getattr(w,"import")(signalpdf)

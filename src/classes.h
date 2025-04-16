@@ -67,3 +67,4 @@
 #include "HiggsAnalysis/CombinedLimit/interface/RooMomentMorphFuncNDFix.h"
 #include "HiggsAnalysis/CombinedLimit/interface/RooHistSplinePdf.h"
 #include "HiggsAnalysis/CombinedLimit/interface/RooHistMorphPdf.h"
+#include "HiggsAnalysis/CombinedLimit/interface/RooHistShiftStretchPdf.h"

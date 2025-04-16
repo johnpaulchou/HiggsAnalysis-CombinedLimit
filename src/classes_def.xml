@@ -224,6 +224,7 @@
   <class name="RooMomentMorphFuncNDFix::Grid2" />
   <class name="RooHistSplinePdf" />
   <class name="RooHistMorphPdf" />
+  <class name="RooHistShiftStretchPdf" />
   <class name="RooModZPdf" />
   <class name="RooExpPdf" />
   <class name="RooSumTwoExpPdf" />

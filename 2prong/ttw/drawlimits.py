@@ -4,7 +4,6 @@ import common.tdrstyle as tdrstyle
 import ROOT
 import array as ar
 import argparse
-import re
 import makeworkspace as ttw
 import math
 
@@ -42,51 +41,23 @@ if __name__ == "__main__":
     # loop over the files that are passed to the command line
     for filename in args.files:
 
-        # Try to open the ROOT TFile
-        rootfile = ROOT.TFile(filename, "READ")
-        if not rootfile or rootfile.IsZombie():
-            print("Error: Unable to open file "+filename+".")
-            continue
+        dict = parse_HC_limit_tree(filename)
 
-        # parse the filename to get the parameters
-        # NB that this assumes it takes the form, higgsCombineTest.AsymptoticLimits.m*.root, which should come from runlimits.sh
-        # This code won't work if that formula is changed
-        m = re.search('higgsCombineTest.AsymptoticLimits.m(.+?).root', filename)
-        if m:
-            try:
-                imass=int(m.group(1))
-            except ValueError:
-                print("Could not convert "+m.group(1)+" into a number")
-                continue
-        else:
-            print("Could not parse the file "+filename+" according to the regex.")
-            continue
-
-        # Try to get the tree
-        treename="limit"
-        tree = rootfile.Get(treename)
-        if not tree or not isinstance(tree, ROOT.TTree) or tree is None:
-            print("Error: Tree '", treename, "' not found or is not a valid TTree object in the file '", filename ,"'.")
-            continue
-
+        # convert mass into an integer
+        imass=int(dict["mass"])
+        
         # skip the 850 MeV mass point
         if imass==2: continue
         
         # start filling in data
         x.append(float(ttw.sigmasses[imass][1:])/1000.)
         ex.append(0.1)
-        tree.GetEntry(0)
-        e25.append(tree.limit)
-        tree.GetEntry(1)
-        e16.append(tree.limit)
-        tree.GetEntry(2)
-        e50.append(tree.limit)
-        tree.GetEntry(3)
-        e84.append(tree.limit)
-        tree.GetEntry(4)
-        e97.append(tree.limit)
-        tree.GetEntry(5)
-        obs.append(tree.limit)
+        e25.append(dict["exp-2"])
+        e16.append(dict["exp-1"])
+        e50.append(dict["exp-med"])
+        e84.append(dict["exp+1"])
+        e97.append(dict["exp+2"])
+        obs.append(dict["obs"])
 
     # edit the contents for plotting
     for i in range(len(x)):

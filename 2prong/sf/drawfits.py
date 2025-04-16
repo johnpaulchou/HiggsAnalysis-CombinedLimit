@@ -18,7 +18,7 @@ if __name__ == "__main__":
     # setup and use the parser
     parser = argparse.ArgumentParser(formatter_class=argparse.ArgumentDefaultsHelpFormatter)
     parser.add_argument("workspacefn", help="root file containing the workspace to draw")
-    parser.add_argument("year", help="data year the file comes from")
+    parser.add_argument("--year", help="data year the file comes from")
     args=parser.parse_args()
 
     # get the workspace
@@ -187,5 +187,5 @@ if __name__ == "__main__":
 
         can.Modified()
         can.Update()
-        can.SaveAs("./plots/"+can.GetName()+".pdf")
+        can.SaveAs("./plots/"+channel+"_"+args.year+".pdf")
 

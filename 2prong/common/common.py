@@ -2,7 +2,7 @@ import ROOT
 import array
 import ctypes
 import numpy as np
-
+import scipy.interpolate as interp
 
 """
 Retrieve a TH1 object from a ROOT file
@@ -107,7 +107,8 @@ def get_datagraph_from_workspace(workspace, datahist_name, category=""):
         raise RuntimeError(f"Cannot find RooDataHist '{datahist_name}' in workspace '{workspace.GetName()}'")
 
     # if the category is not empty, reduce the dataset
-    datahist = datahist.reduce(category)
+    if not category=="":
+        datahist = datahist.reduce(category)
     
     # Get the variable(s) associated with the RooDataHist
     var_set = datahist.get()
@@ -256,3 +257,100 @@ def monte_carlo_uncertainty_envelope(pdf, normalization, fitresult, binning, num
     std_devs = np.std(func_evals, axis=0)
     return std_devs
 
+
+
+
+"""
+Parses a tree coming from HiggsCombine containing a limit (or significance)
+    
+Parameters:
+    - rootfn: filename of root file
+    - hasExpected: has expected limits in addition to observed. If this is false, the dictionary only contains 'mass' and 'obs' entries
+
+Returns:
+    - dictionary with mass, obs, exp-2, exp-1, ex-med, ex+1, ex+2
+"""
+
+def parse_HC_limit_tree(rootfn, hasExpected=True):
+    
+    # Try to open the ROOT TFile
+    rootfile = ROOT.TFile(rootfn, "READ")
+    if not rootfile or rootfile.IsZombie():
+        print("Error: Unable to open file "+rootfn+".")
+        return {}
+
+    # Try to get the tree
+    treename="limit"
+    tree = rootfile.Get(treename)
+    if not tree or not isinstance(tree, ROOT.TTree) or tree is None:
+        print("Error: Tree '", treename, "' not found or is not a valid TTree object in the file '", filename ,"'.")
+        return {}
+
+    dict = {}
+    tree.GetEntry(0)
+    dict["mass"]=tree.mh
+
+    if hasExpected:
+        dict["exp-2"]=tree.limit
+        tree.GetEntry(1)
+        dict["exp-1"]=tree.limit
+        tree.GetEntry(2)
+        dict["exp-med"]=tree.limit
+        tree.GetEntry(3)
+        dict["exp+1"]=tree.limit
+        tree.GetEntry(4)
+        dict["exp+2"]=tree.limit
+        tree.GetEntry(5)
+        dict["obs"]=tree.limit
+    else:
+        dict["obs"]=tree.limit
+
+    return dict
+
+
+
+
+
+"""
+Interpolate a TH2D histogram to a new one with finer binning using SciPy.
+
+Parameters:
+    hist (ROOT.TH2D): The original histogram.
+    new_nbins_x (int): Number of bins in X for the new histogram.
+    new_nbins_y (int): Number of bins in Y for the new histogram.
+
+Returns:
+    ROOT.TH2D: A new histogram with interpolated data and finer binning.
+"""
+
+def interpolate_th2d(hist, new_nbins_x, new_nbins_y):
+    # Get original bin edges
+    nx = hist.GetNbinsX()
+    ny = hist.GetNbinsY()
+    x_edges = np.array([hist.GetXaxis().GetBinLowEdge(i+1) for i in range(nx)] + [hist.GetXaxis().GetBinUpEdge(nx)])
+    y_edges = np.array([hist.GetYaxis().GetBinLowEdge(i+1) for i in range(ny)] + [hist.GetYaxis().GetBinUpEdge(ny)])
+    x_centers = 0.5 * (x_edges[:-1] + x_edges[1:])
+    y_centers = 0.5 * (y_edges[:-1] + y_edges[1:])
+
+    # Get Z values into a 2D numpy array
+    z_vals = np.array([[hist.GetBinContent(i+1, j+1) for j in range(ny)] for i in range(nx)])
+
+    # Create the interpolator
+    interpolator = interp.RectBivariateSpline(x_centers, y_centers, z_vals)
+
+    # Define new bin edges
+    x_min, x_max = x_edges[0], x_edges[-1]
+    y_min, y_max = y_edges[0], y_edges[-1]
+    new_hist = ROOT.TH2D(hist.GetName()+"_interp", "Interpolated Histogram",
+                         new_nbins_x, x_min, x_max,
+                         new_nbins_y, y_min, y_max)
+
+    # Fill new histogram with interpolated values
+    for i in range(1, new_nbins_x+1):
+        x = new_hist.GetXaxis().GetBinCenter(i)
+        for j in range(1, new_nbins_y+1):
+            y = new_hist.GetYaxis().GetBinCenter(j)
+            z_interp = interpolator(x, y)[0][0]
+            new_hist.SetBinContent(i, j, z_interp)
+
+    return new_hist

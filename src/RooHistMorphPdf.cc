@@ -16,6 +16,7 @@ RooHistMorphPdf::RooHistMorphPdf(const char *name, const char *title, RooAbsReal
   TString newname(name);
   newname += "_RooHistMorphPdf";
   _hist=dynamic_cast<TH2*>(hist->Clone(newname));
+  _hist->SetDirectory(0);
 }
 
 RooHistMorphPdf::RooHistMorphPdf(const RooHistMorphPdf& other, const char* name) : RooAbsPdf(other, name), _x("x", this, other._x), _p("p", this, other._p) {
