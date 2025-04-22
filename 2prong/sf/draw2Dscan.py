@@ -4,7 +4,7 @@ import ROOT
 from scipy.interpolate import griddata
 import numpy as np
 import argparse
-
+import common.common as common
 
 
 
@@ -17,24 +17,16 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser(formatter_class=argparse.ArgumentDefaultsHelpFormatter)
     parser.add_argument("workspacefn", help="root file containing the workspace to draw")
     parser.add_argument("--year", help="data year the file comes from")
-    parser.add_argument('--xrange', nargs=3, metavar=('PARAM', 'LOW', 'HIGH'),
-                        help='Specify x-axis parameter name with low and high values')
-    parser.add_argument('--yrange', nargs=3, metavar=('PARAM', 'LOW', 'HIGH'),
-                        help='Specify y-axis parameter name with low and high values')
+    parser.add_argument('--xvar', help='Specify x-axis parameter name')
+    parser.add_argument('--yvar', help='Specify y-axis parameter name')
 
     args=parser.parse_args()
-    xname, xlo, xhi= args.xrange
-    yname, ylo, yhi= args.yrange
-    xlo=float(xlo)
-    xhi=float(xhi)
-    ylo=float(ylo)
-    yhi=float(yhi)
 
     axisdict = { "r" : ["efficiency scale factor", 1.0], "shiftPar" : ["mass scale shift [GeV]", 0.0], "stretchPar" : ["mass resolution",1.0] }
-    xtitle=axisdict[xname][0]
-    ytitle=axisdict[yname][0]
-    SMx=axisdict[xname][1]
-    SMy=axisdict[yname][1]
+    xtitle=axisdict[args.xvar][0]
+    ytitle=axisdict[args.yvar][0]
+    SMx=axisdict[args.xvar][1]
+    SMy=axisdict[args.yvar][1]
     
     
     ROOT.gROOT.SetBatch(True)
@@ -43,19 +35,21 @@ if __name__ == "__main__":
     f = ROOT.TFile(args.workspacefn)
     t = f.Get("limit")
 
-    # Number of points in interpolation
-    n_points = 1000
-    x_range = [xlo, xhi]
-    y_range = [ylo, yhi]
-
     # Number of bins in plot
-    n_bins = 60
+    n_bins = 50
 
     x, y, deltaNLL = [], [], []
     for ev in t:
-        x.append(getattr(ev, xname))
-        y.append(getattr(ev, yname))
+        x.append(getattr(ev, args.xvar))
+        y.append(getattr(ev, args.yvar))
         deltaNLL.append(getattr(ev, "deltaNLL"))
+    xlo=min(x)
+    xhi=max(x)
+    ylo=min(y)
+    yhi=max(y)
+
+    # Number of points in interpolation
+    n_points = 1000
 
     # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
     # Do interpolation
@@ -63,7 +57,7 @@ if __name__ == "__main__":
     dnll = np.asarray(deltaNLL)
     points = np.array([x, y]).transpose()
     # Set up grid
-    grid_x, grid_y = np.mgrid[x_range[0] : x_range[1] : n_points * 1j, y_range[0] : y_range[1] : n_points * 1j]
+    grid_x, grid_y = np.mgrid[xlo : xhi : n_points * 1j, ylo : yhi : n_points * 1j]
     grid_vals = griddata(points, dnll, (grid_x, grid_y), "cubic")
 
     # Remove NANS
@@ -73,7 +67,7 @@ if __name__ == "__main__":
     # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
     
     # Define Profile2D histogram
-    h2D = ROOT.TProfile2D("h", "h", n_bins, x_range[0], x_range[1], n_bins, y_range[0], y_range[1])
+    h2D = ROOT.TProfile2D("h", "h", n_bins, xlo, xhi, n_bins, ylo, yhi)
 
     bbxvals=[]
     bbyvals=[]
@@ -90,17 +84,18 @@ if __name__ == "__main__":
     parxerr = round((bb[2]-bb[0])/2,3)
     pary = round((bb[3]+bb[1])/2,3)
     paryerr = round((bb[3]-bb[1])/2,3)
-    print(xname+" = "+str(parx)+" +/- "+str(parxerr))
-    print(yname+" = "+str(pary)+" +/- "+str(paryerr))
-    
+    print(args.xvar+" = "+str(parx)+" +/- "+str(parxerr))
+    print(args.yvar+" = "+str(pary)+" +/- "+str(paryerr))
+
+
     # Loop over bins: if content = 0 then set 999
     for ibin in range(1, h2D.GetNbinsX() + 1):
         for jbin in range(1, h2D.GetNbinsY() + 1):
             if h2D.GetBinContent(ibin, jbin) == 0:
                 xc = h2D.GetXaxis().GetBinCenter(ibin)
                 yc = h2D.GetYaxis().GetBinCenter(jbin)
-        h2D.Fill(xc, yc, 999)
-
+                h2D.Fill(xc, yc, 999)
+    
     # Set up canvas
     canv = ROOT.TCanvas("canv", "canv", 600, 600)
     canv.SetTickx()
@@ -109,8 +104,8 @@ if __name__ == "__main__":
     canv.SetLeftMargin(0.115)
     canv.SetBottomMargin(0.115)
     # Extract binwidth
-    xw = (x_range[1] - x_range[0]) / n_bins
-    yw = (y_range[1] - y_range[0]) / n_bins
+    xw = (xhi - xlo) / n_bins
+    yw = (yhi - ylo) / n_bins
 
     # Set histogram properties
     h2D.SetContour(999)
@@ -118,12 +113,12 @@ if __name__ == "__main__":
     h2D.GetXaxis().SetTitle(xtitle)
     h2D.GetXaxis().SetTitleSize(0.05)
     h2D.GetXaxis().SetTitleOffset(0.9)
-    h2D.GetXaxis().SetRangeUser(x_range[0], x_range[1] - xw)
+    h2D.GetXaxis().SetRangeUser(xlo, xhi - xw)
 
     h2D.GetYaxis().SetTitle(ytitle)
     h2D.GetYaxis().SetTitleSize(0.05)
     h2D.GetYaxis().SetTitleOffset(1.05)
-    h2D.GetYaxis().SetRangeUser(y_range[0], y_range[1] - yw)
+    h2D.GetYaxis().SetRangeUser(ylo, yhi - yw)
     
     h2D.GetZaxis().SetTitle("-2 #Delta ln L")
     h2D.GetZaxis().SetTitleSize(0.05)
@@ -210,8 +205,7 @@ if __name__ == "__main__":
     lumitxt = ROOT.TLatex()
     lumitxt.SetTextFont(42)
     lumitxt.SetTextSize(0.05)
-    if args.year=="2018":
-        lumitxt.DrawLatexNDC(0.58,0.915,"59 fb^{-1} (13 TeV)")
+    lumitxt.DrawLatexNDC(0.58,0.915,common.getLumiStr(args.year)+" fb^{-1} (13 TeV)")
 
     canv.Update()
-    canv.SaveAs("./plots/"+xname+"_"+yname+"_"+args.year+".pdf")
+    canv.SaveAs("./plots/"+args.xvar+"_"+args.yvar+"_"+args.year+".pdf")

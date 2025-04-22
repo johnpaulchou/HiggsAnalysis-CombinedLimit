@@ -354,3 +354,22 @@ def interpolate_th2d(hist, new_nbins_x, new_nbins_y):
             new_hist.SetBinContent(i, j, z_interp)
 
     return new_hist
+
+
+
+
+def getLumiStr(year):
+    if year=="2018":
+        return "59.8"
+    elif year=="2017":
+        return "41.4"
+    elif year=="2016pre":
+        return "19.4"
+    elif year=="2016post":
+        return "16.8"
+    elif year=="2016":
+        return "36.3"
+    elif year=="all":
+        return "138"
+
+    

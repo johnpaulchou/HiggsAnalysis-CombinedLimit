@@ -151,8 +151,7 @@ if __name__ == "__main__":
         lumitxt = ROOT.TLatex()
         lumitxt.SetTextFont(42)
         lumitxt.SetTextSize(0.05)
-        if args.year=="2018":
-            lumitxt.DrawLatexNDC(0.68,0.915,"59 fb^{-1} (13 TeV)")
+        lumitxt.DrawLatexNDC(0.68,0.915,common.getLumiStr(args.year)+" fb^{-1} (13 TeV)")
         txt = ROOT.TLatex()
         txt.SetTextFont(42)
         txt.SetTextSize(0.05)

@@ -16,15 +16,30 @@ minm2p = 0.0
 maxm2p = 3.5
 
 # signal scale (from Brandon)
-sigScale=1.8433
+def getSigScale(year):
+    if year=="2018":
+        return 1.8433
+    elif year=="2017":
+        return 1.2761
+    elif year=="2016":
+        return 1.1189
 
 # where to read things from
 def getDataFilename(year):
-#    return "./input/data_newptbins_"+str(year)+".root"
-    return "./input/data_wsmear_"+str(year)+".root"
+    if year=="2018":
+        return "./input/data_wsmear_2018.root"
+    elif year=="2017":
+        return "./input/data_2017_apr21.root"
+    elif year=="2016":
+        return "./input/data_2016hadd_apr22.root"
+        
 def getSignalFilename(year):
-#    return "./input/dysig_newptbins_"+str(year)+".root"
-    return "./input/dysig_wsmear_"+str(year)+".root"
+    if year=="2018":
+        return "./input/dysig_wsmear_2018.root"
+    elif year=="2017":
+        return "./input/dy_2017_apr21.root"
+    elif year=="2016":
+        return "./input/dy_2016hadd_apr22.root"
 
 
 ###############################################################
@@ -61,6 +76,8 @@ if __name__ == "__main__":
         templateTH1 = common.get_TH1_from_file(datafilename, "plots/ANTI_TPM_TauCand_massPi0_"+ptbin+"_ZWIN")
         if templateTH1.GetBinContent(1)==0: templateTH1.SetBinContent(1,1.0)
         if templateTH1.GetBinContent(2)==0: templateTH1.SetBinContent(2,1.0)
+        if templateTH1.GetBinContent(13)==0: templateTH1.SetBinContent(13,1.0)
+        if templateTH1.GetBinContent(14)==0: templateTH1.SetBinContent(14,1.0)
         newName = "temp_"+ptbin
         templateDataHist = ROOT.RooDataHist(newName+"_dh",newName+"_dh",ROOT.RooArgList(m2p),templateTH1)
         a1=ROOT.RooRealVar(newName+"_a1",newName+"_a1",0,-0.6,0.6)
@@ -84,7 +101,7 @@ if __name__ == "__main__":
         signalTH1.SetBinContent(14,0.0)
 
 
-        signalTH1.Scale(sigScale)
+        signalTH1.Scale(getSigScale(args.year))
         newName = "signal_"+ptbin
         signalIntegral=signalTH1.Integral()
         signalDataHist = ROOT.RooDataHist(newName+"_dh",newName+"_dh",ROOT.RooArgList(m2p),signalTH1)
