@@ -47,9 +47,10 @@ if __name__ == "__main__":
         pmass=files.pmasspoints[pindex]
         obs=dict["obs"]
         exp=dict["exp-med"]
-        for skip in args.suppressPoints:
-            if skip==imass:
-                obs=exp
+        if args.suppressPoints is not None:
+            for skip in args.suppressPoints:
+                if skip==imass:
+                    obs=exp
 #        print("windex="+str(windex)+" pindex="+str(pindex)+" obs="+str(dict["obs"]))
         hObs.SetBinContent(windex+1,pindex+1,math.log10(obs))
         hExp.SetBinContent(windex+1,pindex+1,math.log10(exp))
@@ -209,39 +210,3 @@ if __name__ == "__main__":
     can3.SaveAs("resobsxs.pdf")
 
     
-"""
-    # Draw Significance
-    
-    can3 = ROOT.TCanvas()
-    can3.SetFillColor(0)
-    can3.SetBorderMode(0)
-    can3.SetFrameFillStyle(0)
-    can3.SetFrameBorderMode(0)
-    can3.SetTickx(0)
-    can3.SetTicky(0)
-    can3.SetMargin(0.15,0.20,0.15,0.15)
-    can3.cd()
-    hSig.Draw("colz")
-    hSig.GetXaxis().SetTitle("m_{#omega} [GeV]")
-    hSig.GetYaxis().SetTitle("m_{#phi} [GeV]")
-    hSig.GetZaxis().SetTitle("Significance (z-score)")
-    hSig.SetMinimum(-0.1)
-    hSig.SetMaximum(5.0)
-
-    cmstxt = ROOT.TLatex()
-    cmstxt.SetTextFont(61)
-    cmstxt.SetTextSize(0.07)
-    cmstxt.DrawLatexNDC(0.15,0.87,"CMS")
-    extratxt = ROOT.TLatex()
-    extratxt.SetTextFont(52)
-    extratxt.SetTextSize(0.05)
-    extratxt.DrawLatexNDC(0.26,0.87,"Preliminary")
-    lumitxt = ROOT.TLatex()
-    lumitxt.SetTextFont(42)
-    lumitxt.SetTextSize(0.05)
-    lumitxt.DrawLatexNDC(0.63,0.87,"138 fb^{-1} (13 TeV)")
-    
-    can3.Update()
-    can3.Draw()
-    can3.SaveAs("ressig.pdf")
-"""
