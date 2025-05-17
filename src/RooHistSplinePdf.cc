@@ -11,6 +11,7 @@ using namespace std;
 using namespace RooFit;
 
 ClassImp(RooHistSplinePdf)
+ClassImp(RooHistBBPdf)
 
 RooHistSplinePdf::RooHistSplinePdf(const char *name, const char *title, const RooArgSet& vars,
 				   const RooDataHist& dhist, Int_t intOrder, const RooArgList &coefList, bool fixEndpoints)
@@ -79,4 +80,50 @@ double RooHistSplinePdf::evaluate() const
   if(scale<0.0) scale=0.0;
   
   return scale*histeval;
+}
+
+
+//---------------------------------------------------------------------------
+
+
+RooHistBBPdf::RooHistBBPdf(const char *name, const char *title, const RooArgSet& vars,
+				   const RooDataHist& dhist, Int_t intOrder, const RooArgList &coefList)
+: RooHistPdf(name, title, vars, dhist, intOrder),
+  _coefList("coefList", "List of coefficients", this) {
+
+  if(_histObsList.size()!=1 || _pdfObsList.size()!=1) {
+    coutE(InputArguments) << "RooHistBBPdf::ctor(" << GetName()
+           << ") Can only run with 1D histogram for now." << std::endl;
+    assert(0);
+  }
+
+  _coefList.add(coefList);
+}
+
+
+
+double RooHistBBPdf::evaluate() const
+{
+  // evaluate the histogram first
+  double histeval=RooHistPdf::evaluate();
+
+  // get the position to evaluate at
+  RooRealVar *param=dynamic_cast<RooRealVar*>(_histObsList[0]);
+
+  // get the value of the histogram *before* the bin width correction
+  double weight=_dataHist->weight(RooArgSet(*param),0,false);
+  double err=1./sqrt(weight);
+  
+  // get the index of the histogram bin
+  int index=_dataHist->getIndex(RooArgSet(*param));
+  
+  // scale by the coefficient
+  double scale=static_cast<RooAbsReal &>(_coefList[index]).getVal();
+
+  double result = (scale*err+1)*histeval;
+  //  std::cout << "histeval=" << histeval << "; weight=" << weight << "; index="<< index << "; scale=" << scale << "; err=" << err << "; result=" << result << std::endl;
+
+  if (weight<4) return histeval;
+  if (result>0.01) return result;
+  return 0.01;
 }
