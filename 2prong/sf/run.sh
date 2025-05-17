@@ -15,11 +15,11 @@ do
     combine -M MultiDimFit newcard.root --saveWorkspace --cminDefaultMinimizerStrategy 0 -v 0
     ./drawfits.py higgsCombineTest.MultiDimFit.mH120.root --year $year
 
-    combine -M MultiDimFit newcard.root --algo grid --points 225 --cminDefaultMinimizerStrategy 0 -P r -P shiftPar --setParameterRanges r=$rLo,$rHi:shiftPar=$shiftLo,$shiftHi
+    combine -M MultiDimFit newcard.root --algo grid --points 100 --cminDefaultMinimizerStrategy 0 -P r -P shiftPar --setParameterRanges r=$rLo,$rHi:shiftPar=$shiftLo,$shiftHi
     ./draw2Dscan.py higgsCombineTest.MultiDimFit.mH120.root --year $year --xvar r --yvar shiftPar
-    combine -M MultiDimFit newcard.root --algo grid --points 225 --cminDefaultMinimizerStrategy 0 -P r -P stretchPar --setParameterRanges r=$rLo,$rHi:stretchPar=$stretchLo,$stretchHi
+    combine -M MultiDimFit newcard.root --algo grid --points 100 --cminDefaultMinimizerStrategy 0 -P r -P stretchPar --setParameterRanges r=$rLo,$rHi:stretchPar=$stretchLo,$stretchHi
     ./draw2Dscan.py higgsCombineTest.MultiDimFit.mH120.root --year $year --xvar r --yvar stretchPar
-    combine -M MultiDimFit newcard.root --algo grid --points 225 --cminDefaultMinimizerStrategy 0 -P shiftPar -P stretchPar --setParameterRanges shiftPar=$shiftLo,$shiftHi:stretchPar=$stretchLo,$stretchHi
+    combine -M MultiDimFit newcard.root --algo grid --points 100 --cminDefaultMinimizerStrategy 0 -P shiftPar -P stretchPar --setParameterRanges shiftPar=$shiftLo,$shiftHi:stretchPar=$stretchLo,$stretchHi
     ./draw2Dscan.py higgsCombineTest.MultiDimFit.mH120.root --year $year --xvar shiftPar --yvar stretchPar
 
 done

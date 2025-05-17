@@ -17,7 +17,7 @@ rate            1.0                1.0
 ---------------------------------------------
 shiftPar              flatParam
 stretchPar            flatParam
-temp_BIN_a1    	      flatParam
-temp_BIN_a2    	      flatParam
-temp_BIN_a3    	      flatParam
-temp_BIN_a4    	      flatParam
+temp_BIN_a1           flatParam
+temp_BIN_a2           flatParam
+temp_BIN_a3           flatParam
+temp_BIN_a4           flatParam
