@@ -14,7 +14,7 @@ if __name__ == "__main__":
     newfilenames = []
 
     # skip the first two bins if we're doing the control region
-    for bin in files.m2pbins:
+    for bin in range(files.num_m2pbins):
         for eta in files.etabins:
             oldfile = open(cardname, "r")
             newfile = tempfile.NamedTemporaryFile(delete=False, mode='wt', dir='.')

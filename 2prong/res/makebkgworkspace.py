@@ -27,9 +27,9 @@ if __name__ == "__main__":
         elif args.region==files.regions[1]: datahist2d=common.get_TH1_from_file(files.datafilename, "plots/recomass_"+etabin)
         
         # loop over the 2-prong mass slices
-        for bin in files.m2pbins:
-            label = "bin"+str(bin)+etabin
-            datahist1d = datahist2d.ProjectionY("_py"+label,bin,bin)
+        for binindex in range(files.num_m2pbins):
+            label = "bin"+str(binindex)+etabin
+            datahist1d = datahist2d.ProjectionY("_py"+label,files.m2pbin_boundaries[binindex],files.m2pbin_boundaries[binindex+1]-1)
             datanorm=datahist1d.Integral(1,datahist1d.GetNbinsX())
 
             # convert histogram into a RooDataHist

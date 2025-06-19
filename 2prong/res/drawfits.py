@@ -37,7 +37,7 @@ if __name__ == "__main__":
     # create S/S+B-weighted histograms
     # first I need to grab a graph so I can use the same binning
     if args.drawSignal:
-        datagraph_ssb,var_ssb=common.get_datagraph_from_workspace(bkgws, "dataHist_bin"+str(files.m2pbins[0])+files.etabins[0])
+        datagraph_ssb,var_ssb=common.get_datagraph_from_workspace(bkgws, "dataHist_bin0"+files.etabins[0])
         datagraph_ssb=datagraph_ssb.Clone("datagraph_ssb")
         for i in range(datagraph_ssb.GetN()):       # zero out the y values and errors
             datagraph_ssb.SetPointY(i,0.)
@@ -50,7 +50,7 @@ if __name__ == "__main__":
     for etabin in files.etabins:
         
         # loop over the m2pbins
-        for m2pbin in files.m2pbins:
+        for m2pbin in range(files.num_m2pbins):
 
             # create the canvas and subdivide into a top and bottom pad
             can=ROOT.TCanvas("fits_"+region+"_"+etabin+"_"+str(m2pbin), "c",300,300)
@@ -237,8 +237,8 @@ if __name__ == "__main__":
 
             # need to get a 2D histogram with the right binning
             hist2d=common.get_TH1_from_file(files.sigworkspacefn,"recomass_barrelm")
-            m2plo = hist2d.GetXaxis().GetBinLowEdge(m2pbin)
-            m2phi = hist2d.GetXaxis().GetBinUpEdge(m2pbin)
+            m2plo = hist2d.GetXaxis().GetBinLowEdge(files.m2pbin_boundaries[m2pbin])
+            m2phi = hist2d.GetXaxis().GetBinUpEdge(files.m2pbin_boundaries[m2pbin+1]-1)
             m2ptext=ROOT.TLatex()
             m2ptext.SetTextFont(42)
             m2ptext.SetTextSize(0.045)

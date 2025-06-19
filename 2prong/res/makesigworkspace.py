@@ -118,9 +118,9 @@ if __name__ == "__main__":
         
             # create PDFs for different m2p slices
             fileout.cd()
-            for bin in files.m2pbins:
-                label = "bin"+str(bin)+etabin
-                projy=morphhist.ProjectionY("_py"+label,bin,bin)
+            for binindex in range(files.num_m2pbins):
+                label = "bin"+str(binindex)+etabin
+                projy=morphhist.ProjectionY("_py"+label,files.m2pbin_boundaries[binindex],files.m2pbin_boundaries[binindex+1]-1)
                 accnum = projy.Integral(1,projy.GetXaxis().GetNbins())
                 accden = morphhist.Integral(1,morphhist.GetXaxis().GetNbins(),1,morphhist.GetYaxis().GetNbins())
                 dh=ROOT.RooDataHist("dh"+label,"dh"+label,files.m2pg,projy)
