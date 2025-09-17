@@ -6,17 +6,21 @@ import argparse
 import numpy
 
 # regions to consider
+sigtypes = ["eta","etaprime"]
 regions = ["sideband","signal"]
 etabins = ["barrel","endcap"]
-m2pbin_boundaries = (1,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,27)
-num_m2pbins = len(m2pbin_boundaries)-1
+eta_m2pbin_boundaries = (1,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,27)
+etaprime_m2pbin_boundaries = (1,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,27)
+eta_num_m2pbins = len(eta_m2pbin_boundaries)-1
+etaprime_num_m2pbins = len(etaprime_m2pbin_boundaries)-1
 
 # setup observables
 m2pg = ROOT.RooRealVar("m2pg","Invariant mass of the 2-prong and photon",500,3998)
 m2p = ROOT.RooRealVar("m2p","Invariant mass of the 2-prong",0.4,5.33)
 
 # list of systematics
-systs = [ "" ]
+systs = [ "", "_shiftUp", "_shiftDown", "_stretchUp", "_stretchDown", "_scaleUp", "_scaleDown", "_resUp", "_resDown" ]
+#systs = [ "" ]
 
 # signal and background workspace filenames
 sigworkspacefn="sigworkspace.root"
@@ -28,7 +32,7 @@ workspacename="w"
 #datafilename = "./input/HISTO_photon2017.root"
 #datafilename = "./input/HISTO_photon2016pre.root"
 #datafilename = "./input/HISTO_photon2016post.root"
-datafilename = "./input/photon_full.root"
+datafilename = "./input/egamma2018full.root"
 
 # luminosity for the dataset
 luminosity=138
@@ -39,7 +43,7 @@ gengridp = ( (1000., "1000"), (2500., "2500") )
 genfilenames = [ [""]*len(gengridw) for i in range(len(gengridp))]
 for i in range(len(gengridw)):
     for j in range(len(gengridp)):
-        genfilenames[i][j]="./input/signal_2x2box_"+gengridp[j][1]+"_"+gengridw[i][1]+"_200k_events.root"
+        genfilenames[i][j]="./input/signal_"+gengridp[j][1]+"_"+gengridw[i][1]+".root"
 
 # omega and phi mass points to run over
 wmasspoints = numpy.linspace(1,2,11)

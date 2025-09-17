@@ -13,6 +13,7 @@ if __name__ == "__main__":
     # setup and use the parser
     parser = argparse.ArgumentParser(formatter_class=argparse.ArgumentDefaultsHelpFormatter)
     parser.add_argument('--region',help='region to run over',choices=files.regions,default=files.regions[0])
+    parser.add_argument("--sigtype",help="signal type that we're using",choices=files.sigtypes, default=files.sigtypes[0])
     args=parser.parse_args()
     
     # open the file and create the workspace
@@ -23,13 +24,22 @@ if __name__ == "__main__":
     for etabin in files.etabins:
 
         # get the 2d data histogram
-        if args.region==files.regions[0]: datahist2d=common.get_TH1_from_file(files.datafilename, "plots/recomass_sideband_"+etabin)
-        elif args.region==files.regions[1]: datahist2d=common.get_TH1_from_file(files.datafilename, "plots/recomass_"+etabin)
+        if args.sigtype==files.sigtypes[0]:
+            tempname="plots/recomass"
+            boundaries=files.eta_m2pbin_boundaries
+            nboundaries=files.eta_num_m2pbins
+        elif args.sigtype==files.sigtypes[1]:
+            tempname="plots/recomassprime"
+            boundaries=files.etaprime_m2pbin_boundaries
+            nboundaries=files.etaprime_num_m2pbins
+            
+        if args.region==files.regions[0]: datahist2d=common.get_TH1_from_file(files.datafilename, tempname+"_sideband_"+etabin)
+        elif args.region==files.regions[1]: datahist2d=common.get_TH1_from_file(files.datafilename, tempname+"_"+etabin)
         
         # loop over the 2-prong mass slices
-        for binindex in range(files.num_m2pbins):
+        for binindex in range(nboundaries):
             label = "bin"+str(binindex)+etabin
-            datahist1d = datahist2d.ProjectionY("_py"+label,files.m2pbin_boundaries[binindex],files.m2pbin_boundaries[binindex+1]-1)
+            datahist1d = datahist2d.ProjectionY("_py"+label,boundaries[binindex],boundaries[binindex+1]-1)
             datanorm=datahist1d.Integral(1,datahist1d.GetNbinsX())
 
             # convert histogram into a RooDataHist
@@ -87,4 +97,5 @@ if __name__ == "__main__":
     fileout.cd()
     w.Write()
     (ROOT.TNamed("region",args.region)).Write()
+    (ROOT.TNamed("sigtype",args.sigtype)).Write()
     fileout.Close()

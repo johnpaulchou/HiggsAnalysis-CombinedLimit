@@ -27,6 +27,13 @@ if __name__ == "__main__":
     imass = common.get_tnamed_title_from_file(files.sigworkspacefn, "imass")
     wmass = common.get_tnamed_title_from_file(files.sigworkspacefn, "wmass")
     pmass = common.get_tnamed_title_from_file(files.sigworkspacefn, "pmass")
+    sigtype = common.get_tnamed_title_from_file(files.sigworkspacefn, "sigtype")
+    if sigtype==files.sigtypes[0]:
+        boundaries=files.eta_m2pbin_boundaries
+        num_m2pbins=files.eta_num_m2pbins
+    else:
+        boundaries=files.etaprime_m2pbin_boundaries
+        num_m2pbins=files.etaprime_num_m2pbins
 
     # general style commands
     ROOT.gStyle.SetErrorX(0)
@@ -50,10 +57,10 @@ if __name__ == "__main__":
     for etabin in files.etabins:
         
         # loop over the m2pbins
-        for m2pbin in range(files.num_m2pbins):
+        for m2pbin in range(num_m2pbins):
 
             # create the canvas and subdivide into a top and bottom pad
-            can=ROOT.TCanvas("fits_"+region+"_"+etabin+"_"+str(m2pbin), "c",300,300)
+            can=ROOT.TCanvas("fits_"+sigtype+"_"+region+"_"+etabin+"_"+str(m2pbin), "c",300,300)
             can.cd()
             pad = ROOT.TPad("pad"+etabin+str(m2pbin),"pad",0,0.25,1,1)
             pad.SetMargin(0.15,0.08,0.02,0.1) #L, R, B, T
@@ -236,9 +243,12 @@ if __name__ == "__main__":
             lumitxt.DrawLatexNDC(0.68,0.915,str(files.luminosity)+" fb^{-1} (13 TeV)")
 
             # need to get a 2D histogram with the right binning
-            hist2d=common.get_TH1_from_file(files.sigworkspacefn,"recomass_barrelm")
-            m2plo = hist2d.GetXaxis().GetBinLowEdge(files.m2pbin_boundaries[m2pbin])
-            m2phi = hist2d.GetXaxis().GetBinUpEdge(files.m2pbin_boundaries[m2pbin+1]-1)
+            if sigtype==files.sigtypes[0]: hist2d=common.get_TH1_from_file(files.sigworkspacefn,"recomass_barrelm")
+
+            else:                           hist2d=common.get_TH1_from_file(files.sigworkspacefn,"recomassprime_barrelm")
+
+            m2plo = hist2d.GetXaxis().GetBinLowEdge(boundaries[m2pbin])
+            m2phi = hist2d.GetXaxis().GetBinUpEdge(boundaries[m2pbin+1]-1)
             m2ptext=ROOT.TLatex()
             m2ptext.SetTextFont(42)
             m2ptext.SetTextSize(0.045)
@@ -253,7 +263,10 @@ if __name__ == "__main__":
             pull.SetMarkerSize(0.3)
             pull.SetMarkerStyle(20)
             pull.SetLineWidth(2)
-            pull.GetXaxis().SetTitle("M(2p+#gamma) [GeV]")
+            if sigtype==files.sigtypes[0]:
+                pull.GetXaxis().SetTitle("M(2p+#gamma) (#eta hypo.) [GeV]")
+            else:
+                pull.GetXaxis().SetTitle("M(2p+#gamma) (#eta' hypo.) [GeV]")
             pull.GetXaxis().SetLabelSize(0.13)
             pull.GetXaxis().SetTitleSize(0.13)
             pull.GetXaxis().SetTitleOffset(0.85)

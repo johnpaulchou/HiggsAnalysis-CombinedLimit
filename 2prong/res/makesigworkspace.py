@@ -22,6 +22,7 @@ def getAcc(filename, histnames, normhistname):
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(formatter_class=argparse.ArgumentDefaultsHelpFormatter)
     parser.add_argument('--imass', help="index of the job to run (0-"+str(files.npoints-1)+")", type=int)
+    parser.add_argument("--sigtype",help="signal type that we're using",choices=files.sigtypes,default=files.sigtypes[0])
     args=parser.parse_args()
 
     (windex,pindex)=files.indexpair(args.imass)
@@ -58,11 +59,20 @@ if __name__ == "__main__":
     xsec.setConstant(True)
     print("The interpolated cross section is "+str(xsec.getValV())+" fb.")
 
+    if args.sigtype==files.sigtypes[0]:
+        tempname="plots/recomass"
+        boundaries=files.eta_m2pbin_boundaries
+        nboundaries=files.eta_num_m2pbins
+    elif args.sigtype==files.sigtypes[1]:
+        tempname="plots/recomassprime"
+        boundaries=files.etaprime_m2pbin_boundaries
+        nboundaries=files.etaprime_num_m2pbins
+    
     # interpolate the acceptance*efficiency
-    accA=getAcc(fnA, ('plots/recomass_barrel','plots/recomass_endcap'), "plots/cutflow")
-    accB=getAcc(fnB, ('plots/recomass_barrel','plots/recomass_endcap'), "plots/cutflow")
-    accC=getAcc(fnC, ('plots/recomass_barrel','plots/recomass_endcap'), "plots/cutflow")
-    accD=getAcc(fnD, ('plots/recomass_barrel','plots/recomass_endcap'), "plots/cutflow")
+    accA=getAcc(fnA, (tempname+'_barrel',tempname+'_endcap'), "plots/cutflow")
+    accB=getAcc(fnB, (tempname+'_barrel',tempname+'_endcap'), "plots/cutflow")
+    accC=getAcc(fnC, (tempname+'_barrel',tempname+'_endcap'), "plots/cutflow")
+    accD=getAcc(fnD, (tempname+'_barrel',tempname+'_endcap'), "plots/cutflow")
     z5=(accC-accA)/(tymax-tymin)*pmass+(accA*tymax-accC*tymin)/(tymax-tymin)
     z6=(accD-accB)/(tymax-tymin)*pmass+(accB*tymax-accD*tymin)/(tymax-tymin)
     acc=(z6-z5)/(txmax-txmin)*wmass+(z5*txmax-z6*txmin)/(txmax-txmin)
@@ -81,10 +91,10 @@ if __name__ == "__main__":
         for etabin in files.etabins:
 
             # get the 2D histograms
-            hA=common.get_TH1_from_file(fnA, "plots/recomass_"+etabin+syst)
-            hB=common.get_TH1_from_file(fnB, "plots/recomass_"+etabin+syst)
-            hC=common.get_TH1_from_file(fnC, "plots/recomass_"+etabin+syst)
-            hD=common.get_TH1_from_file(fnD, "plots/recomass_"+etabin+syst)
+            hA=common.get_TH1_from_file(fnA, tempname+"_"+etabin+syst)
+            hB=common.get_TH1_from_file(fnB, tempname+"_"+etabin+syst)
+            hC=common.get_TH1_from_file(fnC, tempname+"_"+etabin+syst)
+            hD=common.get_TH1_from_file(fnD, tempname+"_"+etabin+syst)
 
             # create RooDataHists
             dhA=ROOT.RooDataHist(hA.GetName()+"A_dh","2D signal RooDataHist",ROOT.RooArgList(files.m2p,files.m2pg),hA)
@@ -118,9 +128,9 @@ if __name__ == "__main__":
         
             # create PDFs for different m2p slices
             fileout.cd()
-            for binindex in range(files.num_m2pbins):
-                label = "bin"+str(binindex)+etabin
-                projy=morphhist.ProjectionY("_py"+label,files.m2pbin_boundaries[binindex],files.m2pbin_boundaries[binindex+1]-1)
+            for binindex in range(nboundaries):
+                label = "bin"+str(binindex)+etabin+syst
+                projy=morphhist.ProjectionY("_py"+label,boundaries[binindex],boundaries[binindex+1]-1)
                 accnum = projy.Integral(1,projy.GetXaxis().GetNbins())
                 accden = morphhist.Integral(1,morphhist.GetXaxis().GetNbins(),1,morphhist.GetYaxis().GetNbins())
                 dh=ROOT.RooDataHist("dh"+label,"dh"+label,files.m2pg,projy)
@@ -145,6 +155,7 @@ if __name__ == "__main__":
     (ROOT.TNamed("imass",str(args.imass))).Write()
     (ROOT.TNamed("wmass",str(wmass))).Write()
     (ROOT.TNamed("pmass",str(pmass))).Write()
+    (ROOT.TNamed("sigtype",args.sigtype)).Write()
     fileout.Close()
 
     
