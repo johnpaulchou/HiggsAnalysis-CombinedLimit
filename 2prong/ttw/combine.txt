@@ -13,9 +13,9 @@ observation     -1
 bin             BBIN               BBIN
 process         sig                bkg
 process         0                  1
-rate            1.0                1.0
+rate            1.23               1.0
 ---------------------------------------------
-lumi                  lnN         1.016      1.0
+lumi                  lnN         1.18       -
 MuonReco              shape       1          -
 MuonId                shape       1          -
 MuonIso               shape       1          -
@@ -24,9 +24,19 @@ BtagLightCorrelated   shape       1          -
 BtagBCCorrelated      shape       1          -
 BtagLightUncorrelated shape       1          -
 BtagBCUncorrelated    shape       1          -
+JEC                   shape       1          -
+JER                   shape       1          -
+MuonRoc               shape       1          -
+MuonReso              shape       1          -
+Pileup                shape       1          -
+TwoProngMassReso      shape       1          -
+TwoProngMassScale     shape       1          -
+TwoProngPtReso        shape       1          -
+TwoProngPtScale       shape       1          -
 temp_BIN_a1    	      flatParam
 temp_BIN_a2    	      flatParam
 temp_BIN_a3    	      flatParam
 temp_BIN_a4    	      flatParam
 temp_BIN_a5    	      flatParam
+temp_BIN_a6    	      flatParam
 

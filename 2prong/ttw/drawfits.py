@@ -23,7 +23,8 @@ if __name__ == "__main__":
     args=parser.parse_args()
 
     # setup bin titles
-    pttitles = ["=20-40", "=40-60", "=60-80", "=80-100", "=100-140", "=140-180", "=180-220", "=220-300", "=300-380", ">380" ]
+#    pttitles = ["=20-40", "=40-60", "=60-80", "=80-100", "=100-140", "=140-180", "=180-220", "=220-300", "=300-380", ">380" ]
+    pttitles = ["=20-40", "=40-60", "=60-80", "=80-100", "=100-140", "=140-180", "=180-300", ">300" ]
     btagtitles = ["=1 b tag", "#kern[0.2]{#geq}#kern[-0.1]{2} b tags" ]
     assert len(pttitles)==len(ttw.ptbins), "pttitles and ptbins lengths don't match"
     assert len(btagtitles)==len(ttw.btagbins), "btagtitles and btagbins lengths don't match"
@@ -52,7 +53,7 @@ if __name__ == "__main__":
         for ptindex, ptbin in enumerate(ttw.ptbins):
             
             # create the canvas and subdivide into a top and bottom pad
-            can=ROOT.TCanvas("fits_"+region+"_"+btagbin+"_"+ptbin, "c_"+btagbin+"_"+ptbin,300,300)
+            can=ROOT.TCanvas("fits_"+sigtype+"_"+region+"_"+btagbin+"_"+ptbin, "c_"+btagbin+"_"+ptbin,300,300)
             can.cd()
             pad = ROOT.TPad("pad"+ptbin,"pad"+ptbin,0,0.25,1,1)
             pad.SetMargin(0.15,0.08,0.02,0.1) #L, R, B, T
@@ -212,6 +213,10 @@ if __name__ == "__main__":
                 regiontxt="asym. non-iso. (scaled)"
             elif region=="asymnoniso_unscaled":
                 regiontxt="asym. non-iso."
+            if sigtype=="eta":
+                regiontxt+="; #eta reco."
+            elif sigtype=="etaprime":
+                regiontxt+="; #eta' reco."
             txt.DrawLatexNDC(0.55,0.80,"#splitline{"+btagtitles[btagindex]+", p_{T}"+pttitles[ptindex]+" GeV}{"+regiontxt+"}")
             
             

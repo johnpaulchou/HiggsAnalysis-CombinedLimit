@@ -9,7 +9,8 @@ fileoutname = "workspace.root"
 workspacename = "w"
 
 # binning labels
-ptbins = ["20_40", "40_60", "60_80", "80_100", "100_140", "140_180", "180_220", "220_300", "300_380", "380on" ]
+#ptbins = ["20_40", "40_60", "60_80", "80_100", "100_140", "140_180", "180_220", "220_300", "300_380", "380on" ]
+ptbins = ["20_40", "40_60", "60_80", "80_100", "100_140", "140_180", "180_300", "300on" ]
 btagbins = ["1b", "mb"]
 
 # create the observable
@@ -21,7 +22,9 @@ sigmasses = ["M500", "M750", "M850", "M1000", "M1500", "M2000", "M2500", "M3000"
 # systematic uncertainties
 systs = ["", "_MuonRecoUp", "_MuonRecoDown", "_MuonIdUp", "_MuonIdDown", "_MuonIsoUp", "_MuonIsoDown", "_MuonHltUp", "_MuonHltDown",
          "_BtagLightCorrelatedUp", "_BtagLightCorrelatedDown", "_BtagBCCorrelatedUp", "_BtagBCCorrelatedDown", "_BtagLightUncorrelatedUp", "_BtagLightUncorrelatedDown",
-         "_BtagBCUncorrelatedUp", "_BtagBCUncorrelatedDown"]
+         "_BtagBCUncorrelatedUp", "_BtagBCUncorrelatedDown", "_JECUp", "_JECDown", "_JERUp", "_JERDown", "_MuonRocUp", "_MuonRocDown", "_MuonResoUp", "_MuonResoDown",
+         "_PileupUp", "_PileupDown", "_TwoProngMassResoUp", "_TwoProngMassResoDown", "_TwoProngMassScaleUp", "_TwoProngMassScaleDown", "_TwoProngPtResoUp", "_TwoProngPtResoDown",
+         "_TwoProngPtScaleUp", "_TwoProngPtScaleDown"]
 
 # regions to evalute
 regions = ["symiso","asymnoniso","asymnoniso_unscaled"]
@@ -30,7 +33,11 @@ regions = ["symiso","asymnoniso","asymnoniso_unscaled"]
 sigtypes = ["eta","etaprime"]
 
 # where to read things from
-filename="./input/summed_hists_19-03-2025.root"
+filenames = ["./input/summed_hists_eta_11-08-25_rebin2.root", "./input/summed_hists_etaprime_18-08-25_rebin2.root"]
+#filenames =  ["./input/summed_hists_eta_11-08-25.root", "./input/summed_hists_etaprime_18-08-25.root"]
+#filenames =  ["./input/summed_hists_TEST_eta_18-08-25.root", "./input/summed_hists_etaprime_18-08-25.root"]
+#filenames =  ["./input/summed_hists_COARSEBINS_eta_23-08-25.root", "./input/summed_hists_COARSEBINS_etaprime_23-08-25.root"]
+
 
 ###############################################################
 # start of the "main" function
@@ -52,6 +59,9 @@ if __name__ == "__main__":
     fileout = ROOT.TFile(fileoutname,"RECREATE")
     w = ROOT.RooWorkspace(workspacename,workspacename)
 
+    if sigtype==sigtypes[0]: filename=filenames[0]
+    if sigtype==sigtypes[1]: filename=filenames[1]
+    
     # write the parser parameters to the rootfile
     fileout.cd()
     (ROOT.TNamed("sigmass",sigmass)).Write()
@@ -62,6 +72,11 @@ if __name__ == "__main__":
     for ptbin in ptbins:
         for btagbin in btagbins:
 
+            if sigtype=="eta" and region=="asymnoniso" and (args.imass==5 or args.imass==6 or args.imass==7): rebin=2
+            elif sigtype=="eta" and region=="symiso" and (args.imass==4 or args.imass==7): rebin=2
+            elif sigtype=="etaprime" and region=="asymnoniso" and (args.imass==6 or args.imass==7): rebin=2
+            else: rebin=1
+            
             # get the data
             if region==regions[0]:
                 dataName = "singlemuon_symiso_"+btagbin+"_"+ptbin+"_tight"
@@ -73,6 +88,7 @@ if __name__ == "__main__":
             # create a RooDataHist from the data histogram
             newName = "data_"+btagbin+"_"+ptbin
             dataTH1 = common.get_TH1_from_file(filename, dataName)
+            dataTH1.Rebin(rebin)
             dataHist = ROOT.RooDataHist(newName,newName,ROOT.RooArgList(m2p),dataTH1)
             getattr(w,"import")(dataHist)
 
@@ -81,6 +97,7 @@ if __name__ == "__main__":
                 templateTH1 = common.get_TH1_from_file(filename, "singlemuon_symiso_0b_"+ptbin+"_loose")
             elif region==regions[1] or region==regions[2]:
                 templateTH1 = common.get_TH1_from_file(filename, "singlemuon_asymnoniso_0b_"+ptbin+"_loose")
+            templateTH1.Rebin(rebin)
                 
             # find any non-0 bins in the data that are 0 in the template
             # set it to 1.0 if it happens and print a warning
@@ -99,8 +116,9 @@ if __name__ == "__main__":
             a3=ROOT.RooRealVar(newName+"_a3",newName+"_a3",0,-0.6,0.6)
             a4=ROOT.RooRealVar(newName+"_a4",newName+"_a4",0,-0.6,0.6)
             a5=ROOT.RooRealVar(newName+"_a5",newName+"_a5",0,-0.6,0.6)
+            a6=ROOT.RooRealVar(newName+"_a6",newName+"_a6",0,-0.6,0.6)
             bkg0pdf=ROOT.RooHistPdf(newName+"_pdf0",newName+"_pdf0",ROOT.RooArgList(m2p),templateDataHist,2)
-            bkg1pdf=ROOT.RooHistSplinePdf(newName+"_pdf1",newName+"_pdf1",ROOT.RooArgList(m2p),templateDataHist,2,ROOT.RooArgList(a1,a2,a3,a4,a5))
+            bkg1pdf=ROOT.RooHistSplinePdf(newName+"_pdf1",newName+"_pdf1",ROOT.RooArgList(m2p),templateDataHist,2,ROOT.RooArgList(a1,a2,a3,a4,a5,a6))
 
             # compute the normalizations
             # (note that the naming convention for the normalization parameter is assumed to be "*_norm" by HiggsCombine)
@@ -122,6 +140,7 @@ if __name__ == "__main__":
             for syst in systs:
                 sigName = sigtype+"_"+str(sigmass)+"_symiso_"+btagbin+"_"+ptbin+"_tight"+syst
                 sigTH1 = common.get_TH1_from_file(filename,sigName)
+                sigTH1.Rebin(rebin)
                 newName = "sig_"+btagbin+"_"+ptbin
                 sigDataHist = ROOT.RooDataHist(newName+"_hist"+syst,newName+"hist"+syst,ROOT.RooArgSet(m2p),sigTH1)
                 sigPdf = ROOT.RooHistPdf(newName+"_pdf"+syst,newName+"_pdf"+syst,ROOT.RooArgSet(m2p),sigDataHist,2)
