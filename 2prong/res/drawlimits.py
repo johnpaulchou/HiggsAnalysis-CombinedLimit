@@ -21,6 +21,7 @@ if __name__ == "__main__":
     parser.add_argument("filenames", nargs="+", help="A list of root files containing the limit info")
     parser.add_argument("--drawSmooth",help="Draw a smoothed version of the limit plot",action=argparse.BooleanOptionalAction,default=False)
     parser.add_argument("--suppressPoints", type=int, nargs="*", help="Observed points to suppress (set them to the expected)")
+    parser.add_argument("--sigtype",help="signal type that we're using",choices=files.sigtypes, default=files.sigtypes[0])
     args = parser.parse_args()
 
     # create histograms
@@ -90,19 +91,20 @@ if __name__ == "__main__":
     obsCont.SetLineColorAlpha(ROOT.kBlack,0.7)
     obsCont.SetLineStyle(ROOT.kDotted)
     obsCont.Draw("cont3same")
-
+    ROOT.gPad.Update()
+    
     # store the observed contour
-    contours = ROOT.gROOT.GetListOfSpecials().FindObject("contours")
-    obsGraphs = []
-    if contours:
-        for i in range(contours.GetSize()):
-            level_list = contours.At(i)
-            for j in range(level_list.GetSize()):
-                gr = level_list.At(j)
-                cloned = gr.Clone()
-                cloned.SetLineColor(ROOT.kRed)  # Optional: set color/style
-                cloned.SetLineWidth(2)
-                obsGraphs.append(cloned)
+#    contours = ROOT.gROOT.GetListOfSpecials().FindObject("contours")
+#    obsGraphs = []
+#    if contours:
+#        for i in range(contours.GetSize()):
+#            level_list = contours.At(i)
+#            for j in range(level_list.GetSize()):
+#                gr = level_list.At(j)
+#                cloned = gr.Clone()
+#                cloned.SetLineColor(ROOT.kRed)  # Optional: set color/style
+#                cloned.SetLineWidth(2)
+#                obsGraphs.append(cloned)
 
     cmstxt = ROOT.TLatex()
     cmstxt.SetTextFont(61)
@@ -116,10 +118,17 @@ if __name__ == "__main__":
     lumitxt.SetTextFont(42)
     lumitxt.SetTextSize(0.05)
     lumitxt.DrawLatexNDC(0.63,0.87,"138 fb^{-1} (13 TeV)")
+    sigtxt = ROOT.TLatex()
+    sigtxt.SetTextFont(42)
+    sigtxt.SetTextSize(0.03)
+    if args.sigtype==files.sigtypes[0]:
+        sigtxt.DrawLatexNDC(0.18,0.75,"#eta BR hypothesis")
+    else:
+        sigtxt.DrawLatexNDC(0.18,0.75,"#eta' BR hypothesis")
     
     can1.Update()
     can1.Draw()
-    can1.SaveAs("resobs.pdf")
+    can1.SaveAs("resobs_"+args.sigtype+".pdf")
 
 
     # Draw Expected limits
@@ -145,29 +154,33 @@ if __name__ == "__main__":
     expCont.SetContourLevel(1,.0)
     expCont.SetLineWidth(3)
     expCont.SetLineColorAlpha(ROOT.kBlack,0.7)
-    expCont.SetLineStyle(ROOT.kDashed)
+    expCont.SetLineStyle(2)
     expCont.Draw("cont3same")
+    ROOT.gPad.Update()
 
-    # store the expected contour
-    contours = ROOT.gROOT.GetListOfSpecials().FindObject("contours")
-    expGraphs = []
-    if contours:
-        for i in range(contours.GetSize()):
-            level_list = contours.At(i)
-            for j in range(level_list.GetSize()):
-                gr = level_list.At(j)
-                cloned = gr.Clone()
-                cloned.SetLineColor(ROOT.kRed)  # Optional: set color/style
-                cloned.SetLineWidth(2)
-                expGraphs.append(cloned)
+    hExpLo.SetContour(2)
+    hExpLo.SetContourLevel(1,.0)
+    hExpLo.SetLineWidth(2)
+    hExpLo.SetLineColorAlpha(ROOT.kBlack,0.7)
+    hExpLo.Draw("cont3same")
+    hExpHi.SetContour(2)
+    hExpHi.SetContourLevel(1,.0)
+    hExpHi.SetLineWidth(2)
+    hExpHi.SetLineColorAlpha(ROOT.kBlack,0.7)
+    hExpHi.Draw("cont3same")
+
 
     cmstxt.DrawLatexNDC(0.15,0.87,"CMS")
     extratxt.DrawLatexNDC(0.26,0.87,"Preliminary")
     lumitxt.DrawLatexNDC(0.63,0.87,"138 fb^{-1} (13 TeV)")
+    if args.sigtype==files.sigtypes[0]:
+        sigtxt.DrawLatexNDC(0.18,0.75,"#eta BR hypothesis")
+    else:
+        sigtxt.DrawLatexNDC(0.18,0.75,"#eta' BR hypothesis")
     
     can2.Update()
     can2.Draw()
-    can2.SaveAs("resexp.pdf")
+    can2.SaveAs("resexp_"+args.sigtype+".pdf")
 
     # Draw xs limits
     can3 = ROOT.TCanvas()
@@ -185,10 +198,22 @@ if __name__ == "__main__":
     hObsXs.SetMinimum(-100)
     hObsXs.SetMaximum(20)
 
-    for gr in expGraphs:
-        gr.Draw("L same")
-    for gr in obsGraphs:
-        gr.Draw("L same")
+
+#    contours = ROOT.gROOT.GetListOfSpecials().FindObject("contours")
+#    list0 = contours.At(0)  # contours for the first (and only) level
+
+#    for gr in list0:
+#        gr.SetLineColor(ROOT.kRed)
+#        gr.SetLineWidth(2)
+#        gr.Draw("L SAME")
+#
+#    obsCont.Draw("cont3same")
+#    expCont.Draw("cont3same")
+    
+#    for gr in expGraphs:
+#        gr.Draw("L same")
+#    for gr in obsGraphs:
+#        gr.Draw("L same")
 
 #    hExpLo.SetContour(2)
  #   hExpLo.SetContourLevel(1,.0)
@@ -204,9 +229,13 @@ if __name__ == "__main__":
     cmstxt.DrawLatexNDC(0.15,0.87,"CMS")
     extratxt.DrawLatexNDC(0.26,0.87,"Preliminary")
     lumitxt.DrawLatexNDC(0.63,0.87,"138 fb^{-1} (13 TeV)")
-
+    if args.sigtype==files.sigtypes[0]:
+        sigtxt.DrawLatexNDC(0.18,0.7,"#eta BR hypothesis")
+    else:
+        sigtxt.DrawLatexNDC(0.18,0.7,"#eta' BR hypothesis")
+    
     can3.Update()
     can3.Draw()
-    can3.SaveAs("resobsxs.pdf")
+    can3.SaveAs("resobsxs_"+args.sigtype+".pdf")
 
     
