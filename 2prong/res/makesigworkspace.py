@@ -22,6 +22,7 @@ def getAcc(filename, histnames, normhistname):
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(formatter_class=argparse.ArgumentDefaultsHelpFormatter)
     parser.add_argument('--imass', help="index of the job to run (0-"+str(files.npoints-1)+")", type=int)
+    parser.add_argument('--region',help='region to run over',choices=files.regions,default=files.regions[0])
     parser.add_argument("--sigtype",help="signal type that we're using",choices=files.sigtypes,default=files.sigtypes[0])
     args=parser.parse_args()
 
@@ -59,15 +60,9 @@ if __name__ == "__main__":
     xsec.setConstant(True)
     print("The interpolated cross section is "+str(xsec.getValV())+" fb.")
 
-    if args.sigtype==files.sigtypes[0]:
-        tempname="plots/recomass"
-        boundaries=files.eta_m2pbin_boundaries
-        nboundaries=files.eta_num_m2pbins
-    elif args.sigtype==files.sigtypes[1]:
-        tempname="plots/recomassprime"
-        boundaries=files.etaprime_m2pbin_boundaries
-        nboundaries=files.etaprime_num_m2pbins
-    
+    if args.sigtype==files.sigtypes[0]: tempname="plots/recomass"
+    elif args.sigtype==files.sigtypes[1]: tempname="plots/recomassprime"
+        
     # interpolate the acceptance*efficiency
     accA=getAcc(fnA, (tempname+'_barrel',tempname+'_endcap'), "plots/cutflow")
     accB=getAcc(fnB, (tempname+'_barrel',tempname+'_endcap'), "plots/cutflow")
@@ -128,8 +123,9 @@ if __name__ == "__main__":
         
             # create PDFs for different m2p slices
             fileout.cd()
-            for binindex in range(nboundaries):
+            for binindex in range(files.get_num_m2pbins(args.region, args.sigtype)):
                 label = "bin"+str(binindex)+etabin+syst
+                boundaries=files.get_m2pbin_boundaries(args.region, args.sigtype)
                 projy=morphhist.ProjectionY("_py"+label,boundaries[binindex],boundaries[binindex+1]-1)
                 accnum = projy.Integral(1,projy.GetXaxis().GetNbins())
                 accden = morphhist.Integral(1,morphhist.GetXaxis().GetNbins(),1,morphhist.GetYaxis().GetNbins())

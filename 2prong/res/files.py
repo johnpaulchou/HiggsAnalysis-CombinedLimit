@@ -9,10 +9,15 @@ import numpy
 sigtypes = ["eta","etaprime"]
 regions = ["sideband","signal"]
 etabins = ["barrel","endcap"]
-eta_m2pbin_boundaries = (1,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,27)
-etaprime_m2pbin_boundaries = (1,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,27)
-eta_num_m2pbins = len(eta_m2pbin_boundaries)-1
-etaprime_num_m2pbins = len(etaprime_m2pbin_boundaries)-1
+
+def get_m2pbin_boundaries(region, sigtype):
+    if sigtype==sigtypes[0]:
+        return (1,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,27)
+    else:
+        return (8,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,27)
+
+def get_num_m2pbins(region, sigtype):
+    return len(get_m2pbin_boundaries(region, sigtype))-1
 
 # setup observables
 m2pg = ROOT.RooRealVar("m2pg","Invariant mass of the 2-prong and photon",500,3998)
@@ -46,8 +51,8 @@ for i in range(len(gengridw)):
         genfilenames[i][j]="./input/signal_"+gengridp[j][1]+"_"+gengridw[i][1]+".root"
 
 # omega and phi mass points to run over
-wmasspoints = numpy.linspace(1,2,11)
-pmasspoints = numpy.linspace(1000,2500,16)
+wmasspoints = numpy.linspace(1,2,4)
+pmasspoints = numpy.linspace(1000,2500,8)
 npoints = len(wmasspoints)*len(pmasspoints)
 
 # convert a single index into a wmassindex and a pmassindex

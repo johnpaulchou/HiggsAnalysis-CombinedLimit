@@ -14,15 +14,16 @@ if __name__ == "__main__":
 
     # setup and use the parser
     parser = argparse.ArgumentParser(formatter_class=argparse.ArgumentDefaultsHelpFormatter)
+    parser.add_argument('--region',help='region to run over',choices=files.regions,default=files.regions[0]) 
     parser.add_argument("--sigtype",help="signal type that we're using",choices=files.sigtypes, default=files.sigtypes[0])
     args=parser.parse_args()
 
+    nbins=files.get_num_m2pbins(args.region, args.sigtype)
+
+    
     cardname = "combine.txt"
     newfilenames = []
 
-    # skip the first two bins if we're doing the control region
-    if args.sigtype==files.sigtypes[0]: nbins=files.eta_num_m2pbins
-    else:                               nbins=files.etaprime_num_m2pbins
     for bin in range(nbins):
         for eta in files.etabins:
             oldfile = open(cardname, "r")

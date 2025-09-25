@@ -28,12 +28,8 @@ if __name__ == "__main__":
     wmass = common.get_tnamed_title_from_file(files.sigworkspacefn, "wmass")
     pmass = common.get_tnamed_title_from_file(files.sigworkspacefn, "pmass")
     sigtype = common.get_tnamed_title_from_file(files.sigworkspacefn, "sigtype")
-    if sigtype==files.sigtypes[0]:
-        boundaries=files.eta_m2pbin_boundaries
-        num_m2pbins=files.eta_num_m2pbins
-    else:
-        boundaries=files.etaprime_m2pbin_boundaries
-        num_m2pbins=files.etaprime_num_m2pbins
+    boundaries=files.get_m2pbin_boundaries(region,sigtype)
+    num_m2pbins=files.get_num_m2pbins(region,sigtype)
 
     # general style commands
     ROOT.gStyle.SetErrorX(0)
