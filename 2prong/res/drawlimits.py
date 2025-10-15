@@ -59,7 +59,7 @@ if __name__ == "__main__":
         hExpHi.SetBinContent(windex+1,pindex+1,math.log10(dict["exp+1"]))
         hObsXs.SetBinContent(windex+1,pindex+1,obs*files.get_xsection(pmass))
 
-    nbins=200
+    nbins=50
     if args.drawSmooth:
         hObs=common.interpolate_th2d(hObs, nbins, nbins)
         hExp=common.interpolate_th2d(hExp, nbins, nbins)
@@ -93,19 +93,6 @@ if __name__ == "__main__":
     obsCont.Draw("cont3same")
     ROOT.gPad.Update()
     
-    # store the observed contour
-#    contours = ROOT.gROOT.GetListOfSpecials().FindObject("contours")
-#    obsGraphs = []
-#    if contours:
-#        for i in range(contours.GetSize()):
-#            level_list = contours.At(i)
-#            for j in range(level_list.GetSize()):
-#                gr = level_list.At(j)
-#                cloned = gr.Clone()
-#                cloned.SetLineColor(ROOT.kRed)  # Optional: set color/style
-#                cloned.SetLineWidth(2)
-#                obsGraphs.append(cloned)
-
     cmstxt = ROOT.TLatex()
     cmstxt.SetTextFont(61)
     cmstxt.SetTextSize(0.07)
@@ -190,49 +177,27 @@ if __name__ == "__main__":
     can3.SetTicky(0)
     can3.SetMargin(0.15,0.20,0.15,0.15)
     can3.cd()
-    can3.SetLogz(True)
+#    can3.SetLogz(True)
     hObsXs.Draw("colz")
     hObsXs.GetXaxis().SetTitle("m_{#omega} [GeV]")
     hObsXs.GetYaxis().SetTitle("m_{#phi} [GeV]")
     hObsXs.GetZaxis().SetTitle("95% CL Excluded #sigma#timesBR [pb]")
-    hObsXs.SetMinimum(-100)
-    hObsXs.SetMaximum(20)
+    hObsXs.SetMinimum(0)
+    hObsXs.SetMaximum(15)
 
 
-#    contours = ROOT.gROOT.GetListOfSpecials().FindObject("contours")
-#    list0 = contours.At(0)  # contours for the first (and only) level
-
-#    for gr in list0:
-#        gr.SetLineColor(ROOT.kRed)
-#        gr.SetLineWidth(2)
-#        gr.Draw("L SAME")
-#
-#    obsCont.Draw("cont3same")
-#    expCont.Draw("cont3same")
-    
-#    for gr in expGraphs:
-#        gr.Draw("L same")
-#    for gr in obsGraphs:
-#        gr.Draw("L same")
-
-#    hExpLo.SetContour(2)
- #   hExpLo.SetContourLevel(1,.0)
-  #  hExpLo.SetLineWidth(3)
-   # hExpLo.SetLineColorAlpha(ROOT.kBlack,0.7)
-    #hExpLo.Draw("cont3same")
-   # hExpHi.SetContour(2)
-   # hExpHi.SetContourLevel(1,.0)
-  #  hExpHi.SetLineWidth(3)
-  #  hExpHi.SetLineColorAlpha(ROOT.kBlack,0.7)
-  #  hExpHi.Draw("cont3same")
+    expCont.Draw("cont3same")
+    obsCont.Draw("cont3same")
+    hExpLo.Draw("cont3same")
+    hExpHi.Draw("cont3same")
 
     cmstxt.DrawLatexNDC(0.15,0.87,"CMS")
     extratxt.DrawLatexNDC(0.26,0.87,"Preliminary")
     lumitxt.DrawLatexNDC(0.63,0.87,"138 fb^{-1} (13 TeV)")
     if args.sigtype==files.sigtypes[0]:
-        sigtxt.DrawLatexNDC(0.18,0.7,"#eta BR hypothesis")
+        sigtxt.DrawLatexNDC(0.18,0.75,"#eta BR hypothesis")
     else:
-        sigtxt.DrawLatexNDC(0.18,0.7,"#eta' BR hypothesis")
+        sigtxt.DrawLatexNDC(0.18,0.75,"#eta' BR hypothesis")
     
     can3.Update()
     can3.Draw()

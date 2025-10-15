@@ -15,7 +15,7 @@ Double_t RooDijet1Pdf::evaluate() const
 {
   using namespace std;
   Double_t x=_x/_sqrts;
-    return pow(x,_p1+_p2*log(x));
+  return pow(1-x,_p1)*pow(x,_p2);
 }
 
 Double_t RooDijet2Pdf::evaluate() const
@@ -29,7 +29,12 @@ Double_t RooDijet3Pdf::evaluate() const
 {
   using namespace std;
   Double_t x=_x/_sqrts;
-  return pow(1.0+x*_p1,_p2);
+  //  return pow(1.0+x*_p1,_p2);
+  //  return pow(x,_p1+_p2*log(x)*log(x));
+  //  return pow(1-pow(x,1./3),_p1)*pow(x,_p2);
+  //    return pow(x,_p1+_p2*log(x));
+  //  return pow(1+x,_p1)*pow(x,_p2*log(x));
+  return pow(1-x,_p1)*exp(_p2*log(x));
 }
 
 

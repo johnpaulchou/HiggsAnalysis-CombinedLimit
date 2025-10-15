@@ -5,6 +5,8 @@ import sys
 import files
 import common.common as common
 import argparse
+import numpy as np
+from scipy.ndimage import gaussian_filter
 
 # function to get acceptance from a file
 def getAcc(filename, histnames, normhistname):
@@ -17,6 +19,32 @@ def getAcc(filename, histnames, normhistname):
     norm=hn.GetBinContent(1)
     return integral/norm
 
+def smooth_TH2D(hist: ROOT.TH2D, sigma=1.5) -> ROOT.TH2D:
+    nx = hist.GetNbinsX()
+    ny = hist.GetNbinsY()
+
+    # Fill numpy array with bin contents
+    # Note: array[y, x] with y fastest-changing
+    arr = np.zeros((ny, nx), dtype=float)
+    for ix in range(1, nx+1):
+        for iy in range(1, ny+1):
+            arr[iy-1, ix-1] = hist.GetBinContent(ix, iy)
+
+    # Apply Gaussian smoothing (symmetric, no shift)
+    arr_smoothed = gaussian_filter(arr, sigma=sigma, mode="nearest")
+
+    # Make new histogram with the same axes
+    hname = hist.GetName() + "_smoothed"
+    htitle = hist.GetTitle() + " (smoothed)"
+    hist_smoothed = hist.Clone(hname)
+
+    # Refill with smoothed contents
+    for ix in range(1, nx+1):
+        for iy in range(1, ny+1):
+            hist_smoothed.SetBinContent(ix, iy, arr_smoothed[iy-1, ix-1])
+            hist_smoothed.SetBinError(ix, iy, 0)
+
+    return hist_smoothed
 
 ###### main function ######
 if __name__ == "__main__":
@@ -120,15 +148,17 @@ if __name__ == "__main__":
             morphhist=hA.Clone(hA.GetName()+"m")
             morphhist.Reset()
             morphhist=morph.fillHistogram(morphhist,ROOT.RooArgList(files.m2p,files.m2pg))
+#            morphhistsmooth=smooth_TH2D(morphhist,0.4)
+            morphhistsmooth=morphhist
         
             # create PDFs for different m2p slices
             fileout.cd()
             for binindex in range(files.get_num_m2pbins(args.region, args.sigtype)):
                 label = "bin"+str(binindex)+etabin+syst
                 boundaries=files.get_m2pbin_boundaries(args.region, args.sigtype)
-                projy=morphhist.ProjectionY("_py"+label,boundaries[binindex],boundaries[binindex+1]-1)
+                projy=morphhistsmooth.ProjectionY("_py"+label,boundaries[binindex],boundaries[binindex+1]-1)
                 accnum = projy.Integral(1,projy.GetXaxis().GetNbins())
-                accden = morphhist.Integral(1,morphhist.GetXaxis().GetNbins(),1,morphhist.GetYaxis().GetNbins())
+                accden = morphhistsmooth.Integral(1,morphhistsmooth.GetXaxis().GetNbins(),1,morphhistsmooth.GetYaxis().GetNbins())
                 dh=ROOT.RooDataHist("dh"+label,"dh"+label,files.m2pg,projy)
                 sigpdf1d = ROOT.RooHistPdf("sigpdf_"+label,"signal PDF for a slice in files.m2p",files.m2pg,dh)
                 sliceacc = ROOT.RooRealVar("sliceacc_"+label,"acceptance in a given slice",accnum/accden)
@@ -141,6 +171,7 @@ if __name__ == "__main__":
             # write the rest to the file
             fileout.cd()
             morphhist.Write()
+            morphhistsmooth.Write()
             hA.Write(hA.GetName()+"A")
             hB.Write(hB.GetName()+"B")
             hC.Write(hC.GetName()+"C")
