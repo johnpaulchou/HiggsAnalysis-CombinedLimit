@@ -21,7 +21,10 @@ def getAcc(filename, histnames, normhistname):
 ###### main function ######
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(formatter_class=argparse.ArgumentDefaultsHelpFormatter)
+    parser.add_argument("--sigtype",help="signal type that we're using",choices=files.sigtypes, default=files.sigtypes[0])
+    parser.add_argument("--region",help="region that we're working in",choices=files.regions, default=files.regions[0])
     parser.add_argument('--imass', help="index of the job to run (0-"+str(files.npoints-1)+")", type=int)
+    parser.add_argument("--binning",type=int,help="binning strategy selection", default=1)
     args=parser.parse_args()
 
     (windex,pindex)=files.indexpair(args.imass)
@@ -117,10 +120,12 @@ if __name__ == "__main__":
             morphhist=morph.fillHistogram(morphhist,ROOT.RooArgList(files.m2p,files.m2pg))
         
             # create PDFs for different m2p slices
+            m2pbin_boundaries = files.get_m2pbin_boundaries(args.region, args.sigtype, args.binning)
+            num_m2pbins = files.get_num_m2pbins(args.region, args.sigtype, args.binning)
             fileout.cd()
-            for binindex in range(files.num_m2pbins):
+            for binindex in range(num_m2pbins):
                 label = "bin"+str(binindex)+etabin
-                projy=morphhist.ProjectionY("_py"+label,files.m2pbin_boundaries[binindex],files.m2pbin_boundaries[binindex+1]-1)
+                projy=morphhist.ProjectionY("_py"+label,m2pbin_boundaries[binindex],m2pbin_boundaries[binindex+1]-1)
                 accnum = projy.Integral(1,projy.GetXaxis().GetNbins())
                 accden = morphhist.Integral(1,morphhist.GetXaxis().GetNbins(),1,morphhist.GetYaxis().GetNbins())
                 dh=ROOT.RooDataHist("dh"+label,"dh"+label,files.m2pg,projy)
@@ -145,6 +150,9 @@ if __name__ == "__main__":
     (ROOT.TNamed("imass",str(args.imass))).Write()
     (ROOT.TNamed("wmass",str(wmass))).Write()
     (ROOT.TNamed("pmass",str(pmass))).Write()
+    (ROOT.TNamed("region",str(args.region))).Write()
+    (ROOT.TNamed("sigype",str(args.sigtype))).Write()
+    (ROOT.TNamed("binning",str(args.binning))).Write()
     fileout.Close()
 
     

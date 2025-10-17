@@ -12,9 +12,12 @@ import common.common as common
 if __name__ == "__main__":
     # setup and use the parser
     parser = argparse.ArgumentParser(formatter_class=argparse.ArgumentDefaultsHelpFormatter)
-    parser.add_argument('--region',help='region to run over',choices=files.regions,default=files.regions[0])
+    parser.add_argument("--sigtype",help="signal type that we're using",choices=files.sigtypes, default=files.sigtypes[0])
+    parser.add_argument("--region",help="region that we're working in",choices=files.regions, default=files.regions[0])
+    #parser.add_argument('--imass', help="index of the job to run (0-"+str(files.npoints-1)+")", type=int)
+    parser.add_argument("--binning",type=int,help="binning strategy selection", default=1)
     args=parser.parse_args()
-    
+
     # open the file and create the workspace
     fileout = ROOT.TFile(files.bkgworkspacefn, "RECREATE")
     w = ROOT.RooWorkspace(files.workspacename,files.workspacename)
@@ -27,9 +30,11 @@ if __name__ == "__main__":
         elif args.region==files.regions[1]: datahist2d=common.get_TH1_from_file(files.datafilename, "plots/recomass_"+etabin)
         
         # loop over the 2-prong mass slices
-        for binindex in range(files.num_m2pbins):
+        m2pbin_boundaries = files.get_m2pbin_boundaries(args.region, args.sigtype, args.binning)
+        num_m2pbins = files.get_num_m2pbins(args.region, args.sigtype, args.binning)
+        for binindex in range(num_m2pbins):
             label = "bin"+str(binindex)+etabin
-            datahist1d = datahist2d.ProjectionY("_py"+label,files.m2pbin_boundaries[binindex],files.m2pbin_boundaries[binindex+1]-1)
+            datahist1d = datahist2d.ProjectionY("_py"+label,m2pbin_boundaries[binindex],m2pbin_boundaries[binindex+1]-1)
             datanorm=datahist1d.Integral(1,datahist1d.GetNbinsX())
 
             # convert histogram into a RooDataHist
@@ -38,7 +43,7 @@ if __name__ == "__main__":
             strategy=2
             # set up the three background function models
             p1 = ROOT.RooRealVar("p1_"+label,"p1",-10,-25,-5)
-            p2 = ROOT.RooRealVar("p2_"+label,"p2",-1,-3,-.1)
+            p2 = ROOT.RooRealVar("p2_"+label,"p2",-1,-5,-.1)
             sqrts = ROOT.RooRealVar("sqrts","sqrts",13000.)
             f1 = ROOT.RooDijet1Pdf("model_bkg_f1_"+label,"f1",files.m2pg,p1,p2,sqrts)
             p3 = ROOT.RooRealVar("p3_"+label,"p3",-5,-200,0)
@@ -87,4 +92,5 @@ if __name__ == "__main__":
     fileout.cd()
     w.Write()
     (ROOT.TNamed("region",args.region)).Write()
+    (ROOT.TNamed("sigtype",args.sigtype)).Write()
     fileout.Close()

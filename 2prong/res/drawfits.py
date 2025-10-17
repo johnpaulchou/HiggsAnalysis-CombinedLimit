@@ -27,6 +27,8 @@ if __name__ == "__main__":
     imass = common.get_tnamed_title_from_file(files.sigworkspacefn, "imass")
     wmass = common.get_tnamed_title_from_file(files.sigworkspacefn, "wmass")
     pmass = common.get_tnamed_title_from_file(files.sigworkspacefn, "pmass")
+    sigtype = common.get_tnamed_title_from_file(files.sigworkspacefn, "sigtype")
+    binning = common.get_tnamed_title_from_file(files.sigworkspacefn, "binning")
 
     # general style commands
     ROOT.gStyle.SetErrorX(0)
@@ -46,11 +48,15 @@ if __name__ == "__main__":
         sighist_ssb=ROOT.TH1D("sighist_ssb","sighist_ssb",var_ssb.getBinning().numBins(), common.get_carray_from_binning(var_ssb.getBinning()))
         bkghist_ssb=ROOT.TH1D("bkghist_ssb","bkghist_ssb",var_ssb.getBinning().numBins(), common.get_carray_from_binning(var_ssb.getBinning()))    
 
+
+    m2pbin_boundaries = files.get_m2pbin_boundaries(region, sigtype, binning)
+    num_m2pbins = files.get_num_m2pbins(region, sigtype, binning)
+
     # loop over etabins
     for etabin in files.etabins:
         
         # loop over the m2pbins
-        for m2pbin in range(files.num_m2pbins):
+        for m2pbin in range(num_m2pbins):
 
             # create the canvas and subdivide into a top and bottom pad
             can=ROOT.TCanvas("fits_"+region+"_"+etabin+"_"+str(m2pbin), "c",300,300)
@@ -237,8 +243,8 @@ if __name__ == "__main__":
 
             # need to get a 2D histogram with the right binning
             hist2d=common.get_TH1_from_file(files.sigworkspacefn,"recomass_barrelm")
-            m2plo = hist2d.GetXaxis().GetBinLowEdge(files.m2pbin_boundaries[m2pbin])
-            m2phi = hist2d.GetXaxis().GetBinUpEdge(files.m2pbin_boundaries[m2pbin+1]-1)
+            m2plo = hist2d.GetXaxis().GetBinLowEdge(m2pbin_boundaries[m2pbin])
+            m2phi = hist2d.GetXaxis().GetBinUpEdge(m2pbin_boundaries[m2pbin+1]-1)
             m2ptext=ROOT.TLatex()
             m2ptext.SetTextFont(42)
             m2ptext.SetTextSize(0.045)

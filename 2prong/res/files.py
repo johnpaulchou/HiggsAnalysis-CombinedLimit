@@ -2,14 +2,38 @@
 
 import ROOT
 import sys
-import argparse
 import numpy
+
+# signal types
+sigtypes = ["eta","etaprime"]
 
 # regions to consider
 regions = ["sideband","signal"]
 etabins = ["barrel","endcap"]
-m2pbin_boundaries = (1,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,27)
-num_m2pbins = len(m2pbin_boundaries)-1
+
+# omega mass bin boundaries
+def get_m2pbin_boundaries(region, sigtype, binning):
+    if binning == 0: # old
+        return (1,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,27)
+    if sigtype==sigtypes[0]:
+        return (1,5,7,9,11,13,15,17,19,21,23,27)
+    else:
+        return (8,11,13,15,17,19,21,23,27)
+    #if sigtype==sigtypes[0]:
+    #    return (1,5,7,9,11,13,15,17,19,21,23,25,27)
+    #else:
+    #    return (8,11,13,15,17,19,21,23,25,27)
+def get_num_m2pbins(region, sigtype, binning):
+    if binning == 0: # old
+        return len((1,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,27))-1
+    if sigtype==sigtypes[0]:
+        return len((1,5,7,9,11,13,15,17,19,21,23,27))-1
+    else:
+        return len((8,11,13,15,17,19,21,23,27))-1
+    #if sigtype==sigtypes[0]:
+    #    return len((1,5,7,9,11,13,15,17,19,21,23,25,27))-1
+    #else:
+    #    return len((8,11,13,15,17,19,21,23,25,27))-1
 
 # setup observables
 m2pg = ROOT.RooRealVar("m2pg","Invariant mass of the 2-prong and photon",500,3998)
