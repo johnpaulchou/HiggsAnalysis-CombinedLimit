@@ -6,6 +6,7 @@ import array as ar
 import argparse
 import makeworkspace as ttw
 import math
+import common.common as common
 
 tdrstyle.setTDRStyle()
 
@@ -23,7 +24,9 @@ if __name__ == "__main__":
     # setup parser
     parser = argparse.ArgumentParser(formatter_class=argparse.ArgumentDefaultsHelpFormatter)
     parser.add_argument("files", nargs="+", help="A list of root files")
+    parser.add_argument("--sigtype",help="signal type that we're using",choices=ttw.sigtypes,default=ttw.sigtypes[0])
     args = parser.parse_args()
+    sigtype = args.sigtype
 
     # setup output for printing
     pdffilename="./plots/limits.pdf"
@@ -41,13 +44,14 @@ if __name__ == "__main__":
     # loop over the files that are passed to the command line
     for filename in args.files:
 
-        dict = parse_HC_limit_tree(filename)
+        dict = common.parse_HC_limit_tree(filename)
 
         # convert mass into an integer
         imass=int(dict["mass"])
         
         # skip the 850 MeV mass point
-        if imass==2: continue
+        if sigtype=="eta" and (imass==2 or imass==6): continue
+        if sigtype=="etaprime" and imass==6: continue
         
         # start filling in data
         x.append(float(ttw.sigmasses[imass][1:])/1000.)
@@ -87,7 +91,10 @@ if __name__ == "__main__":
     ge2.SetFillStyle(1001)
     ge2.Draw("a3")
     ge2.SetMinimum(0.01)
-    ge2.SetMaximum(8.0)
+    if sigtype=="eta":
+        ge2.SetMaximum(25.0)
+    elif sigtype=="etaprime":
+        ge2.SetMaximum(5.0)
     ge2.GetXaxis().SetTitle("m_{#omega} [GeV]")
     ge2.GetXaxis().SetRangeUser(x[0],x[len(x)-1])
     ge2.GetYaxis().SetTitle("95% C.L. Lower limit on #mu")
@@ -127,7 +134,10 @@ if __name__ == "__main__":
     brtxt = ROOT.TLatex()
     brtxt.SetTextFont(42)
     brtxt.SetTextSize(0.04)
-    brtxt.DrawLatexNDC(0.25,0.20,"#eta BRs")
+    if sigtype=="eta":
+        brtxt.DrawLatexNDC(0.25,0.20,"#eta BRs")
+    elif sigtype=="etaprime":
+        brtxt.DrawLatexNDC(0.25,0.20,"#eta' BRs")
 
     # Draw horizontal line
     line=ROOT.TLine(x[0],1.0,x[len(x)-1],1.0)

@@ -13,9 +13,8 @@ if __name__ == "__main__":
     # setup and use the parser
     parser = argparse.ArgumentParser(formatter_class=argparse.ArgumentDefaultsHelpFormatter)
     parser.add_argument("--sigtype",help="signal type that we're using",choices=files.sigtypes, default=files.sigtypes[0])
-    parser.add_argument("--region",help="region that we're working in",choices=files.regions, default=files.regions[0])
+    parser.add_argument('--region',help='region to run over',choices=files.regions,default=files.regions[0])
     #parser.add_argument('--imass', help="index of the job to run (0-"+str(files.npoints-1)+")", type=int)
-    parser.add_argument("--binning",type=int,help="binning strategy selection", default=1)
     args=parser.parse_args()
 
     # open the file and create the workspace
@@ -26,15 +25,18 @@ if __name__ == "__main__":
     for etabin in files.etabins:
 
         # get the 2d data histogram
-        if args.region==files.regions[0]: datahist2d=common.get_TH1_from_file(files.datafilename, "plots/recomass_sideband_"+etabin)
-        elif args.region==files.regions[1]: datahist2d=common.get_TH1_from_file(files.datafilename, "plots/recomass_"+etabin)
+        if args.sigtype==files.sigtypes[0]:   tempname="plots/recomass"
+        elif args.sigtype==files.sigtypes[1]: tempname="plots/recomassprime"
+        boundaries=files.get_m2pbin_boundaries(args.region, args.sigtype)
+        nboundaries=files.get_num_m2pbins(args.region, args.sigtype)
+
+        if args.region==files.regions[0]: datahist2d=common.get_TH1_from_file(files.datafilename, tempname+"_sideband_"+etabin)
+        elif args.region==files.regions[1]: datahist2d=common.get_TH1_from_file(files.datafilename, tempname+"_"+etabin)
         
         # loop over the 2-prong mass slices
-        m2pbin_boundaries = files.get_m2pbin_boundaries(args.region, args.sigtype, args.binning)
-        num_m2pbins = files.get_num_m2pbins(args.region, args.sigtype, args.binning)
-        for binindex in range(num_m2pbins):
+        for binindex in range(nboundaries):
             label = "bin"+str(binindex)+etabin
-            datahist1d = datahist2d.ProjectionY("_py"+label,m2pbin_boundaries[binindex],m2pbin_boundaries[binindex+1]-1)
+            datahist1d = datahist2d.ProjectionY("_py"+label,boundaries[binindex],boundaries[binindex+1]-1)
             datanorm=datahist1d.Integral(1,datahist1d.GetNbinsX())
 
             # convert histogram into a RooDataHist
@@ -42,15 +44,15 @@ if __name__ == "__main__":
 
             strategy=2
             # set up the three background function models
-            p1 = ROOT.RooRealVar("p1_"+label,"p1",-10,-25,-5)
-            p2 = ROOT.RooRealVar("p2_"+label,"p2",-1,-5,-.1)
+            p1 = ROOT.RooRealVar("p1_"+label,"p1",5,0,100)
+            p2 = ROOT.RooRealVar("p2_"+label,"p2",-1,-5,0)
             sqrts = ROOT.RooRealVar("sqrts","sqrts",13000.)
             f1 = ROOT.RooDijet1Pdf("model_bkg_f1_"+label,"f1",files.m2pg,p1,p2,sqrts)
             p3 = ROOT.RooRealVar("p3_"+label,"p3",-5,-200,0)
             p4 = ROOT.RooRealVar("p4_"+label,"p4",-1,-20,0)
             f2 = ROOT.RooDijet2Pdf("model_bkg_f2_"+label,"f2",files.m2pg,p3,p4,sqrts)
             p5 = ROOT.RooRealVar("p5_"+label,"p5",5,0,100)
-            p6 = ROOT.RooRealVar("p6_"+label,"p6",-20,-200,0)
+            p6 = ROOT.RooRealVar("p6_"+label,"p6",-1,-10,0)
             f3 = ROOT.RooDijet3Pdf("model_bkg_f3_"+label,"f3",files.m2pg,p5,p6,sqrts)
 
             # perform some initial fits

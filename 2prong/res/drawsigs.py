@@ -63,7 +63,7 @@ if __name__ == "__main__":
     hSig.GetYaxis().SetTitle("m_{#phi} [GeV]")
     hSig.GetZaxis().SetTitle("Significance (z-score)")
     hSig.SetMinimum(-0.2)
-    hSig.SetMaximum(5.0)
+    hSig.SetMaximum(7.0)
 
     cmstxt = ROOT.TLatex()
     cmstxt.SetTextFont(61)

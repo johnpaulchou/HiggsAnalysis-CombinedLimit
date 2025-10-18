@@ -8,10 +8,9 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser(formatter_class=argparse.ArgumentDefaultsHelpFormatter)
     parser.add_argument("--sigtype",help="signal type that we're using",choices=files.sigtypes, default=files.sigtypes[0])
     parser.add_argument("--region",help="region that we're working in",choices=files.regions, default=files.regions[0])
-    parser.add_argument("--binning",type=int,help="binning strategy selection", default=1)
     args=parser.parse_args()
 
-    TOTAL_BINS = files.get_num_m2pbins(args.region, args.sigtype, args.binning)
+    TOTAL_BINS = files.get_num_m2pbins(args.region, args.sigtype)
 
     string0 = ""
     params = ['p3', 'p4', 'p5', 'p6']

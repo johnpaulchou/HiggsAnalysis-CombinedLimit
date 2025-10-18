@@ -5,6 +5,8 @@ import sys
 import files
 import common.common as common
 import argparse
+import numpy as np
+from scipy.ndimage import gaussian_filter
 
 # function to get acceptance from a file
 def getAcc(filename, histnames, normhistname):
@@ -17,14 +19,39 @@ def getAcc(filename, histnames, normhistname):
     norm=hn.GetBinContent(1)
     return integral/norm
 
+def smooth_TH2D(hist: ROOT.TH2D, sigma=1.5) -> ROOT.TH2D:
+    nx = hist.GetNbinsX()
+    ny = hist.GetNbinsY()
+
+    # Fill numpy array with bin contents
+    # Note: array[y, x] with y fastest-changing
+    arr = np.zeros((ny, nx), dtype=float)
+    for ix in range(1, nx+1):
+        for iy in range(1, ny+1):
+            arr[iy-1, ix-1] = hist.GetBinContent(ix, iy)
+
+    # Apply Gaussian smoothing (symmetric, no shift)
+    arr_smoothed = gaussian_filter(arr, sigma=sigma, mode="nearest")
+
+    # Make new histogram with the same axes
+    hname = hist.GetName() + "_smoothed"
+    htitle = hist.GetTitle() + " (smoothed)"
+    hist_smoothed = hist.Clone(hname)
+
+    # Refill with smoothed contents
+    for ix in range(1, nx+1):
+        for iy in range(1, ny+1):
+            hist_smoothed.SetBinContent(ix, iy, arr_smoothed[iy-1, ix-1])
+            hist_smoothed.SetBinError(ix, iy, 0)
+
+    return hist_smoothed
 
 ###### main function ######
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(formatter_class=argparse.ArgumentDefaultsHelpFormatter)
     parser.add_argument("--sigtype",help="signal type that we're using",choices=files.sigtypes, default=files.sigtypes[0])
-    parser.add_argument("--region",help="region that we're working in",choices=files.regions, default=files.regions[0])
+    parser.add_argument('--region',help='region to run over',choices=files.regions,default=files.regions[0])
     parser.add_argument('--imass', help="index of the job to run (0-"+str(files.npoints-1)+")", type=int)
-    parser.add_argument("--binning",type=int,help="binning strategy selection", default=1)
     args=parser.parse_args()
 
     (windex,pindex)=files.indexpair(args.imass)
@@ -61,11 +88,14 @@ if __name__ == "__main__":
     xsec.setConstant(True)
     print("The interpolated cross section is "+str(xsec.getValV())+" fb.")
 
+    if args.sigtype==files.sigtypes[0]: tempname="plots/recomass"
+    elif args.sigtype==files.sigtypes[1]: tempname="plots/recomassprime"
+        
     # interpolate the acceptance*efficiency
-    accA=getAcc(fnA, ('plots/recomass_barrel','plots/recomass_endcap'), "plots/cutflow")
-    accB=getAcc(fnB, ('plots/recomass_barrel','plots/recomass_endcap'), "plots/cutflow")
-    accC=getAcc(fnC, ('plots/recomass_barrel','plots/recomass_endcap'), "plots/cutflow")
-    accD=getAcc(fnD, ('plots/recomass_barrel','plots/recomass_endcap'), "plots/cutflow")
+    accA=getAcc(fnA, (tempname+'_barrel',tempname+'_endcap'), "plots/cutflow")
+    accB=getAcc(fnB, (tempname+'_barrel',tempname+'_endcap'), "plots/cutflow")
+    accC=getAcc(fnC, (tempname+'_barrel',tempname+'_endcap'), "plots/cutflow")
+    accD=getAcc(fnD, (tempname+'_barrel',tempname+'_endcap'), "plots/cutflow")
     z5=(accC-accA)/(tymax-tymin)*pmass+(accA*tymax-accC*tymin)/(tymax-tymin)
     z6=(accD-accB)/(tymax-tymin)*pmass+(accB*tymax-accD*tymin)/(tymax-tymin)
     acc=(z6-z5)/(txmax-txmin)*wmass+(z5*txmax-z6*txmin)/(txmax-txmin)
@@ -84,10 +114,10 @@ if __name__ == "__main__":
         for etabin in files.etabins:
 
             # get the 2D histograms
-            hA=common.get_TH1_from_file(fnA, "plots/recomass_"+etabin+syst)
-            hB=common.get_TH1_from_file(fnB, "plots/recomass_"+etabin+syst)
-            hC=common.get_TH1_from_file(fnC, "plots/recomass_"+etabin+syst)
-            hD=common.get_TH1_from_file(fnD, "plots/recomass_"+etabin+syst)
+            hA=common.get_TH1_from_file(fnA, tempname+"_"+etabin+syst)
+            hB=common.get_TH1_from_file(fnB, tempname+"_"+etabin+syst)
+            hC=common.get_TH1_from_file(fnC, tempname+"_"+etabin+syst)
+            hD=common.get_TH1_from_file(fnD, tempname+"_"+etabin+syst)
 
             # create RooDataHists
             dhA=ROOT.RooDataHist(hA.GetName()+"A_dh","2D signal RooDataHist",ROOT.RooArgList(files.m2p,files.m2pg),hA)
@@ -118,16 +148,18 @@ if __name__ == "__main__":
             morphhist=hA.Clone(hA.GetName()+"m")
             morphhist.Reset()
             morphhist=morph.fillHistogram(morphhist,ROOT.RooArgList(files.m2p,files.m2pg))
+#            morphhistsmooth=smooth_TH2D(morphhist,0.4)
+            morphhistsmooth=morphhist
         
             # create PDFs for different m2p slices
-            m2pbin_boundaries = files.get_m2pbin_boundaries(args.region, args.sigtype, args.binning)
-            num_m2pbins = files.get_num_m2pbins(args.region, args.sigtype, args.binning)
             fileout.cd()
-            for binindex in range(num_m2pbins):
-                label = "bin"+str(binindex)+etabin
-                projy=morphhist.ProjectionY("_py"+label,m2pbin_boundaries[binindex],m2pbin_boundaries[binindex+1]-1)
+            boundaries=files.get_m2pbin_boundaries(args.region, args.sigtype)
+            for binindex in range(files.get_num_m2pbins(args.region, args.sigtype)):
+                label = "bin"+str(binindex)+etabin+syst
+                projy=morphhistsmooth.ProjectionY("_py"+label,boundaries[binindex],boundaries[binindex+1]-1)
+
                 accnum = projy.Integral(1,projy.GetXaxis().GetNbins())
-                accden = morphhist.Integral(1,morphhist.GetXaxis().GetNbins(),1,morphhist.GetYaxis().GetNbins())
+                accden = morphhistsmooth.Integral(1,morphhistsmooth.GetXaxis().GetNbins(),1,morphhistsmooth.GetYaxis().GetNbins())
                 dh=ROOT.RooDataHist("dh"+label,"dh"+label,files.m2pg,projy)
                 sigpdf1d = ROOT.RooHistPdf("sigpdf_"+label,"signal PDF for a slice in files.m2p",files.m2pg,dh)
                 sliceacc = ROOT.RooRealVar("sliceacc_"+label,"acceptance in a given slice",accnum/accden)
@@ -140,6 +172,7 @@ if __name__ == "__main__":
             # write the rest to the file
             fileout.cd()
             morphhist.Write()
+            morphhistsmooth.Write()
             hA.Write(hA.GetName()+"A")
             hB.Write(hB.GetName()+"B")
             hC.Write(hC.GetName()+"C")
@@ -152,7 +185,6 @@ if __name__ == "__main__":
     (ROOT.TNamed("pmass",str(pmass))).Write()
     (ROOT.TNamed("region",str(args.region))).Write()
     (ROOT.TNamed("sigype",str(args.sigtype))).Write()
-    (ROOT.TNamed("binning",str(args.binning))).Write()
     fileout.Close()
 
     

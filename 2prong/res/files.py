@@ -12,35 +12,22 @@ regions = ["sideband","signal"]
 etabins = ["barrel","endcap"]
 
 # omega mass bin boundaries
-def get_m2pbin_boundaries(region, sigtype, binning):
-    if binning == 0: # old
+def get_m2pbin_boundaries(region, sigtype):
+    if sigtype==sigtypes[0]:
         return (1,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,27)
-    if sigtype==sigtypes[0]:
-        return (1,5,7,9,11,13,15,17,19,21,23,27)
     else:
-        return (8,11,13,15,17,19,21,23,27)
-    #if sigtype==sigtypes[0]:
-    #    return (1,5,7,9,11,13,15,17,19,21,23,25,27)
-    #else:
-    #    return (8,11,13,15,17,19,21,23,25,27)
-def get_num_m2pbins(region, sigtype, binning):
-    if binning == 0: # old
-        return len((1,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,27))-1
-    if sigtype==sigtypes[0]:
-        return len((1,5,7,9,11,13,15,17,19,21,23,27))-1
-    else:
-        return len((8,11,13,15,17,19,21,23,27))-1
-    #if sigtype==sigtypes[0]:
-    #    return len((1,5,7,9,11,13,15,17,19,21,23,25,27))-1
-    #else:
-    #    return len((8,11,13,15,17,19,21,23,25,27))-1
+        return (8,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,27)
+
+def get_num_m2pbins(region, sigtype):
+    return len(get_m2pbin_boundaries(region, sigtype))-1
 
 # setup observables
 m2pg = ROOT.RooRealVar("m2pg","Invariant mass of the 2-prong and photon",500,3998)
 m2p = ROOT.RooRealVar("m2p","Invariant mass of the 2-prong",0.4,5.33)
 
 # list of systematics
-systs = [ "" ]
+systs = [ "", "_shiftUp", "_shiftDown", "_stretchUp", "_stretchDown", "_scaleUp", "_scaleDown", "_resUp", "_resDown" ]
+#systs = [ "" ]
 
 # signal and background workspace filenames
 sigworkspacefn="sigworkspace.root"
@@ -52,7 +39,7 @@ workspacename="w"
 #datafilename = "./input/HISTO_photon2017.root"
 #datafilename = "./input/HISTO_photon2016pre.root"
 #datafilename = "./input/HISTO_photon2016post.root"
-datafilename = "./input/photon_full.root"
+datafilename = "./input/egamma2018full.root"
 
 # luminosity for the dataset
 luminosity=138
@@ -63,11 +50,11 @@ gengridp = ( (1000., "1000"), (2500., "2500") )
 genfilenames = [ [""]*len(gengridw) for i in range(len(gengridp))]
 for i in range(len(gengridw)):
     for j in range(len(gengridp)):
-        genfilenames[i][j]="./input/signal_2x2box_"+gengridp[j][1]+"_"+gengridw[i][1]+"_200k_events.root"
+        genfilenames[i][j]="./input/signal_"+gengridp[j][1]+"_"+gengridw[i][1]+".root"
 
 # omega and phi mass points to run over
-wmasspoints = numpy.linspace(1,2,11)
-pmasspoints = numpy.linspace(1000,2500,16)
+wmasspoints = numpy.linspace(1,2,8)
+pmasspoints = numpy.linspace(1000,2500,14)
 npoints = len(wmasspoints)*len(pmasspoints)
 
 # convert a single index into a wmassindex and a pmassindex

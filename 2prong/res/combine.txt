@@ -4,7 +4,7 @@ jmax 1 number of processes minus 1
 kmax * number of nuisance parameters
 -------------------------------------------------------------------------------
 shapes      data_obs    BIN      BKGWS                    w:dataHist_BIN
-shapes      sig         BIN      SIGWS                    w:sigpdf_BIN
+shapes      sig         BIN      SIGWS                    w:sigpdf_BIN w:sigpdf_BIN_$SYSTEMATIC
 #shapes      bkg         BIN      BKGWS                    w:model_bkg_f3_BIN
 shapes      bkg         BIN      BKGWS                    w:multipdf_BIN
 -------------------------------------------------------------------------------
@@ -16,7 +16,11 @@ process         sig                bkg
 process         0                  1
 rate            LUMI               1.0
 ---------------------------------------------
-lumi          lnN         1.016      1.0
+lumi          lnN         1.18       -
+shift	      shape	  1	     -
+stretch       shape	  1	     -
+scale	      shape	  1	     -
+res	      shape	  1	     -
 p1_BIN        flatParam
 p2_BIN        flatParam
 p3_BIN        flatParam

@@ -13,15 +13,15 @@ if __name__ == "__main__":
     # setup and use the parser
     parser = argparse.ArgumentParser(formatter_class=argparse.ArgumentDefaultsHelpFormatter)
     parser.add_argument("--sigtype",help="signal type that we're using",choices=files.sigtypes, default=files.sigtypes[0])
-    parser.add_argument("--region",help="region that we're working in",choices=files.regions, default=files.regions[0])
-    parser.add_argument("--binning",help="binning strategy selection", default=1)
+    parser.add_argument('--region',help='region to run over',choices=files.regions,default=files.regions[0]) 
     args=parser.parse_args()
 
     cardname = "combine.txt"
     newfilenames = []
+    nbins=files.get_num_m2pbins(args.region, args.sigtype)
 
     # skip the first two bins if we're doing the control region
-    for bin in range(files.get_num_m2pbins(args.region, args.sigtype, args.binning)):
+    for bin in range(nbins):
         for eta in files.etabins:
             oldfile = open(cardname, "r")
             newfile = tempfile.NamedTemporaryFile(delete=False, mode='wt', dir='.')
