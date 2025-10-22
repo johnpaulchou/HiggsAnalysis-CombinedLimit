@@ -56,6 +56,8 @@ for i in range(len(gengridw)):
 wmasspoints = numpy.linspace(1,2,8)
 pmasspoints = numpy.linspace(1000,2500,14)
 npoints = len(wmasspoints)*len(pmasspoints)
+#wmasspoints = numpy.linspace(1,2,11)
+#pmasspoints = numpy.linspace(1000,2500,16)
 
 # convert a single index into a wmassindex and a pmassindex
 def indexpair(index):

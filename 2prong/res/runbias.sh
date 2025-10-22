@@ -1,7 +1,5 @@
 #!/bin/bash
 
-
-
 source setup.sh
 ./makeconstants.py
 source constants.sh
@@ -27,8 +25,10 @@ for mass in ${masses[@]}; do
                 freeze_params0="lumi,$list_params,$freezeparams0"
                 freeze_params1="lumi,$list_params,$freezeparams1"
                 freeze_params2="lumi,$list_params,$freezeparams2"
+                freeze_paramstmp="freeze_params$testfix"
+                freeze_paramsstr="${!freeze_paramstmp}"
                 combine newcard.txt -M GenerateOnly --setParameters lumi=0,$genfixstr --toysNoSystematics -t $niter --expectSignal $sigstr --saveToys -m 125 --freezeParameters lumi,$list_params -v $debug
-                combine -M FitDiagnostics newcard.root --toysFile higgsCombineTest.GenerateOnly.mH125.123456.root -t $niter --rMin -$rrange --rMax $rrange --cminDefaultMinimizerStrategy=0  --X-rtd MINIMIZER_freezeDisassociatedParams --setParameters $testfixstr --freezeParameters $freeze_params0 -v $debug
+                combine -M FitDiagnostics newcard.root --toysFile higgsCombineTest.GenerateOnly.mH125.123456.root -t $niter --rMin -$rrange --rMax $rrange --cminDefaultMinimizerStrategy=0  --X-rtd MINIMIZER_freezeDisassociatedParams --setParameters $testfixstr --freezeParameters $freeze_paramsstr -v $debug
 
                 mv fitDiagnosticsTest.root fitDiagnosticsTest_m${mass}_sig${sigstr}_gen${genfix}_test${testfix}.root
             done
