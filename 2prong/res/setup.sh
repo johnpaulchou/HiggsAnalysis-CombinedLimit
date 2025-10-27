@@ -8,4 +8,4 @@ rrange=200
 sigstrs=(1.0)
 genfixes=(2)
 testfixes=(0)
-debug=0
+debug="0"
