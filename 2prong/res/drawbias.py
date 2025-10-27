@@ -53,7 +53,7 @@ if __name__ == "__main__":
         # parse the filename to get the parameters
         # NB that this assumes it takes the form, fitDiagnosticsTest_m${mass}_sig${strength}.root, which should come from runbias.sh
         # This code won't work if that formula is changed
-        m = re.search('fitDiagnosticsTest_m(.+?)_sig(.+?)_fix(.+?)_test(.+?).root', filename)
+        m = re.search('fitDiagnosticsTest_m(.+?)_sig(.+?)_gen(.+?)_test(.+?).root', filename)
         if m:
             try:
                 imass=int(m.group(1))
@@ -158,10 +158,7 @@ if __name__ == "__main__":
             for entry in data[mu]:
                 print("  ", entry)
         
-        pindex, windex = files.indexpair(int(mass))
-        #print(mass)
-        #print(pindex)
-        #print(windex)
+        windex, pindex = files.indexpair(int(mass))
         pmass, wmass = files.pmasspoints[pindex], files.wmasspoints[windex]        
         Title = "(M_#Phi, M_#omega) = ({}, {}) GeV".format(pmass, wmass)
                 
@@ -199,7 +196,7 @@ if __name__ == "__main__":
         # Format the graphs by getting the first graph
         firstgr=graphandmus[0][0]
         #firstgr.GetXaxis().SetTitle("M_{#omega} [MeV]")
-        firstgr.GetXaxis().SetTitle("Func pair (fix,test)")
+        firstgr.GetXaxis().SetTitle("Func pair (gen,test)")
         firstgr.GetYaxis().SetTitle("Bias")
         firstgr.SetTitle(Title)
         firstgr.GetYaxis().SetRangeUser(-2.5,2.5)
