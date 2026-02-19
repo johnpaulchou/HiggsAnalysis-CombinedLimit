@@ -20,6 +20,8 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser(formatter_class=argparse.ArgumentDefaultsHelpFormatter)
     parser.add_argument("filenames", nargs="+", help="A list of root files containing the limit info")
     parser.add_argument("--drawSmooth",help="Draw a smoothed version of the limit plot",action=argparse.BooleanOptionalAction,default=False)
+    parser.add_argument("--sigtype",help="signal type that we're using",choices=files.sigtypes, default=files.sigtypes[0])
+
     args = parser.parse_args()
 
     # create histograms
@@ -63,7 +65,7 @@ if __name__ == "__main__":
     hSig.GetYaxis().SetTitle("m_{#phi} [GeV]")
     hSig.GetZaxis().SetTitle("Significance (z-score)")
     hSig.SetMinimum(-0.2)
-    hSig.SetMaximum(7.0)
+    hSig.SetMaximum(3.0)
 
     cmstxt = ROOT.TLatex()
     cmstxt.SetTextFont(61)
@@ -77,7 +79,14 @@ if __name__ == "__main__":
     lumitxt.SetTextFont(42)
     lumitxt.SetTextSize(0.05)
     lumitxt.DrawLatexNDC(0.63,0.87,"138 fb^{-1} (13 TeV)")
+    sigtxt = ROOT.TLatex()
+    sigtxt.SetTextFont(42)
+    sigtxt.SetTextSize(0.03)
+    if args.sigtype==files.sigtypes[0]:
+        sigtxt.DrawLatexNDC(0.18,0.75,"#eta BR hypothesis")
+    else:
+        sigtxt.DrawLatexNDC(0.18,0.75,"#eta' BR hypothesis")
     
     can.Update()
     can.Draw()
-    can.SaveAs("ressig.pdf")
+    can.SaveAs("ressig_"+args.sigtype+".pdf")

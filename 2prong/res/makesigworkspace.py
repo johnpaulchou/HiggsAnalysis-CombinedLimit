@@ -47,16 +47,23 @@ def smooth_TH2D(hist: ROOT.TH2D, sigma=1.5) -> ROOT.TH2D:
     return hist_smoothed
 
 ###### main function ######
-if __name__ == "__main__":
+def main(argv=None):
     parser = argparse.ArgumentParser(formatter_class=argparse.ArgumentDefaultsHelpFormatter)
     parser.add_argument('--imass', help="index of the job to run (0-"+str(files.npoints-1)+")", type=int)
+    parser.add_argument('--fixmasses', nargs=2, metavar=('wmass', 'pmass'),type=float,help="(m_omega, m_phi) This overwrites indexed masses (using imass).")
     parser.add_argument('--region',help='region to run over',choices=files.regions,default=files.regions[0])
     parser.add_argument("--sigtype",help="signal type that we're using",choices=files.sigtypes,default=files.sigtypes[0])
-    args=parser.parse_args()
+    args=parser.parse_args(argv)
 
-    (windex,pindex)=files.indexpair(args.imass)
-    wmass = files.wmasspoints[windex]
-    pmass = files.pmasspoints[pindex]
+    if args.fixmasses is None:
+        (windex,pindex)=files.indexpair(args.imass)
+        wmass = files.wmasspoints[windex]
+        pmass = files.pmasspoints[pindex]
+    else:
+        wmass = args.fixmasses[0]
+        pmass = args.fixmasses[1]
+
+        
     print("Creating workspace for m_w="+str(wmass)+" GeV and m_phi="+str(pmass)+" GeV")
     # find the grid points to match up to the chosen omega and phi masses
     txmin=txmax=tymin=tymax=-999.
@@ -148,17 +155,15 @@ if __name__ == "__main__":
             morphhist=hA.Clone(hA.GetName()+"m")
             morphhist.Reset()
             morphhist=morph.fillHistogram(morphhist,ROOT.RooArgList(files.m2p,files.m2pg))
-#            morphhistsmooth=smooth_TH2D(morphhist,0.4)
-            morphhistsmooth=morphhist
         
             # create PDFs for different m2p slices
             fileout.cd()
             for binindex in range(files.get_num_m2pbins(args.region, args.sigtype)):
                 label = "bin"+str(binindex)+etabin+syst
                 boundaries=files.get_m2pbin_boundaries(args.region, args.sigtype)
-                projy=morphhistsmooth.ProjectionY("_py"+label,boundaries[binindex],boundaries[binindex+1]-1)
+                projy=morphhist.ProjectionY("_py"+label,boundaries[binindex],boundaries[binindex+1]-1)
                 accnum = projy.Integral(1,projy.GetXaxis().GetNbins())
-                accden = morphhistsmooth.Integral(1,morphhistsmooth.GetXaxis().GetNbins(),1,morphhistsmooth.GetYaxis().GetNbins())
+                accden = morphhist.Integral(1,morphhist.GetXaxis().GetNbins(),1,morphhist.GetYaxis().GetNbins())
                 dh=ROOT.RooDataHist("dh"+label,"dh"+label,files.m2pg,projy)
                 sigpdf1d = ROOT.RooHistPdf("sigpdf_"+label,"signal PDF for a slice in files.m2p",files.m2pg,dh)
                 sliceacc = ROOT.RooRealVar("sliceacc_"+label,"acceptance in a given slice",accnum/accden)
@@ -171,7 +176,6 @@ if __name__ == "__main__":
             # write the rest to the file
             fileout.cd()
             morphhist.Write()
-            morphhistsmooth.Write()
             hA.Write(hA.GetName()+"A")
             hB.Write(hB.GetName()+"B")
             hC.Write(hC.GetName()+"C")
@@ -185,4 +189,7 @@ if __name__ == "__main__":
     (ROOT.TNamed("sigtype",args.sigtype)).Write()
     fileout.Close()
 
-    
+
+if __name__ == "__main__":
+    main()
+

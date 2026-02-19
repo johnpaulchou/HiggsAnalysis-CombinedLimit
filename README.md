@@ -20,6 +20,10 @@ git clone https://github.com/johnpaulchou/HiggsAnalysis-CombinedLimit.git HiggsA
 cd HiggsAnalysis/CombinedLimit
 git checkout Brandon
 scramv1 b clean; scramv1 b # always make a clean build
+
+# to run the limits (in either the twoprong/ttw or twoprong/res subdirectories)
+./runlimits.sh
+
 ```
 =======
 ### Publication 
