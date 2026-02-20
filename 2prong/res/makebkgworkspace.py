@@ -50,8 +50,8 @@ if __name__ == "__main__":
             p3 = ROOT.RooRealVar("p3_"+label,"p3",-5,-200,0)
             p4 = ROOT.RooRealVar("p4_"+label,"p4",-1,-20,0)
             f2 = ROOT.RooDijet2Pdf("model_bkg_f2_"+label,"f2",files.m2pg,p3,p4,sqrts)
-            p5 = ROOT.RooRealVar("p5_"+label,"p5",5,0,100)
-            p6 = ROOT.RooRealVar("p6_"+label,"p6",-1,-10,0)
+            p5 = ROOT.RooRealVar("p5_"+label,"p5",5,-100,100)
+            p6 = ROOT.RooRealVar("p6_"+label,"p6",-1,-5,5)
             f3 = ROOT.RooDijet3Pdf("model_bkg_f3_"+label,"f3",files.m2pg,p5,p6,sqrts)
 
             # perform some initial fits

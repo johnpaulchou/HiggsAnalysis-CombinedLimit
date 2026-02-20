@@ -34,7 +34,14 @@ Double_t RooDijet3Pdf::evaluate() const
   //  return pow(1-pow(x,1./3),_p1)*pow(x,_p2);
   //    return pow(x,_p1+_p2*log(x));
   //  return pow(1+x,_p1)*pow(x,_p2*log(x));
-  return pow(1-x,_p1)*exp(_p2*log(x));
+  //  return pow(1-x,_p1)*pow(1+x,_p2*x);
+  //  return pow(1-x,_p1)*pow(x,_p2*log(x));
+  //  return pow(1-x,_p1)*exp(_p2*x);
+  //  return pow(x,_p1+_p2*log(x));
+  return pow(1-x,_p1)*pow(x,_p2*log(x));
+
+
+
 }
 
 
