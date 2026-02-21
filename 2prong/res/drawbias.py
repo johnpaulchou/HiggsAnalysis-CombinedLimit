@@ -160,7 +160,7 @@ if __name__ == "__main__":
         
         windex, pindex = files.indexpair(int(mass))
         pmass, wmass = files.pmasspoints[pindex], files.wmasspoints[windex]        
-        Title = "(M_#Phi, M_#omega) = ({}, {}) GeV".format(pmass, wmass)
+        Title = "(M_#Phi, M_#omega) = ({:.0f}, {:.3f}) GeV".format(pmass, wmass)
                 
         # graph+mu value pairs
         graphandmus = []

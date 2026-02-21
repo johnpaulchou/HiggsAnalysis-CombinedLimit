@@ -1,5 +1,5 @@
-niter="30"
-masses=(111)
+niter="50"
+masses=(0)
 # 0, 7, 104, 111
 # 0, 7, 72, 79
 #masses = (0, 10, 110, 120) # phi max at 2000
