@@ -5,7 +5,7 @@ kmax * number of nuisance parameters
 -------------------------------------------------------------------------------
 shapes      data_obs    BIN      BKGWS                    w:dataHist_BIN
 shapes      sig         BIN      SIGWS                    w:sigpdf_BIN w:sigpdf_BIN_$SYSTEMATIC
-shapes      bkg         BIN      BKGWS                    w:multipdf_BIN
+shapes      bkg         BIN      BKGWS                    w:model_bkg_f3_BIN
 -------------------------------------------------------------------------------
 bin             BIN
 observation     -1
@@ -22,10 +22,5 @@ shift	      shape	  1	     -
 stretch       shape	  1	     -
 scale	      shape	  1	     -
 res	      shape	  1	     -
-p1_BIN        flatParam
-p2_BIN        flatParam
-p3_BIN        flatParam
-p4_BIN        flatParam
 p5_BIN        flatParam
 p6_BIN        flatParam
-pdfindex_BIN  discrete
