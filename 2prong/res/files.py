@@ -3,6 +3,8 @@
 import ROOT
 import sys
 import numpy
+import re
+import os
 
 # signal types
 sigtypes = ["eta","etaprime"]
@@ -10,6 +12,11 @@ sigtypes = ["eta","etaprime"]
 # regions to consider
 regions = ["sideband","signal"]
 etabins = ["barrel","endcap"]
+
+# omega and phi mass points to run over
+wmasspoints = numpy.linspace(1, 2, 3)
+pmasspoints = numpy.linspace(1000, 2500, 3)
+npoints = len(wmasspoints)*len(pmasspoints)
 
 # omega mass bin boundaries
 def get_m2pbin_boundaries(region, sigtype):
@@ -34,30 +41,14 @@ sigworkspacefn="sigworkspace.root"
 bkgworkspacefn="bkgworkspace.root"
 workspacename="w"
 
-# data file names
-#datafilename = "./input/egamma18.root"
-#datafilename = "./input/HISTO_photon2017.root"
-#datafilename = "./input/HISTO_photon2016pre.root"
-#datafilename = "./input/HISTO_photon2016post.root"
-datafilename = "./input/egamma2018full.root"
+# input path
+input_top_level = '/home/chiarito/work/stats/condor/input'
+signal_input = 'signal_10percent_eta'
+data_input = '.'
+datafilename = "{}/{}/egamma2018full.root".format(input_top_level, data_input)
 
 # luminosity for the dataset
 luminosity=138
-
-# set up the grid of generated points and their corresponding input files
-gengridw = ( (1.0, "1p0"), (2.0, "2p0") )
-gengridp = ( (1000., "1000"), (2500., "2500") )
-genfilenames = [ [""]*len(gengridw) for i in range(len(gengridp))]
-for i in range(len(gengridw)):
-    for j in range(len(gengridp)):
-        genfilenames[i][j]="./input/signal_"+gengridp[j][1]+"_"+gengridw[i][1]+".root"
-
-# omega and phi mass points to run over
-wmasspoints = numpy.linspace(1,2,8)
-pmasspoints = numpy.linspace(1000,2500,14)
-npoints = len(wmasspoints)*len(pmasspoints)
-#wmasspoints = numpy.linspace(1,2,11)
-#pmasspoints = numpy.linspace(1000,2500,16)
 
 # convert a single index into a wmassindex and a pmassindex
 def indexpair(index):
@@ -71,6 +62,14 @@ def index(wmassindex, pmassindex):
     assert(wmassindex>=0 and wmassindex<len(wmasspoints))
     assert(pmassindex>=0 and pmassindex<len(pmasspoints))
     return wmassindex+pmassindex*len(wmasspoints)
+
+def indexof(wmass, pmass):
+    w_idx = numpy.where(numpy.isclose(wmasspoints, wmass))[0]
+    p_idx = numpy.where(numpy.isclose(pmasspoints, pmass))[0]
+    if len(w_idx) == 0 or len(p_idx) == 0:
+        return None
+    #return w_idx[0], p_idx[0]
+    return index(w_idx[0], p_idx[0])
 
 # x-section as a function of m_phi from an interpolation of the phi masses
 def get_xsection(phimass):
@@ -86,3 +85,57 @@ def get_xsection(phimass):
         x1, y1 = theory_xs[i + 1]
         if x0 <= phimass <= x1:
             return y0 + (y1 - y0) * (phimass - x0) / (x1 - x0)
+
+# set up the grid of generated points and their corresponding input files
+import os
+import re
+signal_fullpath = "{}/{}".format(input_top_level, signal_input)
+files = os.listdir(signal_fullpath)
+pattern = re.compile(r"signal_(\d+)_(\d+p\d+)\.root")
+wmasses = set()
+pmasses = set()
+for f in files:
+    m = pattern.match(f)
+    if m:
+        pmasses.add(m.group(1))
+        wmasses.add(m.group(2))
+def parse_w(s):
+    return float(s.replace("p", "."))
+def parse_p(s):
+    return float(s)
+gengridw = tuple(sorted((parse_w(s), s) for s in wmasses))
+gengridp = tuple(sorted((parse_p(s), s) for s in pmasses))
+
+#genfilenames = [ [""]*len(gengridw) for i in range(len(gengridp))] # old
+genfilenames = [ [""]*len(gengridp) for i in range(len(gengridw))] 
+for i in range(len(gengridw)):
+    for j in range(len(gengridp)):
+        sigfilename="signal_"+gengridp[j][1]+"_"+gengridw[i][1]+".root"   
+        genfilenames[i][j] = "{}/{}".format(signal_fullpath, sigfilename)
+
+genfilenames_raw = ['',]*npoints
+signal_fullpath = "{}/{}".format(input_top_level, signal_input)
+for fi in os.listdir(signal_fullpath):
+    result = re.search(r"signal_(.+?)\.root", fi)
+    if not result: continue
+    masspoint_string = result.group(1)
+    pmass_string = re.search(r"(.+?)_(.*)", masspoint_string).group(1)
+    wmass_string = (re.search(r"(.+?)_(.*)", masspoint_string).group(2)).replace('p','.')
+    masspoint_index = indexof(float(wmass_string), float(pmass_string))
+    #print(masspoint_string, masspoint_index)
+    if not masspoint_index == None: genfilenames_raw[masspoint_index] ="{}/signal_{}.root".format(signal_fullpath, masspoint_string)
+
+def main():
+    print("npoints:", npoints)
+    print("pmasspoints:", pmasspoints)
+    print("wmasspoints:", wmasspoints)
+    print('(w, p) indexes and associated gen file')
+    for n in range(npoints):
+        print(n, indexpair(n), genfilenames_raw[n])
+    print('full gen grid:')
+    for i in range(len(gengridw)):
+        for j in range(len(gengridp)):
+            print(i, j, genfilenames[i][j])
+
+if __name__ == "__main__":
+    main()

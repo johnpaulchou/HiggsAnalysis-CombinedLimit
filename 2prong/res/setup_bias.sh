@@ -1,3 +1,5 @@
+region=sideband
+sigtype=etaprime
 niter="50"
 masses=(0)
 # 0, 7, 104, 111

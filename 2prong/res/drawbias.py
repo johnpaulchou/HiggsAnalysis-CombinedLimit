@@ -32,8 +32,8 @@ if __name__ == "__main__":
     args = parser.parse_args()
 
     # setup output for printing
-    pdffilename="./plots/biasfits.pdf"
-    pdfsummaryfilename="./plots/biasfits_summary.pdf"
+    pdffilename="./plots_bias/biasfits.pdf"
+    pdfsummaryfilename="./plots_bias/biasfits_summary.pdf"
     first=True
 
     # stuff to plot

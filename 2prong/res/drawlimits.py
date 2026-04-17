@@ -44,6 +44,7 @@ if __name__ == "__main__":
     for file in args.filenames:
         dict=common.parse_HC_limit_tree(file)
         imass=int(dict["mass"])
+        #print(imass)
         windex,pindex=files.indexpair(imass)
         pmass=files.pmasspoints[pindex]
         obs=dict["obs"]
@@ -52,7 +53,7 @@ if __name__ == "__main__":
             for skip in args.suppressPoints:
                 if skip==imass:
                     obs=exp
-#        print("windex="+str(windex)+" pindex="+str(pindex)+" obs="+str(dict["obs"]))
+        print("windex="+str(windex)+" pindex="+str(pindex)+" obs="+str(dict["obs"]))
         hObs.SetBinContent(windex+1,pindex+1,math.log10(obs))
         hExp.SetBinContent(windex+1,pindex+1,math.log10(exp))
         hExpLo.SetBinContent(windex+1,pindex+1,math.log10(dict["exp-1"]))
@@ -117,6 +118,12 @@ if __name__ == "__main__":
     can1.Draw()
     can1.SaveAs("resobs_"+args.sigtype+".pdf")
 
+    print('DUMP Observed')
+    nx = hObs.GetNbinsX()
+    ny = hObs.GetNbinsY()
+    for y in range(ny, 0, -1):  # last y-bin first
+        row = [f"{hObs.GetBinContent(hObs.GetBin(x, y)):.3f}" for x in range(1, nx + 1)]
+        print(" ".join(row))
 
     # Draw Expected limits
     
@@ -169,6 +176,13 @@ if __name__ == "__main__":
     can2.Draw()
     can2.SaveAs("resexp_"+args.sigtype+".pdf")
 
+    print('DUMP Expected')
+    nx = hExp.GetNbinsX()
+    ny = hExp.GetNbinsY()
+    for y in range(ny, 0, -1):  # last y-bin first
+        row = [f"{hExp.GetBinContent(hExp.GetBin(x, y)):.3f}" for x in range(1, nx + 1)]
+        print(" ".join(row))
+
     # Draw xs limits
     can3 = ROOT.TCanvas()
     can3.SetFillColor(0)
@@ -203,4 +217,10 @@ if __name__ == "__main__":
     can3.Draw()
     can3.SaveAs("resobsxs_"+args.sigtype+".pdf")
 
+    print('DUMP Observed xsec')
+    nx = hObsXs.GetNbinsX()
+    ny = hObsXs.GetNbinsY()
+    for y in range(ny, 0, -1):  # last y-bin first
+        row = [f"{hObsXs.GetBinContent(hObsXs.GetBin(x, y)):.3f}" for x in range(1, nx + 1)]
+        print(" ".join(row))
     
