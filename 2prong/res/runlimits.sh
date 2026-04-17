@@ -12,7 +12,7 @@ for mass in ${masses[@]}; do
     echo "Processing mass $mass"
     ./makebkgworkspace.py --region $region --sigtype $sigtype &> "$output"
     echo "."
-    ./makesigworkspace_mod.py --region $region --sigtype $sigtype --imass $mass --raw &> "$output"
+    ./makesigworkspace_mod.py --region $region --sigtype $sigtype --imass $mass --raw > "$output"
     echo ".."
     ./makenewcard.py --region $region --sigtype $sigtype
     echo "..."

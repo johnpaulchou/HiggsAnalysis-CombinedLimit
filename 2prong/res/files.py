@@ -14,8 +14,8 @@ regions = ["sideband","signal"]
 etabins = ["barrel","endcap"]
 
 # omega and phi mass points to run over
-wmasspoints = numpy.linspace(1, 2, 3)
-pmasspoints = numpy.linspace(1000, 2500, 3)
+wmasspoints = numpy.linspace(0.5, 4, 15)
+pmasspoints = numpy.linspace(500, 3000, 11)
 npoints = len(wmasspoints)*len(pmasspoints)
 
 # omega mass bin boundaries
@@ -130,8 +130,11 @@ def main():
     print("pmasspoints:", pmasspoints)
     print("wmasspoints:", wmasspoints)
     print('(w, p) indexes and associated gen file')
+    count = 0
     for n in range(npoints):
         print(n, indexpair(n), genfilenames_raw[n])
+        if genfilenames_raw[n] != '': count += 1
+    print('points with genfile: {}'.format(count))
     print('full gen grid:')
     for i in range(len(gengridw)):
         for j in range(len(gengridp)):

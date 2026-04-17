@@ -86,9 +86,12 @@ def main(argv=None):
         #print(files.genfilenames[windex][pindex])
         #print("############")
         if fnRaw == '':
-            print("Raw mode: no appropriate signal file. Using interpoloation instead.")
-        rawFound = True
-        print("Raw mode: using file "+fnRaw)
+            print("OUT Raw mode: no appropriate signal file. Using interpoloation instead.")
+            print("ERR Raw mode: no appropriate signal file. Using interpoloation instead.", file=sys.stderr)
+        else:
+            rawFound = True
+            print("OUT Raw mode: using file "+fnRaw)
+            print("ERR Raw mode: using file "+fnRaw, file=sys.stderr)
     if not args.raw or not rawFound:
         # find the grid points to match up to the chosen omega and phi masses
         txmin=txmax=tymin=tymax=-999.
@@ -127,7 +130,7 @@ def main(argv=None):
     elif args.sigtype==files.sigtypes[1]: tempname="plots/recomassprime"
         
     # compute acceptance*efficiency
-    if args.raw:
+    if args.raw and rawFound:
         acc = getAcc(fnRaw, (tempname+'_barrel',tempname+'_endcap'), "plots/cutflow")
     else:
         accA=getAcc(fnA, (tempname+'_barrel',tempname+'_endcap'), "plots/cutflow")
@@ -152,7 +155,7 @@ def main(argv=None):
         # loop over eta regions
         for etabin in files.etabins:
 
-            if args.raw:
+            if args.raw and rawFound:
                 # Raw mode: use the histogram directly, no morphing
                 morphhist = common.get_TH1_from_file(fnRaw, tempname+"_"+etabin+syst)
             else:
@@ -212,7 +215,7 @@ def main(argv=None):
             # write the rest to the file
             fileout.cd()
             morphhist.Write()
-            if not args.raw:
+            if not (args.raw and rawFound):
                 hA.Write(hA.GetName()+"A")
                 hB.Write(hB.GetName()+"B")
                 hC.Write(hC.GetName()+"C")
