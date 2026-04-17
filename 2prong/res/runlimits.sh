@@ -25,13 +25,8 @@ for mass in ${masses[@]}; do
     #echo "fit diagnostics mass $mass"
 
     rm higgsCombineTest.AsymptoticLimits.mH$mass.root
-    combine -M AsymptoticLimits newcard.txt -m $mass --X-rtd MINIMIZER_freezeDisassociatedParams --cminDefaultMinimizerStrategy 0 -v $debug --run observed --noFitAsimov  --rAbsAcc 0.02 --rRelAcc 0.05
+    combine -M AsymptoticLimits newcard.txt -m $mass --X-rtd MINIMIZER_freezeDisassociatedParams --cminDefaultMinimizerStrategy 0 -v $debug --rAbsAcc 0.02 --rRelAcc 0.05
     echo "....."
-
-    #./drawlimits.py --sigtype $sigtype higgsCombineTest.AsymptoticLimits.mH$mass.root 2> "$output"
-    #echo ""
-    #date
-    #echo "Finished mass $mass"
 done
 
 date
