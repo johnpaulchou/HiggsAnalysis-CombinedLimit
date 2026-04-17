@@ -14,9 +14,10 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser(formatter_class=argparse.ArgumentDefaultsHelpFormatter)
     parser.add_argument("--sigtype",help="signal type that we're using",choices=files.sigtypes, default=files.sigtypes[0])
     parser.add_argument('--region',help='region to run over',choices=files.regions,default=files.regions[0]) 
+    parser.add_argument('--cardname',help='cardname to use',default="combine.txt")
     args=parser.parse_args()
 
-    cardname = "combine.txt"
+    cardname = args.cardname
     newfilenames = []
     nbins=files.get_num_m2pbins(args.region, args.sigtype)
 
