@@ -1,6 +1,6 @@
 #!/bin/bash
 
-source setup.sh
+source setup_bias.sh
 ./makeconstants.py
 source constants.sh
 if [ "$debug" = "-2" ]; then
@@ -10,8 +10,8 @@ else
     output="/dev/stdout"
 fi
 
-./makebkgworkspace.py
-./makenewcard.py
+./makebkgworkspace.py --region $region --sigtype $sigtype
+./makenewcard.py --region $region --sigtype $sigtype
 
 for mass in ${masses[@]}; do
     for sigstr in ${sigstrs[@]}; do
@@ -22,7 +22,7 @@ for mass in ${masses[@]}; do
                 #    continue
                 #fi
                 echo "Processing $mass $sigstr $genfix $testfix" `date`
-                ./makesigworkspace.py --imass $mass
+                ./makesigworkspace.py --imass $mass --region $region --sigtype $sigtype
                 text2workspace.py newcard.txt
                 genfixtemp="fix$genfix"
                 genfixstr="${!genfixtemp}"

@@ -97,7 +97,7 @@ if __name__ == "__main__":
         ge2.SetMaximum(5.0)
     ge2.GetXaxis().SetTitle("m_{#omega} [GeV]")
     ge2.GetXaxis().SetRangeUser(x[0],x[len(x)-1])
-    ge2.GetYaxis().SetTitle("95% C.L. Lower limit on #mu")
+    ge2.GetYaxis().SetTitle("95% C.L. upper limit on #mu")
     ge1.SetFillColor(ROOT.TColor.GetColor("#607641"))
     ge1.SetFillStyle(1001)
     ge1.Draw("Same3l")
