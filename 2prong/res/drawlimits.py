@@ -24,16 +24,23 @@ if __name__ == "__main__":
     parser.add_argument("--sigtype",help="signal type that we're using",choices=files.sigtypes, default=files.sigtypes[0])
     args = parser.parse_args()
 
+    remove_500 = True
+
     # create histograms
     xbinsn = len(files.wmasspoints)
     xbinsw = (files.wmasspoints[1]-files.wmasspoints[0])
-    ybinsn = len(files.pmasspoints)
+    if not remove_500: ybinsn = len(files.pmasspoints)
+    else:              ybinsn = len(files.pmasspoints)-1
     ybinsw = (files.pmasspoints[1]-files.pmasspoints[0])
     xbinslo = files.wmasspoints[0]-xbinsw*0.5
     xbinshi = files.wmasspoints[xbinsn-1]+xbinsw*0.5
-    ybinslo = files.pmasspoints[0]-ybinsw*0.5
+    if not remove_500: ybinslo = files.pmasspoints[0]-ybinsw*0.5
+    else:              ybinslo = files.pmasspoints[1]-ybinsw*0.5
     ybinshi = files.pmasspoints[ybinsn-1]+ybinsw*0.5
+    if not remove_500: ybinshi = files.pmasspoints[ybinsn-1]+ybinsw*0.5
+    else:              ybinshi = files.pmasspoints[ybinsn-1+1]+ybinsw*0.5
 
+    print(ybinslo, ybinshi, ybinsn)
     hObs = ROOT.TH2D("hObs","Observed",xbinsn,xbinslo,xbinshi,ybinsn,ybinslo,ybinshi)
     hExp = ROOT.TH2D("hExp","Expected",xbinsn,xbinslo,xbinshi,ybinsn,ybinslo,ybinshi)
     hExpLo = ROOT.TH2D("hExpLo","Expected -1 sigma",xbinsn,xbinslo,xbinshi,ybinsn,ybinslo,ybinshi)
@@ -44,9 +51,10 @@ if __name__ == "__main__":
     for file in args.filenames:
         dict=common.parse_HC_limit_tree(file)
         imass=int(dict["mass"])
-        #print(imass)
+        if remove_500 and imass <= 14: continue
         windex,pindex=files.indexpair(imass)
         pmass=files.pmasspoints[pindex]
+        if remove_500: pindex = pindex-1
         obs=dict["obs"]
         exp=dict["exp-med"]
         if args.suppressPoints is not None:
@@ -82,7 +90,8 @@ if __name__ == "__main__":
     hObs.GetXaxis().SetTitle("m_{#omega} [GeV]")
     hObs.GetYaxis().SetTitle("m_{#phi} [GeV]")
     hObs.GetZaxis().SetTitle("Observed log_{10}r_{95}")
-    hObs.SetMinimum(-1.0)
+    #hObs.SetMinimum(-1.0)
+    hObs.SetMinimum(-1.5)
     hObs.SetMaximum(2.0)
 
     obsCont=hObs.Clone("obsCont")
@@ -140,7 +149,8 @@ if __name__ == "__main__":
     hExp.GetXaxis().SetTitle("m_{#omega} [GeV]")
     hExp.GetYaxis().SetTitle("m_{#phi} [GeV]")
     hExp.GetZaxis().SetTitle("Expected log_{10}r_{95}")
-    hExp.SetMinimum(-1.0)
+    #hExp.SetMinimum(-1.0)
+    hExp.SetMinimum(-1.5)
     hExp.SetMaximum(2.0)
 
     expCont=hExp.Clone("expCont")
