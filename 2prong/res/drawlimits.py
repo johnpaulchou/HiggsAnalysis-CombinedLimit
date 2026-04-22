@@ -24,7 +24,7 @@ if __name__ == "__main__":
     parser.add_argument("--sigtype",help="signal type that we're using",choices=files.sigtypes, default=files.sigtypes[0])
     args = parser.parse_args()
 
-    remove_500 = True
+    remove_500 = False
 
     # create histograms
     xbinsn = len(files.wmasspoints)

@@ -2,7 +2,7 @@
 
 rm -f bkgworkspace.root newcard.root sigworkspace.root
 
-source setup_limits.sh
+#source setup_limits.sh
 output="/dev/null"
 #output="/dev/stdout"
 
