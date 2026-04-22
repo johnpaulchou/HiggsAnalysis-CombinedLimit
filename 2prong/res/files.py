@@ -21,6 +21,7 @@ def get_num_m2pbins(region, sigtype):
 
 # setup observables
 m2pg = ROOT.RooRealVar("m2pg","Invariant mass of the 2-prong and photon",500,3998)
+m2pg_sig = ROOT.RooRealVar("m2pg_sig","Invariant mass of the 2-prong and photon for the signal pdfs only",396,3998)
 m2p = ROOT.RooRealVar("m2p","Invariant mass of the 2-prong",0.4,5.33)
 
 # list of systematics
@@ -43,16 +44,16 @@ datafilename = "./input/egamma2018full.root"
 luminosity=138
 
 # set up the grid of generated points and their corresponding input files
-gengridw = ( (1.0, "1p0"), (2.0, "2p0") )
-gengridp = ( (1000., "1000"), (2500., "2500") )
+gengridw = ( (0.5, "0p5"), (0.75, "0p750"), (0.85, "0p850"), (1.0, "1p0"), (2.0, "2p0"), (3.0, "3p0"), (4.0, "4p0") )
+gengridp = ( (500, "500"), (750, "750"), (1000., "1000"), (1500, "1500"), (2500., "2500"), (3000., "3000"))
 genfilenames = [ [""]*len(gengridw) for i in range(len(gengridp))]
 for i in range(len(gengridw)):
     for j in range(len(gengridp)):
-        genfilenames[i][j]="./input/signal_"+gengridp[j][1]+"_"+gengridw[i][1]+".root"
+        genfilenames[j][i]="./input/signal_"+gengridp[j][1]+"_"+gengridw[i][1]+".root"
 
 # omega and phi mass points to run over
-wmasspoints = numpy.linspace(1,2,8)
-pmasspoints = numpy.linspace(1000,2500,14)
+wmasspoints = numpy.linspace(0.85,4.0,8)
+pmasspoints = numpy.linspace(600.,3000,20)
 npoints = len(wmasspoints)*len(pmasspoints)
 
 # convert a single index into a wmassindex and a pmassindex
