@@ -31,7 +31,7 @@ if __name__ == "__main__":
         nboundaries=files.get_num_m2pbins(args.region, args.sigtype)
 
         if args.region==files.regions[0]: datahist2d=common.get_TH1_from_file(files.datafilename, tempname+"_sideband_"+etabin)
-        elif args.region==files.regions[1]: datahist2d=common.get_TH1_from_file(files.datafilename, tempname+"_"+etabin)
+        elif args.region==files.regions[1]: datahist2d=common.get_TH1_from_file(files.datafilename, tempname+"_bare_"+etabin)
         
         # loop over the 2-prong mass slices
         for binindex in range(nboundaries):
