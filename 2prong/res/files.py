@@ -43,7 +43,7 @@ workspacename="w"
 
 # input path
 input_top_level = '/home/chiarito/work/stats/condor/input'
-signal_input = 'signal_10percent_eta'
+signal_input = 'signal_10percent_etaprime'
 data_input = '.'
 datafilename = "{}/{}/egamma2018full.root".format(input_top_level, data_input)
 
@@ -94,6 +94,7 @@ files = os.listdir(signal_fullpath)
 pattern = re.compile(r"signal_(\d+)_(\d+p\d+)\.root")
 wmasses = set()
 pmasses = set()
+#print(files)
 for f in files:
     m = pattern.match(f)
     if m:
@@ -103,15 +104,37 @@ def parse_w(s):
     return float(s.replace("p", "."))
 def parse_p(s):
     return float(s)
-gengridw = tuple(sorted((parse_w(s), s) for s in wmasses))
-gengridp = tuple(sorted((parse_p(s), s) for s in pmasses))
-
+gengridw = list(sorted((parse_w(s), s) for s in wmasses))
+gengridp = list(sorted((parse_p(s), s) for s in pmasses))
+print("################")
+#print(gengridw)
+#print(gengridp)
 #genfilenames = [ [""]*len(gengridw) for i in range(len(gengridp))] # old
-genfilenames = [ [""]*len(gengridp) for i in range(len(gengridw))] 
+genfilenames = [ [""]*len(gengridp) for i in range(len(gengridw))]
+remove_w = set()
+remove_p = set()
 for i in range(len(gengridw)):
     for j in range(len(gengridp)):
-        sigfilename="signal_"+gengridp[j][1]+"_"+gengridw[i][1]+".root"   
-        genfilenames[i][j] = "{}/{}".format(signal_fullpath, sigfilename)
+        sigfilename="signal_"+gengridp[j][1]+"_"+gengridw[i][1]+".root"
+        if sigfilename not in files:
+            remove_w.add(gengridw[i])
+            remove_p.add(gengridp[j])
+#print(remove_w)
+#print(remove_p)
+for item in remove_w:
+    gengridw.remove(item)
+for item in remove_p:
+    gengridp.remove(item)
+#print(gengridw)
+#print(gengridp)
+#print("################")
+for i in range(len(gengridw)):
+    for j in range(len(gengridp)):
+        sigfilename="signal_"+gengridp[j][1]+"_"+gengridw[i][1]+".root"
+        if sigfilename in files:
+            genfilenames[i][j] = "{}/{}".format(signal_fullpath, sigfilename)
+        else:
+            genfilenames[i][j] = "error"
 
 genfilenames_raw = ['',]*npoints
 signal_fullpath = "{}/{}".format(input_top_level, signal_input)
@@ -133,7 +156,9 @@ def main():
     count = 0
     for n in range(npoints):
         print(n, indexpair(n), genfilenames_raw[n])
-        if genfilenames_raw[n] != '': count += 1
+        if genfilenames_raw[n] != '':
+            #print(n)
+            count += 1
     print('points with genfile: {}'.format(count))
     print('full gen grid:')
     for i in range(len(gengridw)):
