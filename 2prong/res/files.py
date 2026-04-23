@@ -4,23 +4,27 @@ import ROOT
 import sys
 import argparse
 import numpy
+import array
+
 
 # regions to consider
 sigtypes = ["eta","etaprime"]
 regions = ["sideband","signal"]
 etabins = ["barrel","endcap"]
 
-def get_m2pbin_boundaries(region, sigtype):
+def get_m2pbin_boundaries(region, sigtype, etabin):
     if sigtype==sigtypes[0]:
         return (1,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,27)
-    else:
-        return (8,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,27)
+    elif sigtype==sigtypes[1] and etabin==etabins[0]:
+        return (6,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,27)
+    elif sigtype==sigtypes[1] and etabin==etabins[1]:
+        return (6,9,10,11,12,13,14,15,16,17,18,19,20,21,27)
 
-def get_num_m2pbins(region, sigtype):
-    return len(get_m2pbin_boundaries(region, sigtype))-1
+def get_num_m2pbins(region, sigtype, etabin):
+    return len(get_m2pbin_boundaries(region, sigtype, etabin))-1
 
 # setup observables
-m2pg = ROOT.RooRealVar("m2pg","Invariant mass of the 2-prong and photon",500,3998)
+m2pg = ROOT.RooRealVar("m2pg","Invariant mass of the 2-prong and photon",520,3998)
 m2pg_sig = ROOT.RooRealVar("m2pg_sig","Invariant mass of the 2-prong and photon for the signal pdfs only",396,3998)
 m2p = ROOT.RooRealVar("m2p","Invariant mass of the 2-prong",0.4,5.33)
 
@@ -83,3 +87,38 @@ def get_xsection(phimass):
         x1, y1 = theory_xs[i + 1]
         if x0 <= phimass <= x1:
             return y0 + (y1 - y0) * (phimass - x0) / (x1 - x0)
+
+# crop histogram bins
+def crop_first_bins_variable(h, n_remove):
+    nbins = h.GetNbinsX()
+    if n_remove >= nbins:
+        raise ValueError("Cannot remove all bins (or more).")
+
+    xaxis = h.GetXaxis()
+
+    # Extract original bin edges
+    edges = [xaxis.GetBinLowEdge(1)]
+    for i in range(1, nbins + 1):
+        edges.append(xaxis.GetBinUpEdge(i))
+
+    # Remove first n_remove bins → keep edges from that point onward
+    new_edges = edges[n_remove:]
+
+    # Convert to C-style array for ROOT
+    edges_array = array.array('d', new_edges)
+
+    # Create new histogram with variable binning
+    h_new = ROOT.TH1D(
+        h.GetName() + "_cropped",
+        h.GetTitle(),
+        len(edges_array) - 1,
+        edges_array
+    )
+
+    # Copy contents and errors
+    for i in range(1, h_new.GetNbinsX() + 1):
+        old_bin = i + n_remove
+        h_new.SetBinContent(i, h.GetBinContent(old_bin))
+        h_new.SetBinError(i, h.GetBinError(old_bin))
+
+    return h_new

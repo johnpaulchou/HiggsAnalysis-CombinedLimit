@@ -18,15 +18,13 @@ if __name__ == "__main__":
     parser.add_argument("--sigtype",help="signal type that we're using",choices=files.sigtypes, default=files.sigtypes[0])
     parser.add_argument('--cardname',help='cardname to use',default="combine.txt")
     args=parser.parse_args()
-
-    nbins=files.get_num_m2pbins(args.region, args.sigtype)
-
     
     cardname = args.cardname
     newfilenames = []
 
-    for bin in range(nbins):
-        for eta in files.etabins:
+    for eta in files.etabins:
+        nbins=files.get_num_m2pbins(args.region, args.sigtype, eta)
+        for bin in range(nbins):
             oldfile = open(cardname, "r")
             newfile = tempfile.NamedTemporaryFile(delete=False, mode='wt', dir='.')
             path = pathlib.Path(newfile.name)

@@ -158,13 +158,15 @@ def main(argv=None):
         
             # create PDFs for different m2p slices
             fileout.cd()
-            for binindex in range(files.get_num_m2pbins(args.region, args.sigtype)):
+            for binindex in range(files.get_num_m2pbins(args.region, args.sigtype, etabin)):
                 label = "bin"+str(binindex)+etabin+syst
-                boundaries=files.get_m2pbin_boundaries(args.region, args.sigtype)
+                boundaries=files.get_m2pbin_boundaries(args.region, args.sigtype, etabin)
                 projy=morphhist.ProjectionY("_py"+label,boundaries[binindex],boundaries[binindex+1]-1)
-                accnum = projy.Integral(1,projy.GetXaxis().GetNbins())
+                projy_crop=files.crop_first_bins_variable(projy,7)
+                
+                accnum = projy_crop.Integral(1,projy_crop.GetXaxis().GetNbins())
                 accden = morphhist.Integral(1,morphhist.GetXaxis().GetNbins(),1,morphhist.GetYaxis().GetNbins())
-                dh=ROOT.RooDataHist("dh"+label,"dh"+label,files.m2pg_sig,projy)
+                dh=ROOT.RooDataHist("dh"+label,"dh"+label,files.m2pg,projy_crop)
                 sigpdf1d = ROOT.RooHistPdf("sigpdf_"+label,"signal PDF for a slice in files.m2p",files.m2pg,dh)
                 sliceacc = ROOT.RooRealVar("sliceacc_"+label,"acceptance in a given slice",accnum/accden)
                 sliceacc.setConstant(True)

@@ -25,9 +25,9 @@ if __name__ == "__main__":
 
         # get the 2d data histogram
         if args.sigtype==files.sigtypes[0]:   tempname="plots/recomass"
-        elif args.sigtype==files.sigtypes[1]: tempname="plots/recomassprime"
-        boundaries=files.get_m2pbin_boundaries(args.region, args.sigtype)
-        nboundaries=files.get_num_m2pbins(args.region, args.sigtype)
+        elif args.sigtype==files.sigtypes[1]: tempname="plots/recomassprime_bare"
+        boundaries=files.get_m2pbin_boundaries(args.region, args.sigtype, etabin)
+        nboundaries=files.get_num_m2pbins(args.region, args.sigtype, etabin)
 
         if args.region==files.regions[0]: datahist2d=common.get_TH1_from_file(files.datafilename, tempname+"_sideband_"+etabin)
         elif args.region==files.regions[1]: datahist2d=common.get_TH1_from_file(files.datafilename, tempname+"_"+etabin)
@@ -36,10 +36,14 @@ if __name__ == "__main__":
         for binindex in range(nboundaries):
             label = "bin"+str(binindex)+etabin
             datahist1d = datahist2d.ProjectionY("_py"+label,boundaries[binindex],boundaries[binindex+1]-1)
-            datanorm=datahist1d.Integral(1,datahist1d.GetNbinsX())
+
+            # crop 1 bin (this is to get it to adjust to the 520 starting point
+            datahist1d_crop=files.crop_first_bins_variable(datahist1d, 1)
+            
+            datanorm=datahist1d_crop.Integral(1,datahist1d_crop.GetNbinsX())
 
             # convert histogram into a RooDataHist
-            dataHist = ROOT.RooDataHist("dataHist_"+label, "dataHist", files.m2pg, datahist1d)
+            dataHist = ROOT.RooDataHist("dataHist_"+label, "dataHist", files.m2pg, datahist1d_crop)
 
             strategy=2
             # set up the three background function models
