@@ -12,7 +12,7 @@ for mass in ${masses[@]}; do
     echo "Processing mass $mass"
     ./makebkgworkspace.py --region $region --sigtype $sigtype &> "$output"
     echo "."
-    ./makesigworkspace_mod.py --region $region --sigtype $sigtype --raw --imass $mass > "$output"
+    ./makesigworkspace_mod.py --region $region --sigtype $sigtype --raw --imass $mass #> "$output"
     if [[ $? -ne 0 ]]; then
         echo "ERROR: signal workspace failed, skipping $mass."
         continue

@@ -24,21 +24,31 @@ if __name__ == "__main__":
     parser.add_argument("--sigtype",help="signal type that we're using",choices=files.sigtypes, default=files.sigtypes[0])
     args = parser.parse_args()
 
-    remove_500 = False
+    do_skip_y = True
+    do_skip_x = True
+    skipx = 3
+    skipy = 3
 
     # create histograms
-    xbinsn = len(files.wmasspoints)
     xbinsw = (files.wmasspoints[1]-files.wmasspoints[0])
-    if not remove_500: ybinsn = len(files.pmasspoints)
-    else:              ybinsn = len(files.pmasspoints)-1
     ybinsw = (files.pmasspoints[1]-files.pmasspoints[0])
-    xbinslo = files.wmasspoints[0]-xbinsw*0.5
-    xbinshi = files.wmasspoints[xbinsn-1]+xbinsw*0.5
-    if not remove_500: ybinslo = files.pmasspoints[0]-ybinsw*0.5
-    else:              ybinslo = files.pmasspoints[1]-ybinsw*0.5
-    ybinshi = files.pmasspoints[ybinsn-1]+ybinsw*0.5
-    if not remove_500: ybinshi = files.pmasspoints[ybinsn-1]+ybinsw*0.5
-    else:              ybinshi = files.pmasspoints[ybinsn-1+1]+ybinsw*0.5
+    #xbinsn = len(files.wmasspoints)
+    if not do_skip_x: xbinsn = len(files.pmasspoints)
+    else:              xbinsn = len(files.pmasspoints)-skipx
+    if not do_skip_y: ybinsn = len(files.pmasspoints)
+    else:              ybinsn = len(files.pmasspoints)-skipy
+
+    #xbinslo = files.wmasspoints[0]-xbinsw*0.5
+    #xbinshi = files.wmasspoints[xbinsn-1]+xbinsw*0.5
+
+    if not do_skip_x: xbinslo = files.pmasspoints[0]-xbinsw*0.5
+    else:              xbinslo = files.pmasspoints[skipx]-xbinsw*0.5
+    if not do_skip_x: xbinshi = files.pmasspoints[xbinsn-1]+xbinsw*0.5
+    else:              xbinshi = files.pmasspoints[xbinsn-1+skipx]+xbinsw*0.5
+    if not do_skip_y: ybinslo = files.pmasspoints[0]-ybinsw*0.5
+    else:              ybinslo = files.pmasspoints[skipy]-ybinsw*0.5
+    if not do_skip_y: ybinshi = files.pmasspoints[ybinsn-1]+ybinsw*0.5
+    else:              ybinshi = files.pmasspoints[ybinsn-1+skipy]+ybinsw*0.5
 
     print(ybinslo, ybinshi, ybinsn)
     hObs = ROOT.TH2D("hObs","Observed",xbinsn,xbinslo,xbinshi,ybinsn,ybinslo,ybinshi)
@@ -49,12 +59,13 @@ if __name__ == "__main__":
     
     # loop over all of the arguments
     for file in args.filenames:
+        print(file)
         dict=common.parse_HC_limit_tree(file)
         imass=int(dict["mass"])
-        if remove_500 and imass <= 14: continue
         windex,pindex=files.indexpair(imass)
         pmass=files.pmasspoints[pindex]
-        if remove_500: pindex = pindex-1
+        if do_skip_y: pindex = pindex-skipy
+        if do_skip_x: windex = windex-skipx
         obs=dict["obs"]
         exp=dict["exp-med"]
         if args.suppressPoints is not None:

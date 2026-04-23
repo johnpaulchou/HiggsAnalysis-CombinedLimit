@@ -14,8 +14,8 @@ regions = ["sideband","signal"]
 etabins = ["barrel","endcap"]
 
 # omega and phi mass points to run over
-wmasspoints = numpy.linspace(0.5, 4, 15)
-pmasspoints = numpy.linspace(500, 3000, 11)
+wmasspoints = numpy.linspace(0.5, 4, 30)
+pmasspoints = numpy.linspace(500, 3000, 22)
 npoints = len(wmasspoints)*len(pmasspoints)
 
 # omega mass bin boundaries
@@ -42,7 +42,7 @@ bkgworkspacefn="bkgworkspace.root"
 workspacename="w"
 
 # input path
-input_top_level = '/home/chiarito/work/stats/condor/input'
+input_top_level = './input'
 signal_input = 'signal_10percent_etaprime'
 data_input = '.'
 datafilename = "{}/{}/egamma2018full.root".format(input_top_level, data_input)
@@ -56,6 +56,13 @@ def indexpair(index):
     windex = index % len(wmasspoints)
     pindex = int(index / len(wmasspoints))
     return (windex, pindex)
+
+# convert a single index into a wmass and a pmass
+def indexmasses(index):
+    assert(index>=0 and index<npoints)
+    windex = index % len(wmasspoints)
+    pindex = int(index / len(wmasspoints))
+    return (wmasspoints[windex], pmasspoints[pindex])
 
 # convert a wmassindex and pmassindex to a single index (inverse of the above)
 def index(wmassindex, pmassindex):
@@ -106,7 +113,7 @@ def parse_p(s):
     return float(s)
 gengridw = list(sorted((parse_w(s), s) for s in wmasses))
 gengridp = list(sorted((parse_p(s), s) for s in pmasses))
-print("################")
+#print("################")
 #print(gengridw)
 #print(gengridp)
 #genfilenames = [ [""]*len(gengridw) for i in range(len(gengridp))] # old
@@ -155,7 +162,7 @@ def main():
     print('(w, p) indexes and associated gen file')
     count = 0
     for n in range(npoints):
-        print(n, indexpair(n), genfilenames_raw[n])
+        print(n, indexpair(n), indexmasses(n), genfilenames_raw[n])
         if genfilenames_raw[n] != '':
             #print(n)
             count += 1
