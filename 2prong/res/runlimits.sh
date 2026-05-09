@@ -18,18 +18,18 @@ for mass in ${masses[@]}; do
         continue
     fi
     echo ".."
-    ./makenewcard.py --region $region --sigtype $sigtype
+    ./makenewcard.py --region $region --sigtype $sigtype #--dropendcap
     echo "..."
-    #text2workspace.py newcard.txt
-    #echo "...."
+    text2workspace.py newcard.txt
+    echo "...."
 
-    #combine -M FitDiagnostics newcard.root -m $mass --X-rtd MINIMIZER_freezeDisassociatedParams --cminDefaultMinimizerStrategy 0 -v $debug --rMin 0 --rMax 200 --freezeParameters lumi &> "$output"
-    #echo ""
-    #date
-    #echo "fit diagnostics mass $mass"
+    combine -M FitDiagnostics newcard.root -m $mass --X-rtd MINIMIZER_freezeDisassociatedParams --cminDefaultMinimizerStrategy 0 -v $debug --rMin 0 --rMax 200 --freezeParameters lumi &> "$output"
+    echo ""
+    date
+    echo "fit diagnostics mass $mass"
 
     rm higgsCombineTest.AsymptoticLimits.mH$mass.root
-    combine -M AsymptoticLimits newcard.txt -m $mass --X-rtd MINIMIZER_freezeDisassociatedParams --cminDefaultMinimizerStrategy 0 -v $debug --rAbsAcc 0.02 --rRelAcc 0.05
+    combine -M AsymptoticLimits newcard.txt -m $mass --X-rtd MINIMIZER_freezeDisassociatedParams --cminDefaultMinimizerStrategy 0 -v $debug 
     echo "....."
 done
 

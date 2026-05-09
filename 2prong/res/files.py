@@ -46,8 +46,8 @@ bkgworkspacefn="bkgworkspace.root"
 workspacename="w"
 
 # input path
-input_top_level = './input'
-signal_input = 'signal_10percent_etaprime'
+input_top_level = '/home/chiarito/work/stats/condor/input'
+signal_input = 'signal_10percent_lowerphimass_eta'
 data_input = '.'
 datafilename = "{}/{}/egamma2018full.root".format(input_top_level, data_input)
 
@@ -63,11 +63,10 @@ for i in range(len(gengridw)):
         genfilenames[j][i]="./input/signal_"+gengridp[j][1]+"_"+gengridw[i][1]+".root"
 
 # omega and phi mass points to run over
-wmasspoints = numpy.linspace(0.85,4.0,8)
-pmasspoints = numpy.linspace(600.,3000,20)
+wmasspoints = numpy.linspace(0.5, 4, 29)
+pmasspoints = numpy.linspace(500, 3000, 21)
 npoints = len(wmasspoints)*len(pmasspoints)
 
->>>>>>> origin/Brandon
 # convert a single index into a wmassindex and a pmassindex
 def indexpair(index):
     assert(index>=0 and index<npoints)
@@ -111,7 +110,6 @@ def get_xsection(phimass):
         if x0 <= phimass <= x1:
             return y0 + (y1 - y0) * (phimass - x0) / (x1 - x0)
 
-<<<<<<< HEAD
 # set up the grid of generated points and their corresponding input files
 import os
 import re

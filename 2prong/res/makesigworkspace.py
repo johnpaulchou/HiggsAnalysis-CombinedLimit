@@ -166,7 +166,8 @@ def main(argv=None):
                 
                 accnum = projy_crop.Integral(1,projy_crop.GetXaxis().GetNbins())
                 accden = morphhist.Integral(1,morphhist.GetXaxis().GetNbins(),1,morphhist.GetYaxis().GetNbins())
-                dh=ROOT.RooDataHist("dh"+label,"dh"+label,files.m2pg,projy_crop)
+                #dh=ROOT.RooDataHist("dh"+label,"dh"+label,files.m2pg,projy_crop)
+                dh=ROOT.RooDataHist("dh"+label,"dh"+label,files.m2pg_sig,projy)
                 sigpdf1d = ROOT.RooHistPdf("sigpdf_"+label,"signal PDF for a slice in files.m2p",files.m2pg,dh)
                 sliceacc = ROOT.RooRealVar("sliceacc_"+label,"acceptance in a given slice",accnum/accden)
                 sliceacc.setConstant(True)
