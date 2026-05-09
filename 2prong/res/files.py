@@ -3,6 +3,7 @@
 import ROOT
 import sys
 import numpy
+import array
 import re
 import os
 
@@ -14,22 +15,25 @@ regions = ["sideband","signal"]
 etabins = ["barrel","endcap"]
 
 # omega and phi mass points to run over
-wmasspoints = numpy.linspace(0.5, 4, 30)
-pmasspoints = numpy.linspace(500, 3000, 22)
-npoints = len(wmasspoints)*len(pmasspoints)
+#wmasspoints = numpy.linspace(0.5, 4, 30)
+#pmasspoints = numpy.linspace(500, 3000, 22)
+#npoints = len(wmasspoints)*len(pmasspoints)
 
 # omega mass bin boundaries
-def get_m2pbin_boundaries(region, sigtype):
+def get_m2pbin_boundaries(region, sigtype, etabin):
     if sigtype==sigtypes[0]:
         return (1,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,27)
-    else:
-        return (8,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,27)
+    elif sigtype==sigtypes[1] and etabin==etabins[0]:
+        return (6,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,27)
+    elif sigtype==sigtypes[1] and etabin==etabins[1]:
+        return (6,9,10,11,12,13,14,15,16,17,18,19,20,21,27)
 
-def get_num_m2pbins(region, sigtype):
-    return len(get_m2pbin_boundaries(region, sigtype))-1
+def get_num_m2pbins(region, sigtype, etabin):
+    return len(get_m2pbin_boundaries(region, sigtype, etabin))-1
 
 # setup observables
-m2pg = ROOT.RooRealVar("m2pg","Invariant mass of the 2-prong and photon",500,3998)
+m2pg = ROOT.RooRealVar("m2pg","Invariant mass of the 2-prong and photon",520,3998)
+m2pg_sig = ROOT.RooRealVar("m2pg_sig","Invariant mass of the 2-prong and photon for the signal pdfs only",396,3998)
 m2p = ROOT.RooRealVar("m2p","Invariant mass of the 2-prong",0.4,5.33)
 
 # list of systematics
@@ -50,6 +54,20 @@ datafilename = "{}/{}/egamma2018full.root".format(input_top_level, data_input)
 # luminosity for the dataset
 luminosity=138
 
+# set up the grid of generated points and their corresponding input files
+gengridw = ( (0.5, "0p5"), (0.75, "0p750"), (0.85, "0p850"), (1.0, "1p0"), (2.0, "2p0"), (3.0, "3p0"), (4.0, "4p0") )
+gengridp = ( (500, "500"), (750, "750"), (1000., "1000"), (1500, "1500"), (2500., "2500"), (3000., "3000"))
+genfilenames = [ [""]*len(gengridw) for i in range(len(gengridp))]
+for i in range(len(gengridw)):
+    for j in range(len(gengridp)):
+        genfilenames[j][i]="./input/signal_"+gengridp[j][1]+"_"+gengridw[i][1]+".root"
+
+# omega and phi mass points to run over
+wmasspoints = numpy.linspace(0.85,4.0,8)
+pmasspoints = numpy.linspace(600.,3000,20)
+npoints = len(wmasspoints)*len(pmasspoints)
+
+>>>>>>> origin/Brandon
 # convert a single index into a wmassindex and a pmassindex
 def indexpair(index):
     assert(index>=0 and index<npoints)
@@ -93,6 +111,7 @@ def get_xsection(phimass):
         if x0 <= phimass <= x1:
             return y0 + (y1 - y0) * (phimass - x0) / (x1 - x0)
 
+<<<<<<< HEAD
 # set up the grid of generated points and their corresponding input files
 import os
 import re
@@ -154,6 +173,41 @@ for fi in os.listdir(signal_fullpath):
     masspoint_index = indexof(float(wmass_string), float(pmass_string))
     #print(masspoint_string, masspoint_index)
     if not masspoint_index == None: genfilenames_raw[masspoint_index] ="{}/signal_{}.root".format(signal_fullpath, masspoint_string)
+
+# crop histogram bins
+def crop_first_bins_variable(h, n_remove):
+    nbins = h.GetNbinsX()
+    if n_remove >= nbins:
+        raise ValueError("Cannot remove all bins (or more).")
+
+    xaxis = h.GetXaxis()
+
+    # Extract original bin edges
+    edges = [xaxis.GetBinLowEdge(1)]
+    for i in range(1, nbins + 1):
+        edges.append(xaxis.GetBinUpEdge(i))
+
+    # Remove first n_remove bins → keep edges from that point onward
+    new_edges = edges[n_remove:]
+
+    # Convert to C-style array for ROOT
+    edges_array = array.array('d', new_edges)
+
+    # Create new histogram with variable binning
+    h_new = ROOT.TH1D(
+        h.GetName() + "_cropped",
+        h.GetTitle(),
+        len(edges_array) - 1,
+        edges_array
+    )
+
+    # Copy contents and errors
+    for i in range(1, h_new.GetNbinsX() + 1):
+        old_bin = i + n_remove
+        h_new.SetBinContent(i, h.GetBinContent(old_bin))
+        h_new.SetBinError(i, h.GetBinError(old_bin))
+
+    return h_new
 
 def main():
     print("npoints:", npoints)

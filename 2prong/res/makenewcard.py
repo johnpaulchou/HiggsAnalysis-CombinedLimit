@@ -21,9 +21,9 @@ if __name__ == "__main__":
     newfilenames = []
     nbins=files.get_num_m2pbins(args.region, args.sigtype)
 
-    # skip the first two bins if we're doing the control region
-    for bin in range(nbins):
-        for eta in files.etabins:
+    for eta in files.etabins:
+        nbins=files.get_num_m2pbins(args.region, args.sigtype, eta)
+        for bin in range(nbins):
             oldfile = open(cardname, "r")
             newfile = tempfile.NamedTemporaryFile(delete=False, mode='wt', dir='.')
             path = pathlib.Path(newfile.name)
