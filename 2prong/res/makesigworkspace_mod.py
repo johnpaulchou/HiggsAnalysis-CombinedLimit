@@ -86,12 +86,12 @@ def main(argv=None):
         #print(files.genfilenames[windex][pindex])
         #print("############")
         if fnRaw == '':
-            print("OUT Raw mode: no appropriate signal file. Using interpoloation instead.")
-            print("ERR Raw mode: no appropriate signal file. Using interpoloation instead.", file=sys.stderr)
+            #print("OUT Raw mode: no appropriate signal file. Using interpoloation instead.")
+            print("Using interpoloation, no signal file at mass index.", file=sys.stderr)
         else:
             rawFound = True
-            print("OUT Raw mode: using file "+fnRaw)
-            print("ERR Raw mode: using file "+fnRaw, file=sys.stderr)
+            #print("OUT Raw mode: using file "+fnRaw)
+            print("Using Raw mode, found signal file at mass index: "+fnRaw, file=sys.stderr)
     if not args.raw or not rawFound:
         # find the grid points to match up to the chosen omega and phi masses
         txmin=txmax=tymin=tymax=-999.
@@ -208,6 +208,7 @@ def main(argv=None):
 
                 projy_crop=files.crop_first_bins_variable(projy,7)
                 accnum = projy_crop.Integral(1,projy_crop.GetXaxis().GetNbins())
+                #accnum = projy.Integral(1,projy.GetXaxis().GetNbins())
                 accden = morphhist.Integral(1,morphhist.GetXaxis().GetNbins(),1,morphhist.GetYaxis().GetNbins())
                 if accden == 0:
                     accden = 1
@@ -215,6 +216,7 @@ def main(argv=None):
 
                 #dh=ROOT.RooDataHist("dh"+label,"dh"+label,files.m2pg,projy)
                 dh=ROOT.RooDataHist("dh"+label,"dh"+label,files.m2pg_sig,projy_crop)
+                #dh=ROOT.RooDataHist("dh"+label,"dh"+label,files.m2pg_sig,projy)
                 sigpdf1d = ROOT.RooHistPdf("sigpdf_"+label,"signal PDF for a slice in files.m2p",files.m2pg_sig,dh)
                 sliceacc = ROOT.RooRealVar("sliceacc_"+label,"acceptance in a given slice",accnum/accden)
                 sliceacc.setConstant(True)

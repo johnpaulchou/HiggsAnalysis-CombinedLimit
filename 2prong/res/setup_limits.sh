@@ -1,17 +1,31 @@
 region=sideband
 sigtype=etaprime
-wmasspoints=(0.5 4 15) # first last npoints
-pmasspoints=(500 3000 11) # first last npoints
-#wmasspoints=(0.5 4 25) # first last npoints
-#pmasspoints=(500 3000 21) # first last npoints
-debug="1" # -1 = very quiet, 0 = quiet, 1 = verbose, 2+ = debug
+debug="0" # -1 = very quiet, 0 = quiet, 1 = verbose, 2+ = debug
 
-input="/home/chiarito/work/stats/condor/input"
+#input="/home/chiarito/work/stats/condor/input"
+input="./input"
 #signal="signal_10percent_eta"
-signal="signal_10percent_etaprime"
+#signal="signal_10percent_lowerphimass_eta"
+signal="signal_10percent_lowerphimass_etaprime"
 #signal="signal_original_box"
 
-masses=(11 20)
+#wmasspoints=(0.5 4 29) # first last npoints
+#pmasspoints=(500 3000 21) # first last npoints
+#wmasspoints=(0.5 4 15) # first last npoints
+#pmasspoints=(500 3000 11) # first last npoints
+#wmasspoints=(1 2 2) # first last npoints
+#pmasspoints=(1000 2500 2) # first last npoints
+
+#wmasspoints=(0.75 4 27) # first last npoints
+#pmasspoints=(500 3000 21) # first last npoints
+#wmasspoints=(0.75 4 14) # first last npoints
+#pmasspoints=(500 3000 6) # first last npoints
+#wmasspoints=(0.5 4 8) # first last npoints
+#pmasspoints=(500 3000 6) # first last npoints
+wmasspoints=(0.5 4 15) # first last npoints
+pmasspoints=(500 3000 11) # first last npoints
+
+masses=(40)
 #masses=(0 1 2 6 10 14 15 16 17 21 25 29 30 31 32 36 40 44 60 61 62 66 70 74 120 121 122 126 130 134 150 151 152 156 160)
 #masses=(0 1 5 6 7 11 18 19 23)
 #masses=($(seq 0 49))

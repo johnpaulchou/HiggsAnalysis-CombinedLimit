@@ -6,6 +6,7 @@ import common.common as common
 import files
 import math
 import argparse
+import sys
 
 tdrstyle.setTDRStyle()
 
@@ -22,62 +23,101 @@ if __name__ == "__main__":
     parser.add_argument("--drawSmooth",help="Draw a smoothed version of the limit plot",action=argparse.BooleanOptionalAction,default=False)
     parser.add_argument("--suppressPoints", type=int, nargs="*", help="Observed points to suppress (set them to the expected)")
     parser.add_argument("--sigtype",help="signal type that we're using",choices=files.sigtypes, default=files.sigtypes[0])
+    parser.add_argument("--fixedgrid",action='store_true', default=False)
     args = parser.parse_args()
 
-    do_skip_y = True
-    do_skip_x = True
+    do_skip_y = False
+    do_skip_x = False
     skipx = 3
     skipy = 3
 
     # create histograms
-    xbinsw = (files.wmasspoints[1]-files.wmasspoints[0])
-    ybinsw = (files.pmasspoints[1]-files.pmasspoints[0])
-    #xbinsn = len(files.wmasspoints)
-    if not do_skip_x: xbinsn = len(files.pmasspoints)
-    else:              xbinsn = len(files.pmasspoints)-skipx
-    if not do_skip_y: ybinsn = len(files.pmasspoints)
-    else:              ybinsn = len(files.pmasspoints)-skipy
+    if args.fixedgrid:
+        #xbinslo, xbinshi, xbinsw = 0.5, 4, 0.25
+        xbinslo, xbinshi, xbinsw = 0.75, 4, 0.25
+        #ybinslo, ybinshi, ybinsw = 500, 3000, 250
+        ybinslo, ybinshi, ybinsw = 1250, 3000, 250
 
-    #xbinslo = files.wmasspoints[0]-xbinsw*0.5
-    #xbinshi = files.wmasspoints[xbinsn-1]+xbinsw*0.5
+        xbinslo = xbinslo - 0.5*xbinsw
+        xbinshi = xbinshi + 0.5*xbinsw
+        ybinslo = ybinslo - 0.5*ybinsw
+        ybinshi = ybinshi + 0.5*ybinsw
+        xbinsn = int((xbinshi - xbinslo)/xbinsw)
+        ybinsn = int((ybinshi - ybinslo)/ybinsw)
+    else:
+        xbinsw = (files.wmasspoints[1]-files.wmasspoints[0])
+        ybinsw = (files.pmasspoints[1]-files.pmasspoints[0])
+        #xbinsn = len(files.wmasspoints)
+        if not do_skip_x: xbinsn = len(files.wmasspoints)
+        else:              xbinsn = len(files.wmasspoints)-skipx
+        if not do_skip_y: ybinsn = len(files.pmasspoints)
+        else:              ybinsn = len(files.pmasspoints)-skipy
+        #xbinslo = files.wmasspoints[0]-xbinsw*0.5
+        #xbinshi = files.wmasspoints[xbinsn-1]+xbinsw*0.5
+        if not do_skip_x: xbinslo = files.wmasspoints[0]-xbinsw*0.5
+        else:              xbinslo = files.wmasspoints[skipx]-xbinsw*0.5
+        if not do_skip_x: xbinshi = files.wmasspoints[xbinsn-1]+xbinsw*0.5
+        else:              xbinshi = files.wmasspoints[xbinsn-1+skipx]+xbinsw*0.5
+        if not do_skip_y: ybinslo = files.pmasspoints[0]-ybinsw*0.5
+        else:              ybinslo = files.pmasspoints[skipy]-ybinsw*0.5
+        if not do_skip_y: ybinshi = files.pmasspoints[ybinsn-1]+ybinsw*0.5
+        else:              ybinshi = files.pmasspoints[ybinsn-1+skipy]+ybinsw*0.5
 
-    if not do_skip_x: xbinslo = files.pmasspoints[0]-xbinsw*0.5
-    else:              xbinslo = files.pmasspoints[skipx]-xbinsw*0.5
-    if not do_skip_x: xbinshi = files.pmasspoints[xbinsn-1]+xbinsw*0.5
-    else:              xbinshi = files.pmasspoints[xbinsn-1+skipx]+xbinsw*0.5
-    if not do_skip_y: ybinslo = files.pmasspoints[0]-ybinsw*0.5
-    else:              ybinslo = files.pmasspoints[skipy]-ybinsw*0.5
-    if not do_skip_y: ybinshi = files.pmasspoints[ybinsn-1]+ybinsw*0.5
-    else:              ybinshi = files.pmasspoints[ybinsn-1+skipy]+ybinsw*0.5
-
+    print(xbinsw)
+    print(ybinsw)
+    print(xbinslo, xbinshi, xbinsn)
     print(ybinslo, ybinshi, ybinsn)
+
     hObs = ROOT.TH2D("hObs","Observed",xbinsn,xbinslo,xbinshi,ybinsn,ybinslo,ybinshi)
     hExp = ROOT.TH2D("hExp","Expected",xbinsn,xbinslo,xbinshi,ybinsn,ybinslo,ybinshi)
     hExpLo = ROOT.TH2D("hExpLo","Expected -1 sigma",xbinsn,xbinslo,xbinshi,ybinsn,ybinslo,ybinshi)
     hExpHi = ROOT.TH2D("hExpHi","Expected +1 sigma",xbinsn,xbinslo,xbinshi,ybinsn,ybinslo,ybinshi)
     hObsXs = ROOT.TH2D("hObsXs","Observed XS",xbinsn,xbinslo,xbinshi,ybinsn,ybinslo,ybinshi)
     
+    def getdrawbin(imass):
+        wmass, pmass = files.indexmasses(imass)
+        xbin = hObs.GetXaxis().FindBin(wmass)
+        ybin = hObs.GetYaxis().FindBin(pmass)
+        return xbin, ybin
+
     # loop over all of the arguments
     for file in args.filenames:
         print(file)
         dict=common.parse_HC_limit_tree(file)
         imass=int(dict["mass"])
+
         windex,pindex=files.indexpair(imass)
         pmass=files.pmasspoints[pindex]
-        if do_skip_y: pindex = pindex-skipy
-        if do_skip_x: windex = windex-skipx
+        #if do_skip_y: pindex = pindex-skipy
+        #if do_skip_x: windex = windex-skipx
+
         obs=dict["obs"]
         exp=dict["exp-med"]
         if args.suppressPoints is not None:
             for skip in args.suppressPoints:
                 if skip==imass:
                     obs=exp
-        print("windex="+str(windex)+" pindex="+str(pindex)+" obs="+str(dict["obs"]))
-        hObs.SetBinContent(windex+1,pindex+1,math.log10(obs))
-        hExp.SetBinContent(windex+1,pindex+1,math.log10(exp))
-        hExpLo.SetBinContent(windex+1,pindex+1,math.log10(dict["exp-1"]))
-        hExpHi.SetBinContent(windex+1,pindex+1,math.log10(dict["exp+1"]))
-        hObsXs.SetBinContent(windex+1,pindex+1,obs*files.get_xsection(pmass))
+        print("imass="+str(imass)+" windex="+str(windex)+" pindex="+str(pindex)+" obs="+str(dict["obs"]) + " exp="+str(dict["exp-med"]))
+        try:
+            math.log10(dict["exp-1"]) + math.log10(dict["exp+1"])
+        except ValueError:
+            print("skipping imass "+str(imass))
+            continue
+       
+        if args.fixedgrid:
+            xindex, yindex = getdrawbin(imass)
+            hObs.SetBinContent(xindex,yindex,math.log10(obs))
+            hExp.SetBinContent(xindex,yindex,math.log10(exp))
+            hExpLo.SetBinContent(xindex,yindex,math.log10(dict["exp-1"]))
+            hExpHi.SetBinContent(xindex,yindex,math.log10(dict["exp+1"]))
+            hObsXs.SetBinContent(xindex,yindex,obs*files.get_xsection(pmass))
+        else:
+            hObs.SetBinContent(windex+1,pindex+1,math.log10(obs))
+            #hObs.SetBinContent(windex+1,pindex+1,10.0)
+            hExp.SetBinContent(windex+1,pindex+1,math.log10(exp))
+            hExpLo.SetBinContent(windex+1,pindex+1,math.log10(dict["exp-1"]))
+            hExpHi.SetBinContent(windex+1,pindex+1,math.log10(dict["exp+1"]))
+            hObsXs.SetBinContent(windex+1,pindex+1,obs*files.get_xsection(pmass))
 
     nbins=50
     if args.drawSmooth:
@@ -102,7 +142,7 @@ if __name__ == "__main__":
     hObs.GetYaxis().SetTitle("m_{#phi} [GeV]")
     hObs.GetZaxis().SetTitle("Observed log_{10}r_{95}")
     #hObs.SetMinimum(-1.0)
-    hObs.SetMinimum(-1.5)
+    hObs.SetMinimum(-3.0)
     hObs.SetMaximum(2.0)
 
     obsCont=hObs.Clone("obsCont")
@@ -144,6 +184,9 @@ if __name__ == "__main__":
     for y in range(ny, 0, -1):  # last y-bin first
         row = [f"{hObs.GetBinContent(hObs.GetBin(x, y)):.3f}" for x in range(1, nx + 1)]
         print(" ".join(row))
+
+    input()
+    sys.exit()
 
     # Draw Expected limits
     

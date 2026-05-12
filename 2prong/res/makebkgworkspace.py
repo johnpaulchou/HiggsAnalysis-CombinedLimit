@@ -42,9 +42,11 @@ if __name__ == "__main__":
             datahist1d_crop=files.crop_first_bins_variable(datahist1d, 1)
             
             datanorm=datahist1d_crop.Integral(1,datahist1d_crop.GetNbinsX())
+            #datanorm=datahist1d.Integral(1,datahist1d.GetNbinsX())
 
             # convert histogram into a RooDataHist
             dataHist = ROOT.RooDataHist("dataHist_"+label, "dataHist", files.m2pg, datahist1d_crop)
+            #dataHist = ROOT.RooDataHist("dataHist_"+label, "dataHist", files.m2pg, datahist1d)
 
             strategy=2
             # set up the three background function models

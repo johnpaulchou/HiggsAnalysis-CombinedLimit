@@ -14,11 +14,6 @@ sigtypes = ["eta","etaprime"]
 regions = ["sideband","signal"]
 etabins = ["barrel","endcap"]
 
-# omega and phi mass points to run over
-#wmasspoints = numpy.linspace(0.5, 4, 30)
-#pmasspoints = numpy.linspace(500, 3000, 22)
-#npoints = len(wmasspoints)*len(pmasspoints)
-
 # omega mass bin boundaries
 def get_m2pbin_boundaries(region, sigtype, etabin):
     if sigtype==sigtypes[0]:
@@ -46,8 +41,8 @@ bkgworkspacefn="bkgworkspace.root"
 workspacename="w"
 
 # input path
-input_top_level = '/home/chiarito/work/stats/condor/input'
-signal_input = 'signal_10percent_lowerphimass_eta'
+input_top_level = './input'
+signal_input = 'signal_10percent_lowerphimass_etaprime'
 data_input = '.'
 datafilename = "{}/{}/egamma2018full.root".format(input_top_level, data_input)
 
@@ -63,8 +58,8 @@ for i in range(len(gengridw)):
         genfilenames[j][i]="./input/signal_"+gengridp[j][1]+"_"+gengridw[i][1]+".root"
 
 # omega and phi mass points to run over
-wmasspoints = numpy.linspace(0.5, 4, 29)
-pmasspoints = numpy.linspace(500, 3000, 21)
+wmasspoints = numpy.linspace(0.5, 4, 15)
+pmasspoints = numpy.linspace(500, 3000, 11)
 npoints = len(wmasspoints)*len(pmasspoints)
 
 # convert a single index into a wmassindex and a pmassindex
