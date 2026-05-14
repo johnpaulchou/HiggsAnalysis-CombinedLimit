@@ -3,8 +3,8 @@
 rm -f bkgworkspace.root newcard.root sigworkspace.root
 
 source setup_limits.sh
-output="/dev/null"
-#output="/dev/stdout"
+#output="/dev/null"
+output="/dev/stdout"
 
 for mass in ${masses[@]}; do
     echo ""

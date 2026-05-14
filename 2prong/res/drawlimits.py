@@ -6,6 +6,7 @@ import common.common as common
 import files
 import math
 import argparse
+import sys
 
 tdrstyle.setTDRStyle()
 
@@ -124,6 +125,9 @@ if __name__ == "__main__":
     for y in range(ny, 0, -1):  # last y-bin first
         row = [f"{hObs.GetBinContent(hObs.GetBin(x, y)):.3f}" for x in range(1, nx + 1)]
         print(" ".join(row))
+
+    input()
+    sys.exit()
 
     # Draw Expected limits
     

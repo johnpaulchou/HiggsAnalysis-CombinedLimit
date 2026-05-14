@@ -42,8 +42,8 @@ bkgworkspacefn="bkgworkspace.root"
 workspacename="w"
 
 # input path
-input_top_level = '/home/chiarito/work/stats/condor/input'
-signal_input = 'signal_10percent_eta'
+input_top_level = './input'
+signal_input = 'signal_10percent_etaprime'
 data_input = '.'
 datafilename = "{}/{}/egamma2018full.root".format(input_top_level, data_input)
 
