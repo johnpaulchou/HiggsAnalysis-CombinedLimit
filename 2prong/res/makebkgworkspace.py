@@ -21,6 +21,8 @@ if __name__ == "__main__":
     fileout = ROOT.TFile(files.bkgworkspacefn, "RECREATE")
     w = ROOT.RooWorkspace(files.workspacename,files.workspacename)
 
+    newmode = files.newmode
+
     # loop over eta bins
     for etabin in files.etabins:
 
@@ -38,9 +40,13 @@ if __name__ == "__main__":
             label = "bin"+str(binindex)+etabin
             datahist1d = datahist2d.ProjectionY("_py"+label,boundaries[binindex],boundaries[binindex+1]-1)
             datanorm=datahist1d.Integral(1,datahist1d.GetNbinsX())
-
             # convert histogram into a RooDataHist
             dataHist = ROOT.RooDataHist("dataHist_"+label, "dataHist", files.m2pg, datahist1d)
+
+            # crop 1 bin (this is to get it to adjust to the 520 starting point
+            if newmode: datahist1d_crop=files.crop_first_bins_variable(datahist1d, 1)
+            if newmode: datanorm=datahist1d_crop.Integral(1,datahist1d_crop.GetNbinsX())
+            if newmode: dataHist = ROOT.RooDataHist("dataHist_"+label, "dataHist", files.m2pg, datahist1d_crop)
 
             strategy=2
             # set up the three background function models

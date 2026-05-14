@@ -70,6 +70,7 @@ def main(argv=None):
         wmass = args.fixmasses[0]
         pmass = args.fixmasses[1]
 
+    newmode = files.newmode
         
     print("Creating workspace for m_w="+str(wmass)+" GeV and m_phi="+str(pmass)+" GeV")
 
@@ -95,7 +96,8 @@ def main(argv=None):
     if not args.raw or not rawFound:
         # find the grid points to match up to the chosen omega and phi masses
         txmin=txmax=tymin=tymax=-999.
-        #print(files.gengridw, files.gengridp)
+        print(files.gengridw, files.gengridp)
+        print(wmass, pmass)
         for i in range(len(files.gengridw)-1):
             for j in range(len(files.gengridp)-1):
                 if files.gengridw[i][0]<=wmass and files.gengridw[i+1][0]>=wmass and files.gengridp[j][0]<=pmass and files.gengridp[j+1][0]>=pmass:
@@ -111,7 +113,7 @@ def main(argv=None):
                     print(fnA, fnB, fnC, fnD)
 
         if txmin<0 or txmax<0 or tymin<0 or tymax<0:
-            print("Outside the theory bounds")
+            print("Outside the theory bounds", txmin, txmax, tymin, tymax)
             exit(1)
         print("txmin="+str(txmin)+"; txmax="+str(txmax)+"; tymin="+str(tymin)+"; tymax="+str(tymax))
 
@@ -166,16 +168,16 @@ def main(argv=None):
                 hD=common.get_TH1_from_file(fnD, tempname+"_"+etabin+syst)
 
                 # create RooDataHists
-                dhA=ROOT.RooDataHist(hA.GetName()+"A_dh","2D signal RooDataHist",ROOT.RooArgList(files.m2p,files.m2pg),hA)
-                dhB=ROOT.RooDataHist(hB.GetName()+"B_dh","2D signal RooDataHist",ROOT.RooArgList(files.m2p,files.m2pg),hB)
-                dhC=ROOT.RooDataHist(hC.GetName()+"C_dh","2D signal RooDataHist",ROOT.RooArgList(files.m2p,files.m2pg),hC)
-                dhD=ROOT.RooDataHist(hD.GetName()+"D_dh","2D signal RooDataHist",ROOT.RooArgList(files.m2p,files.m2pg),hD)
+                dhA=ROOT.RooDataHist(hA.GetName()+"A_dh","2D signal RooDataHist",ROOT.RooArgList(files.m2p,files.m2pg_sig),hA)
+                dhB=ROOT.RooDataHist(hB.GetName()+"B_dh","2D signal RooDataHist",ROOT.RooArgList(files.m2p,files.m2pg_sig),hB)
+                dhC=ROOT.RooDataHist(hC.GetName()+"C_dh","2D signal RooDataHist",ROOT.RooArgList(files.m2p,files.m2pg_sig),hC)
+                dhD=ROOT.RooDataHist(hD.GetName()+"D_dh","2D signal RooDataHist",ROOT.RooArgList(files.m2p,files.m2pg_sig),hD)
 
                 # create RooAbsPdfs out of datahists
-                pdfA=ROOT.RooHistPdf(hA.GetName()+"A_pdf","2D signal pdf",ROOT.RooArgSet(files.m2p,files.m2pg), dhA)
-                pdfB=ROOT.RooHistPdf(hB.GetName()+"B_pdf","2D signal pdf",ROOT.RooArgSet(files.m2p,files.m2pg), dhB)
-                pdfC=ROOT.RooHistPdf(hC.GetName()+"C_pdf","2D signal pdf",ROOT.RooArgSet(files.m2p,files.m2pg), dhC)
-                pdfD=ROOT.RooHistPdf(hD.GetName()+"D_pdf","2D signal pdf",ROOT.RooArgSet(files.m2p,files.m2pg), dhD)
+                pdfA=ROOT.RooHistPdf(hA.GetName()+"A_pdf","2D signal pdf",ROOT.RooArgSet(files.m2p,files.m2pg_sig), dhA)
+                pdfB=ROOT.RooHistPdf(hB.GetName()+"B_pdf","2D signal pdf",ROOT.RooArgSet(files.m2p,files.m2pg_sig), dhB)
+                pdfC=ROOT.RooHistPdf(hC.GetName()+"C_pdf","2D signal pdf",ROOT.RooArgSet(files.m2p,files.m2pg_sig), dhC)
+                pdfD=ROOT.RooHistPdf(hD.GetName()+"D_pdf","2D signal pdf",ROOT.RooArgSet(files.m2p,files.m2pg_sig), dhD)
 
                 # create a grid with each pdf at a corner
                 bintx=ROOT.RooBinning(1,txmin,txmax)
@@ -187,13 +189,13 @@ def main(argv=None):
                 grid.addPdf(pdfD,1,1)
 
                 # morph and create a new 2D histogram in its place
-                morph=ROOT.RooMomentMorphFuncNDFix("morph","morph",ROOT.RooArgList(tx,ty),ROOT.RooArgList(files.m2p,files.m2pg),grid,ROOT.RooMomentMorphFuncNDFix.Linear);
+                morph=ROOT.RooMomentMorphFuncNDFix("morph","morph",ROOT.RooArgList(tx,ty),ROOT.RooArgList(files.m2p,files.m2pg_sig),grid,ROOT.RooMomentMorphFuncNDFix.Linear)
                 morph.setPdfMode()
                 tx.setVal(wmass)
                 ty.setVal(pmass)
                 morphhist=hA.Clone(hA.GetName()+"m")
                 morphhist.Reset()
-                morphhist=morph.fillHistogram(morphhist,ROOT.RooArgList(files.m2p,files.m2pg))
+                morphhist=morph.fillHistogram(morphhist,ROOT.RooArgList(files.m2p,files.m2pg_sig))
         
             # create PDFs for different m2p slices
             fileout.cd()
@@ -202,9 +204,15 @@ def main(argv=None):
                 label = "bin"+str(binindex)+etabin+syst
                 projy=morphhist.ProjectionY("_py"+label,boundaries[binindex],boundaries[binindex+1]-1)
                 accnum = projy.Integral(1,projy.GetXaxis().GetNbins())
+                dh=ROOT.RooDataHist("dh"+label,"dh"+label,files.m2pg_sig,projy)
+                projy_crop=files.crop_first_bins_variable(projy,7)
+                if newmode: accnum = projy_crop.Integral(1,projy_crop.GetXaxis().GetNbins())
+                if newmode: dh=ROOT.RooDataHist("dh"+label,"dh"+label,files.m2pg_sig,projy_crop)
                 accden = morphhist.Integral(1,morphhist.GetXaxis().GetNbins(),1,morphhist.GetYaxis().GetNbins())
-                dh=ROOT.RooDataHist("dh"+label,"dh"+label,files.m2pg,projy)
-                sigpdf1d = ROOT.RooHistPdf("sigpdf_"+label,"signal PDF for a slice in files.m2p",files.m2pg,dh)
+                if accden == 0:
+                    accden = 1
+                    print("WARNING: accden = 0 !")
+                sigpdf1d = ROOT.RooHistPdf("sigpdf_"+label,"signal PDF for a slice in files.m2p",files.m2pg_sig,dh)
                 sliceacc = ROOT.RooRealVar("sliceacc_"+label,"acceptance in a given slice",accnum/accden)
                 sliceacc.setConstant(True)
                 print("The slice acceptance for "+label+" is "+str(sliceacc.getValV()))
@@ -227,9 +235,8 @@ def main(argv=None):
     (ROOT.TNamed("wmass",str(wmass))).Write()
     (ROOT.TNamed("pmass",str(pmass))).Write()
     (ROOT.TNamed("region",str(args.region))).Write()
-    (ROOT.TNamed("sigype",str(args.sigtype))).Write()
+    (ROOT.TNamed("sigtype",str(args.sigtype))).Write()
     fileout.Close()
-
 
 if __name__ == "__main__":
     main()
