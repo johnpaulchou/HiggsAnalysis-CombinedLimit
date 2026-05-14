@@ -74,10 +74,10 @@ def main(argv=None):
                 txmax=files.gengridw[i+1][0]
                 tymin=files.gengridp[j][0]
                 tymax=files.gengridp[j+1][0]
-                fnA=files.genfilenames[i][j]
-                fnB=files.genfilenames[i+1][j]
-                fnC=files.genfilenames[i][j+1]
-                fnD=files.genfilenames[i+1][j+1]
+                fnA=files.genfilenames[j][i]
+                fnB=files.genfilenames[j][i+1]
+                fnC=files.genfilenames[j+1][i]
+                fnD=files.genfilenames[j+1][i+1]
 
     if txmin<0 or txmax<0 or tymin<0 or tymax<0:
         print("Outside the theory bounds")
@@ -127,16 +127,16 @@ def main(argv=None):
             hD=common.get_TH1_from_file(fnD, tempname+"_"+etabin+syst)
 
             # create RooDataHists
-            dhA=ROOT.RooDataHist(hA.GetName()+"A_dh","2D signal RooDataHist",ROOT.RooArgList(files.m2p,files.m2pg),hA)
-            dhB=ROOT.RooDataHist(hB.GetName()+"B_dh","2D signal RooDataHist",ROOT.RooArgList(files.m2p,files.m2pg),hB)
-            dhC=ROOT.RooDataHist(hC.GetName()+"C_dh","2D signal RooDataHist",ROOT.RooArgList(files.m2p,files.m2pg),hC)
-            dhD=ROOT.RooDataHist(hD.GetName()+"D_dh","2D signal RooDataHist",ROOT.RooArgList(files.m2p,files.m2pg),hD)
+            dhA=ROOT.RooDataHist(hA.GetName()+"A_dh","2D signal RooDataHist",ROOT.RooArgList(files.m2p,files.m2pg_sig),hA)
+            dhB=ROOT.RooDataHist(hB.GetName()+"B_dh","2D signal RooDataHist",ROOT.RooArgList(files.m2p,files.m2pg_sig),hB)
+            dhC=ROOT.RooDataHist(hC.GetName()+"C_dh","2D signal RooDataHist",ROOT.RooArgList(files.m2p,files.m2pg_sig),hC)
+            dhD=ROOT.RooDataHist(hD.GetName()+"D_dh","2D signal RooDataHist",ROOT.RooArgList(files.m2p,files.m2pg_sig),hD)
 
             # create RooAbsPdfs out of datahists
-            pdfA=ROOT.RooHistPdf(hA.GetName()+"A_pdf","2D signal pdf",ROOT.RooArgSet(files.m2p,files.m2pg), dhA)
-            pdfB=ROOT.RooHistPdf(hB.GetName()+"B_pdf","2D signal pdf",ROOT.RooArgSet(files.m2p,files.m2pg), dhB)
-            pdfC=ROOT.RooHistPdf(hC.GetName()+"C_pdf","2D signal pdf",ROOT.RooArgSet(files.m2p,files.m2pg), dhC)
-            pdfD=ROOT.RooHistPdf(hD.GetName()+"D_pdf","2D signal pdf",ROOT.RooArgSet(files.m2p,files.m2pg), dhD)
+            pdfA=ROOT.RooHistPdf(hA.GetName()+"A_pdf","2D signal pdf",ROOT.RooArgSet(files.m2p,files.m2pg_sig), dhA)
+            pdfB=ROOT.RooHistPdf(hB.GetName()+"B_pdf","2D signal pdf",ROOT.RooArgSet(files.m2p,files.m2pg_sig), dhB)
+            pdfC=ROOT.RooHistPdf(hC.GetName()+"C_pdf","2D signal pdf",ROOT.RooArgSet(files.m2p,files.m2pg_sig), dhC)
+            pdfD=ROOT.RooHistPdf(hD.GetName()+"D_pdf","2D signal pdf",ROOT.RooArgSet(files.m2p,files.m2pg_sig), dhD)
 
             # create a grid with each pdf at a corner
             bintx=ROOT.RooBinning(1,txmin,txmax)
@@ -148,24 +148,26 @@ def main(argv=None):
             grid.addPdf(pdfD,1,1)
 
             # morph and create a new 2D histogram in its place
-            morph=ROOT.RooMomentMorphFuncNDFix("morph","morph",ROOT.RooArgList(tx,ty),ROOT.RooArgList(files.m2p,files.m2pg),grid,ROOT.RooMomentMorphFuncNDFix.Linear);
+            morph=ROOT.RooMomentMorphFuncNDFix("morph","morph",ROOT.RooArgList(tx,ty),ROOT.RooArgList(files.m2p,files.m2pg_sig),grid,ROOT.RooMomentMorphFuncNDFix.Linear)
             morph.setPdfMode()
             tx.setVal(wmass)
             ty.setVal(pmass)
             morphhist=hA.Clone(hA.GetName()+"m")
             morphhist.Reset()
-            morphhist=morph.fillHistogram(morphhist,ROOT.RooArgList(files.m2p,files.m2pg))
+            morphhist=morph.fillHistogram(morphhist,ROOT.RooArgList(files.m2p,files.m2pg_sig))
         
             # create PDFs for different m2p slices
             fileout.cd()
-            boundaries=files.get_m2pbin_boundaries(args.region, args.sigtype)
-            for binindex in range(files.get_num_m2pbins(args.region, args.sigtype)):
+            for binindex in range(files.get_num_m2pbins(args.region, args.sigtype, etabin)):
                 label = "bin"+str(binindex)+etabin+syst
-                #projy=morphhistsmooth.ProjectionY("_py"+label,boundaries[binindex],boundaries[binindex+1]-1)
+                boundaries=files.get_m2pbin_boundaries(args.region, args.sigtype, etabin)
                 projy=morphhist.ProjectionY("_py"+label,boundaries[binindex],boundaries[binindex+1]-1)
-                accnum = projy.Integral(1,projy.GetXaxis().GetNbins())
+                projy_crop=files.crop_first_bins_variable(projy,7)
+                
+                accnum = projy_crop.Integral(1,projy_crop.GetXaxis().GetNbins())
                 accden = morphhist.Integral(1,morphhist.GetXaxis().GetNbins(),1,morphhist.GetYaxis().GetNbins())
-                dh=ROOT.RooDataHist("dh"+label,"dh"+label,files.m2pg,projy)
+                #dh=ROOT.RooDataHist("dh"+label,"dh"+label,files.m2pg,projy_crop)
+                dh=ROOT.RooDataHist("dh"+label,"dh"+label,files.m2pg_sig,projy)
                 sigpdf1d = ROOT.RooHistPdf("sigpdf_"+label,"signal PDF for a slice in files.m2p",files.m2pg,dh)
                 sliceacc = ROOT.RooRealVar("sliceacc_"+label,"acceptance in a given slice",accnum/accden)
                 sliceacc.setConstant(True)

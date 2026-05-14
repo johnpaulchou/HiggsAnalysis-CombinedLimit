@@ -197,8 +197,8 @@ def main(argv=None):
         
             # create PDFs for different m2p slices
             fileout.cd()
-            boundaries=files.get_m2pbin_boundaries(args.region, args.sigtype)
-            for binindex in range(files.get_num_m2pbins(args.region, args.sigtype)):
+            boundaries=files.get_m2pbin_boundaries(args.region, args.sigtype, etabin)
+            for binindex in range(files.get_num_m2pbins(args.region, args.sigtype, etabin)):
                 label = "bin"+str(binindex)+etabin+syst
                 projy=morphhist.ProjectionY("_py"+label,boundaries[binindex],boundaries[binindex+1]-1)
                 accnum = projy.Integral(1,projy.GetXaxis().GetNbins())

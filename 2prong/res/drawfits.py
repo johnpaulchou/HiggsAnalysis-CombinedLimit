@@ -28,8 +28,6 @@ if __name__ == "__main__":
     wmass = common.get_tnamed_title_from_file(files.sigworkspacefn, "wmass")
     pmass = common.get_tnamed_title_from_file(files.sigworkspacefn, "pmass")
     sigtype = common.get_tnamed_title_from_file(files.sigworkspacefn, "sigtype")
-    boundaries=files.get_m2pbin_boundaries(region,sigtype)
-    num_m2pbins=files.get_num_m2pbins(region,sigtype)
 
     # general style commands
     ROOT.gStyle.SetErrorX(0)
@@ -55,6 +53,9 @@ if __name__ == "__main__":
 
     # loop over etabins
     for etabin in files.etabins:
+
+        boundaries=files.get_m2pbin_boundaries(region,sigtype, etabin)
+        num_m2pbins=files.get_num_m2pbins(region,sigtype, etabin)
         
         # loop over the m2pbins
         for m2pbin in range(num_m2pbins):

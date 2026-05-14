@@ -27,8 +27,8 @@ if __name__ == "__main__":
         # get the 2d data histogram
         if args.sigtype==files.sigtypes[0]:   tempname="plots/recomass"
         elif args.sigtype==files.sigtypes[1]: tempname="plots/recomassprime"
-        boundaries=files.get_m2pbin_boundaries(args.region, args.sigtype)
-        nboundaries=files.get_num_m2pbins(args.region, args.sigtype)
+        boundaries=files.get_m2pbin_boundaries(args.region, args.sigtype, etabin)
+        nboundaries=files.get_num_m2pbins(args.region, args.sigtype, etabin)
 
         if args.region==files.regions[0]: datahist2d=common.get_TH1_from_file(files.datafilename, tempname+"_sideband_"+etabin)
         elif args.region==files.regions[1]: datahist2d=common.get_TH1_from_file(files.datafilename, tempname+"_"+etabin)
