@@ -204,12 +204,10 @@ def main(argv=None):
                 label = "bin"+str(binindex)+etabin+syst
                 projy=morphhist.ProjectionY("_py"+label,boundaries[binindex],boundaries[binindex+1]-1)
                 accnum = projy.Integral(1,projy.GetXaxis().GetNbins())
-                dh=ROOT.RooDataHist("dh"+label,"dh"+label,files.m2pg,projy)
-
+                dh=ROOT.RooDataHist("dh"+label,"dh"+label,files.m2pg_sig,projy)
                 projy_crop=files.crop_first_bins_variable(projy,7)
                 if newmode: accnum = projy_crop.Integral(1,projy_crop.GetXaxis().GetNbins())
                 if newmode: dh=ROOT.RooDataHist("dh"+label,"dh"+label,files.m2pg_sig,projy_crop)
-
                 accden = morphhist.Integral(1,morphhist.GetXaxis().GetNbins(),1,morphhist.GetYaxis().GetNbins())
                 if accden == 0:
                     accden = 1
