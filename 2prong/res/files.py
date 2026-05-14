@@ -51,6 +51,19 @@ datafilename = "{}/{}/egamma2018full.root".format(input_top_level, data_input)
 # luminosity for the dataset
 luminosity=138
 
+# set up the grid of generated points and their corresponding input files
+gengridw = ( (0.5, "0p5"), (0.75, "0p750"), (0.85, "0p850"), (1.0, "1p0"), (2.0, "2p0"), (3.0, "3p0"), (4.0, "4p0") )
+gengridp = ( (500, "500"), (750, "750"), (1000., "1000"), (1500, "1500"), (2500., "2500"), (3000., "3000"))
+genfilenames = [ [""]*len(gengridw) for i in range(len(gengridp))]
+for i in range(len(gengridw)):
+    for j in range(len(gengridp)):
+        genfilenames[j][i]="./input/signal_"+gengridp[j][1]+"_"+gengridw[i][1]+".root"
+
+# omega and phi mass points to run over
+wmasspoints = numpy.linspace(0.5, 4, 15)
+pmasspoints = numpy.linspace(500, 3000, 11)
+npoints = len(wmasspoints)*len(pmasspoints)
+
 # convert a single index into a wmassindex and a pmassindex
 def indexpair(index):
     assert(index>=0 and index<npoints)
@@ -112,15 +125,37 @@ def parse_w(s):
     return float(s.replace("p", "."))
 def parse_p(s):
     return float(s)
-gengridw = tuple(sorted((parse_w(s), s) for s in wmasses))
-gengridp = tuple(sorted((parse_p(s), s) for s in pmasses))
-
+gengridw = list(sorted((parse_w(s), s) for s in wmasses))
+gengridp = list(sorted((parse_p(s), s) for s in pmasses))
+#print("################")
+#print(gengridw)
+#print(gengridp)
 #genfilenames = [ [""]*len(gengridw) for i in range(len(gengridp))] # old
-genfilenames = [ [""]*len(gengridp) for i in range(len(gengridw))] 
+genfilenames = [ [""]*len(gengridp) for i in range(len(gengridw))]
+remove_w = set()
+remove_p = set()
 for i in range(len(gengridw)):
     for j in range(len(gengridp)):
-        sigfilename="signal_"+gengridp[j][1]+"_"+gengridw[i][1]+".root"   
-        genfilenames[i][j] = "{}/{}".format(signal_fullpath, sigfilename)
+        sigfilename="signal_"+gengridp[j][1]+"_"+gengridw[i][1]+".root"
+        if sigfilename not in files:
+            remove_w.add(gengridw[i])
+            remove_p.add(gengridp[j])
+#print(remove_w)
+#print(remove_p)
+for item in remove_w:
+    gengridw.remove(item)
+for item in remove_p:
+    gengridp.remove(item)
+#print(gengridw)
+#print(gengridp)
+#print("################")
+for i in range(len(gengridw)):
+    for j in range(len(gengridp)):
+        sigfilename="signal_"+gengridp[j][1]+"_"+gengridw[i][1]+".root"
+        if sigfilename in files:
+            genfilenames[i][j] = "{}/{}".format(signal_fullpath, sigfilename)
+        else:
+            genfilenames[i][j] = "error"
 
 genfilenames_raw = ['',]*npoints
 signal_fullpath = "{}/{}".format(input_top_level, signal_input)
@@ -176,8 +211,10 @@ def main():
     print('(w, p) indexes and associated gen file')
     count = 0
     for n in range(npoints):
-        print(n, indexpair(n), genfilenames_raw[n])
-        if genfilenames_raw[n] != '': count += 1
+        print(n, indexpair(n), indexmasses(n), genfilenames_raw[n])
+        if genfilenames_raw[n] != '':
+            #print(n)
+            count += 1
     print('points with genfile: {}'.format(count))
     print('full gen grid:')
     for i in range(len(gengridw)):
