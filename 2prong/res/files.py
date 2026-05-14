@@ -14,23 +14,27 @@ sigtypes = ["eta","etaprime"]
 regions = ["sideband","signal"]
 etabins = ["barrel","endcap"]
 
-# omega and phi mass points to run over
-wmasspoints = numpy.linspace(0.5, 4, 15)
-pmasspoints = numpy.linspace(500, 3000, 11)
-npoints = len(wmasspoints)*len(pmasspoints)
+# toggle dropendcap-logic stuff
+newmode = False
 
 # omega mass bin boundaries
 def get_m2pbin_boundaries(region, sigtype, etabin):
     if sigtype==sigtypes[0]:
         return (1,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,27)
-    else:
+    elif not newmode and sigtype==sigtypes[1]:
         return (8,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,27)
+    elif newmode and sigtype==sigtypes[1] and etabin==etabins[0]:
+        return (6,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,27)
+    elif newmode and sigtype==sigtypes[1] and etabin==etabins[1]:
+        return (6,9,10,11,12,13,14,15,16,17,18,19,20,21,27)
 
 def get_num_m2pbins(region, sigtype, etabin):
     return len(get_m2pbin_boundaries(region, sigtype, etabin))-1
 
 # setup observables
 m2pg = ROOT.RooRealVar("m2pg","Invariant mass of the 2-prong and photon",500,3998)
+if newmode: m2pg = ROOT.RooRealVar("m2pg","Invariant mass of the 2-prong and photon",520,3998)
+m2pg_sig = ROOT.RooRealVar("m2pg_sig","Invariant mass of the 2-prong and photon for the signal pdfs only",396,3998)
 m2p = ROOT.RooRealVar("m2p","Invariant mass of the 2-prong",0.4,5.33)
 
 # list of systematics

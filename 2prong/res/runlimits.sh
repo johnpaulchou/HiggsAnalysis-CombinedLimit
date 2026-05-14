@@ -3,8 +3,8 @@
 rm -f bkgworkspace.root newcard.root sigworkspace.root
 
 source setup_limits.sh
-#output="/dev/null"
-output="/dev/stdout"
+output="/dev/null"
+#output="/dev/stdout"
 
 for mass in ${masses[@]}; do
     echo ""
@@ -23,7 +23,7 @@ for mass in ${masses[@]}; do
     text2workspace.py newcard.txt
     echo "...."
 
-    combine -M FitDiagnostics newcard.root -m $mass --X-rtd MINIMIZER_freezeDisassociatedParams --cminDefaultMinimizerStrategy 0 -v $debug --rMin 0 --rMax 200 --freezeParameters lumi &> "$output"
+    combine -M FitDiagnostics newcard.root -m $mass --X-rtd MINIMIZER_freezeDisassociatedParams --cminDefaultMinimizerStrategy 0 -v $debug --rMin 0 --rMax 200 --freezeParameters lumi
     echo ""
     date
     echo "fit diagnostics mass $mass"
