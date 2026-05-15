@@ -8,3 +8,4 @@ results/
 roostats-*.root
 sigworkspace.root
 input
+git_commit.log

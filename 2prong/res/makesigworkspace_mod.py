@@ -87,12 +87,12 @@ def main(argv=None):
         #print(files.genfilenames[windex][pindex])
         #print("############")
         if fnRaw == '':
-            print("OUT Raw mode: no appropriate signal file. Using interpoloation instead.")
-            print("ERR Raw mode: no appropriate signal file. Using interpoloation instead.", file=sys.stderr)
+            #print("OUT Raw mode: no appropriate signal file. Using interpoloation instead.")
+            print("Using interpoloation, no signal file at mass index.", file=sys.stderr)
         else:
             rawFound = True
-            print("OUT Raw mode: using file "+fnRaw)
-            print("ERR Raw mode: using file "+fnRaw, file=sys.stderr)
+            #print("OUT Raw mode: using file "+fnRaw)
+            print("Using Raw mode, found signal file at mass index: "+fnRaw, file=sys.stderr)
     if not args.raw or not rawFound:
         # find the grid points to match up to the chosen omega and phi masses
         txmin=txmax=tymin=tymax=-999.
@@ -202,6 +202,7 @@ def main(argv=None):
             boundaries=files.get_m2pbin_boundaries(args.region, args.sigtype, etabin)
             for binindex in range(files.get_num_m2pbins(args.region, args.sigtype, etabin)):
                 label = "bin"+str(binindex)+etabin+syst
+
                 projy=morphhist.ProjectionY("_py"+label,boundaries[binindex],boundaries[binindex+1]-1)
                 accnum = projy.Integral(1,projy.GetXaxis().GetNbins())
                 dh=ROOT.RooDataHist("dh"+label,"dh"+label,files.m2pg_sig,projy)

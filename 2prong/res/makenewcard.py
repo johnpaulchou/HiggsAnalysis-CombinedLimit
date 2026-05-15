@@ -15,13 +15,14 @@ if __name__ == "__main__":
     parser.add_argument("--sigtype",help="signal type that we're using",choices=files.sigtypes, default=files.sigtypes[0])
     parser.add_argument('--region',help='region to run over',choices=files.regions,default=files.regions[0]) 
     parser.add_argument('--cardname',help='cardname to use',default="combine.txt")
+    parser.add_argument('--dropendcap',default=False,action='store_true',help='')
     args=parser.parse_args()
 
     cardname = args.cardname
     newfilenames = []
 
-    # skip the first two bins if we're doing the control region
     for eta in files.etabins:
+        if args.dropendcap and eta is files.etabins[1]: continue
         nbins=files.get_num_m2pbins(args.region, args.sigtype, eta)
         for bin in range(nbins):
             oldfile = open(cardname, "r")

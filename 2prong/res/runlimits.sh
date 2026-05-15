@@ -3,8 +3,8 @@
 rm -f bkgworkspace.root newcard.root sigworkspace.root
 
 source setup_limits.sh
-output="/dev/null"
-#output="/dev/stdout"
+#output="/dev/null"
+output="/dev/stdout"
 
 for mass in ${masses[@]}; do
     echo ""
@@ -12,7 +12,7 @@ for mass in ${masses[@]}; do
     echo "Processing mass $mass"
     ./makebkgworkspace.py --region $region --sigtype $sigtype &> "$output"
     echo "."
-    ./makesigworkspace_mod.py --region $region --sigtype $sigtype --imass $mass --raw > "$output"
+    ./makesigworkspace_mod.py --region $region --sigtype $sigtype --raw --imass $mass > "$output"
     if [[ $? -ne 0 ]]; then
         echo "ERROR: signal workspace failed, skipping $mass."
         continue
@@ -29,7 +29,7 @@ for mass in ${masses[@]}; do
     echo "fit diagnostics mass $mass"
 
     rm higgsCombineTest.AsymptoticLimits.mH$mass.root
-    combine -M AsymptoticLimits newcard.txt -m $mass --X-rtd MINIMIZER_freezeDisassociatedParams --cminDefaultMinimizerStrategy 0 -v $debug
+    combine -M AsymptoticLimits newcard.txt -m $mass --X-rtd MINIMIZER_freezeDisassociatedParams --cminDefaultMinimizerStrategy 0 -v $debug 
     echo "....."
 done
 
