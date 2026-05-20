@@ -70,8 +70,6 @@ def main(argv=None):
         wmass = args.fixmasses[0]
         pmass = args.fixmasses[1]
 
-    newmode = files.newmode
-        
     print("Creating workspace for m_w="+str(wmass)+" GeV and m_phi="+str(pmass)+" GeV")
 
     rawFound = False
@@ -203,12 +201,23 @@ def main(argv=None):
             for binindex in range(files.get_num_m2pbins(args.region, args.sigtype, etabin)):
                 label = "bin"+str(binindex)+etabin+syst
 
-                projy=morphhist.ProjectionY("_py"+label,boundaries[binindex],boundaries[binindex+1]-1)
-                accnum = projy.Integral(1,projy.GetXaxis().GetNbins())
-                dh=ROOT.RooDataHist("dh"+label,"dh"+label,files.m2pg_sig,projy)
-                projy_crop=files.crop_first_bins_variable(projy,7)
-                if newmode: accnum = projy_crop.Integral(1,projy_crop.GetXaxis().GetNbins())
-                if newmode: dh=ROOT.RooDataHist("dh"+label,"dh"+label,files.m2pg_sig,projy_crop)
+                if files.crop_style == 0:
+                    projy=morphhist.ProjectionY("_py"+label,boundaries[binindex],boundaries[binindex+1]-1)
+                    accnum = projy.Integral(1,projy.GetXaxis().GetNbins())
+                    dh=ROOT.RooDataHist("dh"+label,"dh"+label,files.m2pg_sig,projy)
+
+                if files.crop_style == 1:
+                    projy=morphhist.ProjectionY("_py"+label,boundaries[binindex],boundaries[binindex+1]-1)
+                    projy_crop=files.crop_first_bins_variable(projy,7)
+                    accnum = projy_crop.Integral(1,projy_crop.GetXaxis().GetNbins())
+                    dh=ROOT.RooDataHist("dh"+label,"dh"+label,files.m2pg_sig,projy_crop)
+
+                if files.crop_style == 2:
+                    projy=morphhist.ProjectionY("_py"+label,boundaries[binindex],boundaries[binindex+1]-1)
+                    projy_crop=files.crop_first_bins_variable(projy,8)
+                    accnum = projy_crop.Integral(1,projy_crop.GetXaxis().GetNbins())
+                    dh=ROOT.RooDataHist("dh"+label,"dh"+label,files.m2pg_sig,projy_crop)
+
                 accden = morphhist.Integral(1,morphhist.GetXaxis().GetNbins(),1,morphhist.GetYaxis().GetNbins())
                 if accden == 0:
                     accden = 1
