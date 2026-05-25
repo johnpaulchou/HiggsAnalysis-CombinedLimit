@@ -1,4 +1,4 @@
-region=sideband
+region=signal
 sigtype=etaprime
 debug="0" # -1 = very quiet, 0 = quiet, 1 = verbose, 2+ = debug
 
@@ -24,9 +24,12 @@ signal="signal_10percent_lowerphimass_etaprime"
 #pmasspoints=(500 3000 6) # first last npoints
 wmasspoints=(0.5 4 15) # first last npoints
 pmasspoints=(500 3000 11) # first last npoints
-crop_style=2 # 0 = none, 1 = jp, 2 = new
+crop_style=1 # 0 = none, 1 = jp, 2 = new
 
-masses=(100)
+#points=(11 12 13)
+#points_str=" ${points[*]} "
+
+masses=(11)
 #masses=(0 1 2 6 10 14 15 16 17 21 25 29 30 31 32 36 40 44 60 61 62 66 70 74 120 121 122 126 130 134 150 151 152 156 160)
 #masses=(0 1 5 6 7 11 18 19 23)
 #masses=($(seq 0 49))

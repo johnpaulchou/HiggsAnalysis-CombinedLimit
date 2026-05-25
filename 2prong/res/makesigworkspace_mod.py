@@ -54,6 +54,7 @@ def main(argv=None):
     parser.add_argument('--region',help='region to run over',choices=files.regions,default=files.regions[0])
     parser.add_argument("--sigtype",help="signal type that we're using",choices=files.sigtypes,default=files.sigtypes[0])
     parser.add_argument('--raw',action='store_true',help="Use raw input file directly (no interpolation). Requires --imass, incompatible with --fixmasses.")
+    parser.add_argument('--dropendcap',default=False,action='store_true',help='')
     args=parser.parse_args(argv)
 
     if args.raw and args.fixmasses is not None:
@@ -154,6 +155,7 @@ def main(argv=None):
 
         # loop over eta regions
         for etabin in files.etabins:
+            if args.dropendcap and etabin is files.etabins[1]: continue
 
             if args.raw and rawFound:
                 # Raw mode: use the histogram directly, no morphing

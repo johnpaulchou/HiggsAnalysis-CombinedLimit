@@ -76,8 +76,8 @@ for i in range(len(gengridw)):
         genfilenames[j][i]="./input/signal_"+gengridp[j][1]+"_"+gengridw[i][1]+".root"
 
 # omega and phi mass points to run over
-wmasspoints = numpy.linspace(0.5, 4, 15)
-pmasspoints = numpy.linspace(500, 3000, 11)
+wmasspoints = numpy.linspace(0.75, 4, 27)
+pmasspoints = numpy.linspace(500, 3000, 21)
 npoints = len(wmasspoints)*len(pmasspoints)
 
 # convert a single index into a wmassindex and a pmassindex

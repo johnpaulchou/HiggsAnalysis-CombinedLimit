@@ -3,8 +3,8 @@
 rm -f bkgworkspace.root newcard.root sigworkspace.root
 
 source setup_limits.sh
-#output="/dev/null"
-output="/dev/stdout"
+output="/dev/null"
+#output="/dev/stdout"
 
 for mass in ${masses[@]}; do
     echo ""
@@ -12,13 +12,17 @@ for mass in ${masses[@]}; do
     echo "Processing mass $mass"
     ./makebkgworkspace.py --region $region --sigtype $sigtype &> "$output"
     echo "."
-    ./makesigworkspace_mod.py --region $region --sigtype $sigtype --raw --imass $mass > "$output"
+
+    ./makesigworkspace_mod.py --region $region --sigtype $sigtype --raw --imass $mass &> "$output"
     if [[ $? -ne 0 ]]; then
-        echo "ERROR: signal workspace failed, skipping $mass."
-        continue
+        echo "MSG: signal workspace failed, dropendcap for $mass."
+        ./makesigworkspace_mod.py --region $region --sigtype $sigtype --raw --imass $mass --dropendcap &> "$output"
+        echo ".."
+        ./makenewcard.py --region $region --sigtype $sigtype --dropendcap
+    else
+        echo ".."
+        ./makenewcard.py --region $region --sigtype $sigtype
     fi
-    echo ".."
-    ./makenewcard.py --region $region --sigtype $sigtype #--dropendcap
     echo "..."
     text2workspace.py newcard.txt
     echo "...."
