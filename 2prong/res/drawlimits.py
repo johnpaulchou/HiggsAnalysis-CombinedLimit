@@ -10,6 +10,8 @@ import sys
 
 tdrstyle.setTDRStyle()
 
+PLOT_R_LOW = -3.0
+PLOT_R_HIGH = 2.5
 
 ###############################################################
 # start of the "main" function
@@ -142,8 +144,8 @@ if __name__ == "__main__":
     hObs.GetYaxis().SetTitle("m_{#phi} [GeV]")
     hObs.GetZaxis().SetTitle("Observed log_{10}r_{95}")
     #hObs.SetMinimum(-1.0)
-    hObs.SetMinimum(-3.0)
-    hObs.SetMaximum(2.0)
+    hObs.SetMinimum(PLOT_R_LOW)
+    hObs.SetMaximum(PLOT_R_HIGH)
 
     obsCont=hObs.Clone("obsCont")
     obsCont.SetContour(2)
@@ -185,8 +187,8 @@ if __name__ == "__main__":
         row = [f"{hObs.GetBinContent(hObs.GetBin(x, y)):.3f}" for x in range(1, nx + 1)]
         print(" ".join(row))
 
-    input()
-    sys.exit()
+    #input()
+    #sys.exit()
 
     # Draw Expected limits
     
@@ -204,8 +206,8 @@ if __name__ == "__main__":
     hExp.GetYaxis().SetTitle("m_{#phi} [GeV]")
     hExp.GetZaxis().SetTitle("Expected log_{10}r_{95}")
     #hExp.SetMinimum(-1.0)
-    hExp.SetMinimum(-1.5)
-    hExp.SetMaximum(2.0)
+    hExp.SetMinimum(PLOT_R_LOW)
+    hExp.SetMaximum(PLOT_R_HIGH)
 
     expCont=hExp.Clone("expCont")
     expCont.SetContour(2)
@@ -288,3 +290,85 @@ if __name__ == "__main__":
         row = [f"{hObsXs.GetBinContent(hObsXs.GetBin(x, y)):.3f}" for x in range(1, nx + 1)]
         print(" ".join(row))
     
+
+
+    '''
+    # setup parser
+    parser = argparse.ArgumentParser(formatter_class=argparse.ArgumentDefaultsHelpFormatter)
+    parser.add_argument("filenames", nargs="+", help="A list of root files containing the limit info")
+    parser.add_argument("--drawSmooth",help="Draw a smoothed version of the limit plot",action=argparse.BooleanOptionalAction,default=False)
+    parser.add_argument("--sigtype",help="signal type that we're using",choices=files.sigtypes, default=files.sigtypes[0])
+
+    args = parser.parse_args()
+    '''
+
+    '''
+    # create histograms
+    xbinsn = len(files.wmasspoints)
+    xbinsw = (files.wmasspoints[1]-files.wmasspoints[0])
+    ybinsn = len(files.pmasspoints)
+    ybinsw = (files.pmasspoints[1]-files.pmasspoints[0])
+    xbinslo = files.wmasspoints[0]-xbinsw*0.5
+    xbinshi = files.wmasspoints[xbinsn-1]+xbinsw*0.5
+    ybinslo = files.pmasspoints[0]-ybinsw*0.5
+    ybinshi = files.pmasspoints[ybinsn-1]+ybinsw*0.5
+    '''
+
+    sys.exit()
+    print("\n%%% Now Significance %%%\n")
+
+    hSig = ROOT.TH2D("hSig","Significance",xbinsn,xbinslo,xbinshi,ybinsn,ybinslo,ybinshi)
+
+    # loop over all of the arguments
+    for file in args.filenames:
+        dict=common.parse_HC_limit_tree(file,hasExpected=False)
+        imass=int(dict["mass"])
+        windex,pindex=files.indexpair(imass)
+        pmass=files.pmasspoints[pindex]
+        sig=dict["obs"]
+        hSig.SetBinContent(windex+1,pindex+1,sig)
+
+    nbins=200
+    if args.drawSmooth:
+        hSig=common.interpolate_th2d(hSig, nbins, nbins)
+
+    # Draw significance
+    can = ROOT.TCanvas()
+    can.SetFillColor(0)
+    can.SetBorderMode(0)
+    can.SetFrameFillStyle(0)
+    can.SetFrameBorderMode(0)
+    can.SetTickx(0)
+    can.SetTicky(0)
+    can.SetMargin(0.15,0.20,0.15,0.15)
+    can.cd()
+    hSig.Draw("colz")
+    hSig.GetXaxis().SetTitle("m_{#omega} [GeV]")
+    hSig.GetYaxis().SetTitle("m_{#phi} [GeV]")
+    hSig.GetZaxis().SetTitle("Significance (z-score)")
+    hSig.SetMinimum(-0.2)
+    hSig.SetMaximum(4.0)
+
+    cmstxt = ROOT.TLatex()
+    cmstxt.SetTextFont(61)
+    cmstxt.SetTextSize(0.07)
+    cmstxt.DrawLatexNDC(0.15,0.87,"CMS")
+    extratxt = ROOT.TLatex()
+    extratxt.SetTextFont(52)
+    extratxt.SetTextSize(0.05)
+    extratxt.DrawLatexNDC(0.26,0.87,"Preliminary")
+    lumitxt = ROOT.TLatex()
+    lumitxt.SetTextFont(42)
+    lumitxt.SetTextSize(0.05)
+    lumitxt.DrawLatexNDC(0.63,0.87,"138 fb^{-1} (13 TeV)")
+    sigtxt = ROOT.TLatex()
+    sigtxt.SetTextFont(42)
+    sigtxt.SetTextSize(0.03)
+    if args.sigtype==files.sigtypes[0]:
+        sigtxt.DrawLatexNDC(0.18,0.75,"#eta BR hypothesis")
+    else:
+        sigtxt.DrawLatexNDC(0.18,0.75,"#eta' BR hypothesis")
+    
+    can.Update()
+    can.Draw()
+    can.SaveAs("ressig_"+args.sigtype+".pdf")
