@@ -206,25 +206,19 @@ def main(argv=None):
                 if files.crop_style == 0:
                     projy=morphhist.ProjectionY("_py"+label,boundaries[binindex],boundaries[binindex+1]-1)
                     accnum = projy.Integral(1,projy.GetXaxis().GetNbins())
-                    dh=ROOT.RooDataHist("dh"+label,"dh"+label,files.m2pg_sig,projy)
-
-                if files.crop_style == 1:
+                    dh=ROOT.RooDataHist("dh"+label,"dh"+label,files.m2pg,projy)
+                else:
                     projy=morphhist.ProjectionY("_py"+label,boundaries[binindex],boundaries[binindex+1]-1)
                     projy_crop=files.crop_first_bins_variable(projy,7)
                     accnum = projy_crop.Integral(1,projy_crop.GetXaxis().GetNbins())
-                    dh=ROOT.RooDataHist("dh"+label,"dh"+label,files.m2pg_sig,projy_crop)
-
-                if files.crop_style == 2:
-                    projy=morphhist.ProjectionY("_py"+label,boundaries[binindex],boundaries[binindex+1]-1)
-                    projy_crop=files.crop_first_bins_variable(projy,8)
-                    accnum = projy_crop.Integral(1,projy_crop.GetXaxis().GetNbins())
-                    dh=ROOT.RooDataHist("dh"+label,"dh"+label,files.m2pg_sig,projy_crop)
+                    if files.crop_style == 2: accnum = projy.Integral(1,projy.GetXaxis().GetNbins())
+                    dh=ROOT.RooDataHist("dh"+label,"dh"+label,files.m2pg,projy_crop)
 
                 accden = morphhist.Integral(1,morphhist.GetXaxis().GetNbins(),1,morphhist.GetYaxis().GetNbins())
                 if accden == 0:
-                    accden = 1
+                    #accden = 1
                     print("WARNING: accden = 0 !")
-                sigpdf1d = ROOT.RooHistPdf("sigpdf_"+label,"signal PDF for a slice in files.m2p",files.m2pg_sig,dh)
+                sigpdf1d = ROOT.RooHistPdf("sigpdf_"+label,"signal PDF for a slice in files.m2p",files.m2pg,dh)
                 sliceacc = ROOT.RooRealVar("sliceacc_"+label,"acceptance in a given slice",accnum/accden)
                 sliceacc.setConstant(True)
                 print("The slice acceptance for "+label+" is "+str(sliceacc.getValV()))

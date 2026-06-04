@@ -15,24 +15,27 @@ regions = ["sideband","signal"]
 etabins = ["barrel","endcap"]
 
 # toggle for extended phi range
-crop_style = 2
+crop_style = 1
 
 # omega mass bin boundaries
-def get_m2pbin_boundaries(region, sigtype, etabin):
+def get_m2pbin_boundaries(region, sigtype, etabin=''):
     if crop_style == 0:
         if sigtype==sigtypes[0]:
             return (1,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,27)
         elif sigtype==sigtypes[1]:
             return (8,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,27)
-    elif crop_style == 1 or crop_style == 2:
+    else:
         if sigtype==sigtypes[0]:
             return (1,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,27)
         elif sigtype==sigtypes[1] and etabin==etabins[0]:
             return (6,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,27)
         elif sigtype==sigtypes[1] and etabin==etabins[1]:
             return (6,9,10,11,12,13,14,15,16,17,18,19,20,21,27)
+        elif sigtype==sigtypes[1]:
+            print('ERR: supply etabin to get_m2pbin_boundaries()!')
+            return (0)
 
-def get_num_m2pbins(region, sigtype, etabin):
+def get_num_m2pbins(region, sigtype, etabin=''):
     return len(get_m2pbin_boundaries(region, sigtype, etabin))-1
 
 # setup observables
@@ -40,13 +43,13 @@ if crop_style == 0:
     m2pg = ROOT.RooRealVar("m2pg","Invariant mass of the 2-prong and photon",500,3998)
     m2pg_sig = m2pg
     m2p = ROOT.RooRealVar("m2p","Invariant mass of the 2-prong",0.4,5.33)
-if crop_style == 1:
+if crop_style == 1 or crop_style == 2:
     m2pg = ROOT.RooRealVar("m2pg","Invariant mass of the 2-prong and photon",520,3998)
     m2pg_sig = ROOT.RooRealVar("m2pg_sig","Invariant mass of the 2-prong and photon for the signal pdfs only",396,3998)
     m2p = ROOT.RooRealVar("m2p","Invariant mass of the 2-prong",0.4,5.33)
-if crop_style == 2:
-    m2pg = ROOT.RooRealVar("m2pg","Invariant mass of the 2-prong and photon",520,3998)
-    m2pg_sig = m2pg
+if crop_style == 3:
+    m2pg = ROOT.RooRealVar("m2pg","Invariant mass of the 2-prong and photon",563,3998)
+    m2pg_sig = ROOT.RooRealVar("m2pg_sig","Invariant mass of the 2-prong and photon for the signal pdfs only",396,3998)
     m2p = ROOT.RooRealVar("m2p","Invariant mass of the 2-prong",0.4,5.33)
 
 # list of systematics
@@ -60,7 +63,7 @@ workspacename="w"
 
 # input path
 input_top_level = './input'
-signal_input = 'signal_10percent_lowerphimass_etaprime'
+signal_input = 'signal_10percent_lowerphimass_eta'
 data_input = '.'
 datafilename = "{}/{}/egamma2018full.root".format(input_top_level, data_input)
 
@@ -76,8 +79,8 @@ for i in range(len(gengridw)):
         genfilenames[j][i]="./input/signal_"+gengridp[j][1]+"_"+gengridw[i][1]+".root"
 
 # omega and phi mass points to run over
-wmasspoints = numpy.linspace(0.75, 4, 27)
-pmasspoints = numpy.linspace(500, 3000, 21)
+wmasspoints = numpy.linspace(0.5, 4, 1)
+pmasspoints = numpy.linspace(550, 3000, 50)
 npoints = len(wmasspoints)*len(pmasspoints)
 
 # convert a single index into a wmassindex and a pmassindex

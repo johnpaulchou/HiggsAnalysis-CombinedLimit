@@ -13,12 +13,14 @@ for mass in ${masses[@]}; do
     ./makebkgworkspace.py --region $region --sigtype $sigtype &> "$output"
     echo "."
 
-    ./makesigworkspace_mod.py --region $region --sigtype $sigtype --raw --imass $mass &> "$output"
+    ./makesigworkspace.py --region $region --sigtype $sigtype --raw --imass $mass &> "$output"
     if [[ $? -ne 0 ]]; then
-        echo "MSG: signal workspace failed, dropendcap for $mass."
-        ./makesigworkspace_mod.py --region $region --sigtype $sigtype --raw --imass $mass --dropendcap &> "$output"
-        echo ".."
-        ./makenewcard.py --region $region --sigtype $sigtype --dropendcap
+        echo "MSG: signal workspace failed for $mass."
+        continue
+        #echo "MSG: signal workspace failed, dropendcap for $mass."
+        #./makesigworkspace.py --region $region --sigtype $sigtype --raw --imass $mass --dropendcap &> "$output"
+        #echo ".."
+        #./makenewcard.py --region $region --sigtype $sigtype --dropendcap
     else
         echo ".."
         ./makenewcard.py --region $region --sigtype $sigtype
@@ -28,13 +30,14 @@ for mass in ${masses[@]}; do
     echo "...."
 
     combine -M FitDiagnostics newcard.root -m $mass --X-rtd MINIMIZER_freezeDisassociatedParams --cminDefaultMinimizerStrategy 0 -v $debug --rMin 0 --rMax 200 --freezeParameters lumi
-    echo ""
-    date
-    echo "fit diagnostics mass $mass"
+    echo "..... done fit"
 
     rm higgsCombineTest.AsymptoticLimits.mH$mass.root
     combine -M AsymptoticLimits newcard.txt -m $mass --X-rtd MINIMIZER_freezeDisassociatedParams --cminDefaultMinimizerStrategy 0 -v $debug 
-    echo "....."
+    echo "...... done limit"
+
+    combine -M Significance newcard.txt -m $mass --X-rtd MINIMIZER_freezeDisassociatedParams --cminDefaultMinimizerStrategy 0 -v $debug
+    echo "....... done sig"
 done
 
 date
