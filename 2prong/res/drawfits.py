@@ -5,6 +5,8 @@ import files
 import argparse
 import common.tdrstyle as tdrstyle
 import common.common as common
+import sys
+import os
 
 ###############################################################
 # start of the "main" function
@@ -19,6 +21,8 @@ if __name__ == "__main__":
     parser.add_argument("--bkgIndex",help="Which background to compute the pull and chi^2 with respect to and/or plot the signal on top of.",type=int,choices=[0,1,2],default=0)
     parser.add_argument("--drawBkgUncertainty",help="Draw the uncertainty on the background fit. This can be slow.",action=argparse.BooleanOptionalAction,default=False)
     args=parser.parse_args()
+
+    ROOT.gROOT.SetBatch(True)
     
     # get the workspace and parameters
     bkgws = common.get_workspace_from_file(files.bkgworkspacefn, files.workspacename)
@@ -47,10 +51,6 @@ if __name__ == "__main__":
         sighist_ssb=ROOT.TH1D("sighist_ssb","sighist_ssb",var_ssb.getBinning().numBins(), common.get_carray_from_binning(var_ssb.getBinning()))
         bkghist_ssb=ROOT.TH1D("bkghist_ssb","bkghist_ssb",var_ssb.getBinning().numBins(), common.get_carray_from_binning(var_ssb.getBinning()))    
 
-
-    m2pbin_boundaries = files.get_m2pbin_boundaries(region, sigtype, binning)
-    num_m2pbins = files.get_num_m2pbins(region, sigtype, binning)
-
     # loop over etabins
     for etabin in files.etabins:
 
@@ -75,7 +75,7 @@ if __name__ == "__main__":
             datagraph,var=common.get_datagraph_from_workspace(bkgws, "dataHist_bin"+str(m2pbin)+etabin)
             sigobs=sigws.var("m2pg")
             bkgobs=bkgws.var("m2pg")
-                
+
             # get the pdfs and their respective normalizations, and turn them into histograms
             sigpdf=sigws.pdf("sigpdf_bin"+str(m2pbin)+etabin)
             sigpdfnorm=sigws.obj("sigpdf_bin"+str(m2pbin)+etabin+"_norm")
@@ -105,6 +105,7 @@ if __name__ == "__main__":
             print("p6="+str(bkgws.var("p6_bin"+str(m2pbin)+etabin).getVal()))
 
             # compute S/S+B weighted histograms
+            weight = 0
             if args.drawSignal:
                 sigsum=bkgsum=0
                 for bin in range(1,sighist_ssb.GetNbinsX()+1):
@@ -258,6 +259,12 @@ if __name__ == "__main__":
             moretext.SetTextFont(42)
             moretext.SetTextSize(0.045)
             moretext.DrawLatexNDC(0.6,0.78,"("+etabin+"; "+region+")")
+            if args.drawSignal:
+                sigtext=ROOT.TLatex()
+                sigtext.SetTextFont(42)
+                sigtext.SetTextSize(0.045)
+                if weight == 0: sigtext.DrawLatexNDC(0.6,0.73,"sig weight zero")
+                else: sigtext.DrawLatexNDC(0.6,0.73,"sig weight {0:0.4f}".format(weight))
             
             # Draw pulls
             pullpad.cd()
@@ -312,6 +319,15 @@ if __name__ == "__main__":
             can.Modified()
             can.Update()
             can.SaveAs("./plots/"+can.GetName()+".pdf")
+
+            mycan=ROOT.TCanvas("sigs_"+sigtype+"_"+region+"_"+etabin+"_"+str(m2pbin), "c",300,300)
+            mycan.cd()
+            sighist.Draw("hist")
+            m2ptext.DrawLatexNDC(0.2,0.83,"{0:0.2f}".format(m2plo)+"<M(2p)<"+"{0:0.2f}".format(m2phi)+" GeV")
+            moretext.DrawLatexNDC(0.2,0.78,"("+etabin+"; "+region+")")
+            mycan.Modified()
+            mycan.Update()
+            mycan.SaveAs("./plots/"+mycan.GetName()+".pdf")
 
     # draw the S/S+B weighted signal plot
     if args.drawSignal:
@@ -414,5 +430,26 @@ if __name__ == "__main__":
 
         
         ssbcan.SaveAs("./plots/"+ssbcan.GetName()+".pdf")
+
         
-#    print(str(bkgInt)+" "+str(sigInt)+" "+str(dataInt))
+    # draw the signal distribution alone
+    if args.drawSignal:
+        signalcan=ROOT.TCanvas("signal_dist","ssb weighted",300,300)
+        signalcan.cd()
+        #signalpad = ROOT.TPad("signalpad","signalpad",0,0,1,1)
+        #signalpad.SetMargin(0.15,0.08,0.02,0.1) #L, R, B, T
+        #signalpad.Draw()
+
+        #sighist_ssb.GetXaxis().SetRangeUser(500,1000)
+        sighist_ssb.SetLineColor(tdrstyle.colors[4])
+        sighist_ssb.SetFillColor(0)
+        sighist_ssb.SetLineWidth(2)
+        signalcan.SetLogy(1)
+
+        sighist_ssb.Draw("hist")
+        signalcan.SaveAs("./plots/"+signalcan.GetName()+".pdf")
+
+    # unite
+    os.system("pdfunite plots/{} {}".format("fits_"+sigtype+"*", "all.pdf"))
+    os.system("mv all.pdf plots/")
+    os.system("rm plots/{}".format("fits_"+sigtype+"*"))

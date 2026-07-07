@@ -10,8 +10,10 @@ import sys
 
 tdrstyle.setTDRStyle()
 
-PLOT_R_LOW = -3.0
+PLOT_R_LOW = -2.0
 PLOT_R_HIGH = 2.5
+PLOT_XSBR_LOW = 0
+PLOT_XSBR_HIGH = 15
 
 ###############################################################
 # start of the "main" function
@@ -28,18 +30,12 @@ if __name__ == "__main__":
     parser.add_argument("--fixedgrid",action='store_true', default=False)
     args = parser.parse_args()
 
-    do_skip_y = False
-    do_skip_x = False
-    skipx = 3
-    skipy = 3
-
     # create histograms
     if args.fixedgrid:
-        #xbinslo, xbinshi, xbinsw = 0.5, 4, 0.25
-        xbinslo, xbinshi, xbinsw = 0.75, 4, 0.25
-        #ybinslo, ybinshi, ybinsw = 500, 3000, 250
-        ybinslo, ybinshi, ybinsw = 1250, 3000, 250
-
+        xbinsw = (files.wmasspoints[1]-files.wmasspoints[0])
+        ybinsw = (files.pmasspoints[1]-files.pmasspoints[0])
+        xbinslo, xbinshi = 0.85, 4
+        ybinslo, ybinshi = 550, 2925
         xbinslo = xbinslo - 0.5*xbinsw
         xbinshi = xbinshi + 0.5*xbinsw
         ybinslo = ybinslo - 0.5*ybinsw
@@ -49,27 +45,19 @@ if __name__ == "__main__":
     else:
         xbinsw = (files.wmasspoints[1]-files.wmasspoints[0])
         ybinsw = (files.pmasspoints[1]-files.pmasspoints[0])
-        #xbinsn = len(files.wmasspoints)
-        if not do_skip_x: xbinsn = len(files.wmasspoints)
-        else:              xbinsn = len(files.wmasspoints)-skipx
-        if not do_skip_y: ybinsn = len(files.pmasspoints)
-        else:              ybinsn = len(files.pmasspoints)-skipy
-        #xbinslo = files.wmasspoints[0]-xbinsw*0.5
-        #xbinshi = files.wmasspoints[xbinsn-1]+xbinsw*0.5
-        if not do_skip_x: xbinslo = files.wmasspoints[0]-xbinsw*0.5
-        else:              xbinslo = files.wmasspoints[skipx]-xbinsw*0.5
-        if not do_skip_x: xbinshi = files.wmasspoints[xbinsn-1]+xbinsw*0.5
-        else:              xbinshi = files.wmasspoints[xbinsn-1+skipx]+xbinsw*0.5
-        if not do_skip_y: ybinslo = files.pmasspoints[0]-ybinsw*0.5
-        else:              ybinslo = files.pmasspoints[skipy]-ybinsw*0.5
-        if not do_skip_y: ybinshi = files.pmasspoints[ybinsn-1]+ybinsw*0.5
-        else:              ybinshi = files.pmasspoints[ybinsn-1+skipy]+ybinsw*0.5
+        xbinsn = len(files.wmasspoints)
+        ybinsn = len(files.pmasspoints)
+        xbinslo = files.wmasspoints[0]-xbinsw*0.5
+        xbinshi = files.wmasspoints[xbinsn-1]+xbinsw*0.5
+        ybinslo = files.pmasspoints[0]-ybinsw*0.5
+        ybinshi = files.pmasspoints[ybinsn-1]+ybinsw*0.5
 
     print(xbinsw)
     print(ybinsw)
     print(xbinslo, xbinshi, xbinsn)
     print(ybinslo, ybinshi, ybinsn)
 
+    hGen = ROOT.TH2D("hGen","Generated Masspoints",xbinsn,xbinslo,xbinshi,ybinsn,ybinslo,ybinshi)
     hObs = ROOT.TH2D("hObs","Observed",xbinsn,xbinslo,xbinshi,ybinsn,ybinslo,ybinshi)
     hExp = ROOT.TH2D("hExp","Expected",xbinsn,xbinslo,xbinshi,ybinsn,ybinslo,ybinshi)
     hExpLo = ROOT.TH2D("hExpLo","Expected -1 sigma",xbinsn,xbinslo,xbinshi,ybinsn,ybinslo,ybinshi)
@@ -82,6 +70,13 @@ if __name__ == "__main__":
         ybin = hObs.GetYaxis().FindBin(pmass)
         return xbin, ybin
 
+    # setup hGen
+    print(files.genfilenames_raw)
+    for imass, entry in enumerate(files.genfilenames_raw):
+        if not entry=='':
+            xindex, yindex = getdrawbin(imass)
+            hGen.SetBinContent(xindex,yindex,0.1)
+   
     # loop over all of the arguments
     for file in args.filenames:
         print(file)
@@ -90,8 +85,6 @@ if __name__ == "__main__":
 
         windex,pindex=files.indexpair(imass)
         pmass=files.pmasspoints[pindex]
-        #if do_skip_y: pindex = pindex-skipy
-        #if do_skip_x: windex = windex-skipx
 
         obs=dict["obs"]
         exp=dict["exp-med"]
@@ -115,7 +108,6 @@ if __name__ == "__main__":
             hObsXs.SetBinContent(xindex,yindex,obs*files.get_xsection(pmass))
         else:
             hObs.SetBinContent(windex+1,pindex+1,math.log10(obs))
-            #hObs.SetBinContent(windex+1,pindex+1,10.0)
             hExp.SetBinContent(windex+1,pindex+1,math.log10(exp))
             hExpLo.SetBinContent(windex+1,pindex+1,math.log10(dict["exp-1"]))
             hExpHi.SetBinContent(windex+1,pindex+1,math.log10(dict["exp+1"]))
@@ -143,7 +135,6 @@ if __name__ == "__main__":
     hObs.GetXaxis().SetTitle("m_{#omega} [GeV]")
     hObs.GetYaxis().SetTitle("m_{#phi} [GeV]")
     hObs.GetZaxis().SetTitle("Observed log_{10}r_{95}")
-    #hObs.SetMinimum(-1.0)
     hObs.SetMinimum(PLOT_R_LOW)
     hObs.SetMaximum(PLOT_R_HIGH)
 
@@ -175,6 +166,14 @@ if __name__ == "__main__":
         sigtxt.DrawLatexNDC(0.18,0.75,"#eta BR hypothesis")
     else:
         sigtxt.DrawLatexNDC(0.18,0.75,"#eta' BR hypothesis")
+
+    hGen.SetMarkerStyle(5)
+    hGen.SetMarkerColor(7)
+    hGen.SetFillColor(7)
+    #hGen.SetLineWidth(1)
+    #hGen.SetLineStyle(1)
+    #hGen.SetMarkerSize(5)
+    hGen.Draw("box same")
     
     can1.Update()
     can1.Draw()
@@ -186,9 +185,6 @@ if __name__ == "__main__":
     for y in range(ny, 0, -1):  # last y-bin first
         row = [f"{hObs.GetBinContent(hObs.GetBin(x, y)):.3f}" for x in range(1, nx + 1)]
         print(" ".join(row))
-
-    #input()
-    #sys.exit()
 
     # Draw Expected limits
     
@@ -205,7 +201,6 @@ if __name__ == "__main__":
     hExp.GetXaxis().SetTitle("m_{#omega} [GeV]")
     hExp.GetYaxis().SetTitle("m_{#phi} [GeV]")
     hExp.GetZaxis().SetTitle("Expected log_{10}r_{95}")
-    #hExp.SetMinimum(-1.0)
     hExp.SetMinimum(PLOT_R_LOW)
     hExp.SetMaximum(PLOT_R_HIGH)
 
@@ -238,6 +233,14 @@ if __name__ == "__main__":
     else:
         sigtxt.DrawLatexNDC(0.18,0.75,"#eta' BR hypothesis")
     
+    hGen.SetMarkerStyle(5)
+    hGen.SetMarkerColor(7)
+    hGen.SetFillColor(7)
+    #hGen.SetLineWidth(1)
+    #hGen.SetLineStyle(1)
+    #hGen.SetMarkerSize(5)
+    hGen.Draw("box same")
+
     can2.Update()
     can2.Draw()
     can2.SaveAs("resexp_"+args.sigtype+".pdf")
@@ -262,8 +265,8 @@ if __name__ == "__main__":
     hObsXs.GetXaxis().SetTitle("m_{#omega} [GeV]")
     hObsXs.GetYaxis().SetTitle("m_{#phi} [GeV]")
     hObsXs.GetZaxis().SetTitle("95% CL Excluded #sigma#timesBR [pb]")
-    hObsXs.SetMinimum(0)
-    hObsXs.SetMaximum(15)
+    hObsXs.SetMinimum(PLOT_XSBR_LOW)
+    hObsXs.SetMaximum(PLOT_XSBR_HIGH)
 
 
     expCont.Draw("cont3same")
@@ -279,6 +282,14 @@ if __name__ == "__main__":
     else:
         sigtxt.DrawLatexNDC(0.18,0.75,"#eta' BR hypothesis")
     
+    hGen.SetMarkerStyle(5)
+    hGen.SetMarkerColor(7)
+    hGen.SetFillColor(7)
+    #hGen.SetLineWidth(1)
+    #hGen.SetLineStyle(1)
+    #hGen.SetMarkerSize(5)
+    hGen.Draw("box same")
+
     can3.Update()
     can3.Draw()
     can3.SaveAs("resobsxs_"+args.sigtype+".pdf")
@@ -289,86 +300,3 @@ if __name__ == "__main__":
     for y in range(ny, 0, -1):  # last y-bin first
         row = [f"{hObsXs.GetBinContent(hObsXs.GetBin(x, y)):.3f}" for x in range(1, nx + 1)]
         print(" ".join(row))
-    
-
-
-    '''
-    # setup parser
-    parser = argparse.ArgumentParser(formatter_class=argparse.ArgumentDefaultsHelpFormatter)
-    parser.add_argument("filenames", nargs="+", help="A list of root files containing the limit info")
-    parser.add_argument("--drawSmooth",help="Draw a smoothed version of the limit plot",action=argparse.BooleanOptionalAction,default=False)
-    parser.add_argument("--sigtype",help="signal type that we're using",choices=files.sigtypes, default=files.sigtypes[0])
-
-    args = parser.parse_args()
-    '''
-
-    '''
-    # create histograms
-    xbinsn = len(files.wmasspoints)
-    xbinsw = (files.wmasspoints[1]-files.wmasspoints[0])
-    ybinsn = len(files.pmasspoints)
-    ybinsw = (files.pmasspoints[1]-files.pmasspoints[0])
-    xbinslo = files.wmasspoints[0]-xbinsw*0.5
-    xbinshi = files.wmasspoints[xbinsn-1]+xbinsw*0.5
-    ybinslo = files.pmasspoints[0]-ybinsw*0.5
-    ybinshi = files.pmasspoints[ybinsn-1]+ybinsw*0.5
-    '''
-
-    sys.exit()
-    print("\n%%% Now Significance %%%\n")
-
-    hSig = ROOT.TH2D("hSig","Significance",xbinsn,xbinslo,xbinshi,ybinsn,ybinslo,ybinshi)
-
-    # loop over all of the arguments
-    for file in args.filenames:
-        dict=common.parse_HC_limit_tree(file,hasExpected=False)
-        imass=int(dict["mass"])
-        windex,pindex=files.indexpair(imass)
-        pmass=files.pmasspoints[pindex]
-        sig=dict["obs"]
-        hSig.SetBinContent(windex+1,pindex+1,sig)
-
-    nbins=200
-    if args.drawSmooth:
-        hSig=common.interpolate_th2d(hSig, nbins, nbins)
-
-    # Draw significance
-    can = ROOT.TCanvas()
-    can.SetFillColor(0)
-    can.SetBorderMode(0)
-    can.SetFrameFillStyle(0)
-    can.SetFrameBorderMode(0)
-    can.SetTickx(0)
-    can.SetTicky(0)
-    can.SetMargin(0.15,0.20,0.15,0.15)
-    can.cd()
-    hSig.Draw("colz")
-    hSig.GetXaxis().SetTitle("m_{#omega} [GeV]")
-    hSig.GetYaxis().SetTitle("m_{#phi} [GeV]")
-    hSig.GetZaxis().SetTitle("Significance (z-score)")
-    hSig.SetMinimum(-0.2)
-    hSig.SetMaximum(4.0)
-
-    cmstxt = ROOT.TLatex()
-    cmstxt.SetTextFont(61)
-    cmstxt.SetTextSize(0.07)
-    cmstxt.DrawLatexNDC(0.15,0.87,"CMS")
-    extratxt = ROOT.TLatex()
-    extratxt.SetTextFont(52)
-    extratxt.SetTextSize(0.05)
-    extratxt.DrawLatexNDC(0.26,0.87,"Preliminary")
-    lumitxt = ROOT.TLatex()
-    lumitxt.SetTextFont(42)
-    lumitxt.SetTextSize(0.05)
-    lumitxt.DrawLatexNDC(0.63,0.87,"138 fb^{-1} (13 TeV)")
-    sigtxt = ROOT.TLatex()
-    sigtxt.SetTextFont(42)
-    sigtxt.SetTextSize(0.03)
-    if args.sigtype==files.sigtypes[0]:
-        sigtxt.DrawLatexNDC(0.18,0.75,"#eta BR hypothesis")
-    else:
-        sigtxt.DrawLatexNDC(0.18,0.75,"#eta' BR hypothesis")
-    
-    can.Update()
-    can.Draw()
-    can.SaveAs("ressig_"+args.sigtype+".pdf")

@@ -3,17 +3,17 @@
 rm -f bkgworkspace.root newcard.root sigworkspace.root
 
 source setup_limits.sh
-output="/dev/null"
-#output="/dev/stdout"
+#output="/dev/null"
+output="/dev/stdout"
 
 for mass in ${masses[@]}; do
     echo ""
     date
     echo "Processing mass $mass"
-    ./makebkgworkspace.py --region $region --sigtype $sigtype &> "$output"
+    ./makebkgworkspace.py --region $region --sigtype $sigtype #&> "$output"
     echo "."
 
-    ./makesigworkspace.py --region $region --sigtype $sigtype --raw --imass $mass &> "$output"
+    ./makesigworkspace.py --region $region --sigtype $sigtype --raw --imass $mass #&> "$output"
     if [[ $? -ne 0 ]]; then
         echo "MSG: signal workspace failed for $mass."
         continue

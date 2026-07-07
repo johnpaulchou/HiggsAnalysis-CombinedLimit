@@ -8,6 +8,16 @@ import argparse
 import numpy as np
 from scipy.ndimage import gaussian_filter
 
+def supress_noise(h):
+    nbins = h.GetNbinsX()
+    for i in range(1, nbins + 1):
+        old_val = h.GetBinContent(i)
+        if old_val >= 1:
+            new_val = old_val - 1
+        else:
+            new_val = old_val
+        h.SetBinContent(i, new_val)
+
 # function to get acceptance from a file
 def getAcc(filename, histnames, normhistname):
     integral=0.0
@@ -159,7 +169,8 @@ def main(argv=None):
 
             if args.raw and rawFound:
                 # Raw mode: use the histogram directly, no morphing
-                morphhist = common.get_TH1_from_file(fnRaw, tempname+"_"+etabin+syst)
+                morphhist_template = common.get_TH1_from_file(fnRaw, tempname+"_"+etabin+syst)
+                morphhist = morphhist_template.Clone(morphhist_template.GetName()+"m")
             else:
                 # get the 2D histograms
                 hA=common.get_TH1_from_file(fnA, tempname+"_"+etabin+syst)
@@ -212,6 +223,7 @@ def main(argv=None):
                     projy_crop=files.crop_first_bins_variable(projy,7)
                     accnum = projy_crop.Integral(1,projy_crop.GetXaxis().GetNbins())
                     if files.crop_style == 2: accnum = projy.Integral(1,projy.GetXaxis().GetNbins())
+                    #supress_noise(projy_crop)
                     dh=ROOT.RooDataHist("dh"+label,"dh"+label,files.m2pg,projy_crop)
 
                 accden = morphhist.Integral(1,morphhist.GetXaxis().GetNbins(),1,morphhist.GetYaxis().GetNbins())
@@ -223,6 +235,57 @@ def main(argv=None):
                 sliceacc.setConstant(True)
                 print("The slice acceptance for "+label+" is "+str(sliceacc.getValV()))
                 norm = ROOT.RooProduct("sigpdf_"+label+"_norm", "Normalisation of signal", ROOT.RooArgList(xsec,acceff,sliceacc))
+
+                '''
+                savesig = projy_crop.Clone()
+                savesig.SetName("savesig_"+label)
+                savesig.Write()
+                savesigbefore = projy.Clone()
+                savesigbefore.SetName("savesigbefore_"+label)
+                savesigbefore.Write()
+                print("#####")
+                print("")
+                print("dump morphhist")
+                hist = morphhist
+                nnx = hist.GetNbinsX()
+                nny = hist.GetNbinsY()
+                for y in range(nny, 0, -1):  # last y-bin first
+                    row = [f"{int(hist.GetBinContent(hist.GetBin(x, y)))}" for x in range(1, nnx + 1)]
+                    print(" ".join(row))
+                print("dump projy")
+                hist = projy
+                nnx = hist.GetNbinsX()
+                print(" ".join([f"{int(hist.GetBinContent(hist.GetBin(x)))}" for x in range(1, nnx + 1)]))
+                print("")
+                hist = morphhist
+                print(hist.GetName())
+                print(hist)
+                print(f"x low edge: {hist.GetXaxis().GetXmin()}")
+                print(f"xhigh edge: {hist.GetXaxis().GetXmax()}")
+                print(f"x n bins: {hist.GetNbinsX()}")
+                print(f"y low edge: {hist.GetYaxis().GetXmin()}")
+                print(f"y high edge: {hist.GetYaxis().GetXmax()}")
+                print(f"y n bins: {hist.GetNbinsY()}")
+                print("")
+                print("")
+                hist = projy
+                print(hist.GetName())
+                print(hist)
+                print(f"low edge: {hist.GetXaxis().GetXmin()}")
+                print(f"high edge: {hist.GetXaxis().GetXmax()}")
+                print(f"n bins: {hist.GetNbinsX()}")
+                print("")
+                hist = projy_crop
+                print(hist.GetName())
+                print(hist)
+                print(f"low edge: {hist.GetXaxis().GetXmin()}")
+                print(f"high edge: {hist.GetXaxis().GetXmax()}")
+                print(f"n bins: {hist.GetNbinsX()}")
+                print("")
+                print("#####")
+                print("#####")
+                '''
+
                 getattr(w,"import")(sigpdf1d)
                 getattr(w,"import")(norm)
 

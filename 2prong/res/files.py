@@ -17,6 +17,9 @@ etabins = ["barrel","endcap"]
 # toggle for extended phi range
 crop_style = 1
 
+# toggle for extra grid points
+extra_points = 0
+
 # omega mass bin boundaries
 def get_m2pbin_boundaries(region, sigtype, etabin=''):
     if crop_style == 0:
@@ -63,7 +66,7 @@ workspacename="w"
 
 # input path
 input_top_level = './input'
-signal_input = 'signal_10percent_lowerphimass_eta'
+signal_input = 'signal_10percent_lowerphimass_etaprime'
 data_input = '.'
 datafilename = "{}/{}/egamma2018full.root".format(input_top_level, data_input)
 
@@ -79,8 +82,19 @@ for i in range(len(gengridw)):
         genfilenames[j][i]="./input/signal_"+gengridp[j][1]+"_"+gengridw[i][1]+".root"
 
 # omega and phi mass points to run over
-wmasspoints = numpy.linspace(0.5, 4, 1)
-pmasspoints = numpy.linspace(550, 3000, 50)
+wmasspoints = numpy.linspace(0.5, 4, 11)
+pmasspoints = numpy.linspace(550, 2925, 20)
+if extra_points == 1:
+    add_w_points = [2.0, 3.0]
+    add_p_points = [1000, 1500]
+    for point in add_w_points:
+        if not numpy.any(numpy.isclose(wmasspoints, point)):
+            wmasspoints = numpy.insert(wmasspoints, numpy.searchsorted(wmasspoints, point), point)
+            wmasspoints = numpy.sort(wmasspoints)  # safety net if wmasspoints isn't already sorted
+    for point in add_p_points:
+        if not numpy.any(numpy.isclose(pmasspoints, point)):
+            pmasspoints = numpy.insert(pmasspoints, numpy.searchsorted(pmasspoints, point), point)
+            pmasspoints = numpy.sort(pmasspoints)  # safety net if pmasspoints isn't already sorted
 npoints = len(wmasspoints)*len(pmasspoints)
 
 # convert a single index into a wmassindex and a pmassindex
@@ -235,15 +249,15 @@ def main():
             #print(n)
             count += 1
     print('points with genfile: {}'.format(count))
-    print('full gen grid:')
-    for i in range(len(gengridw)):
-        for j in range(len(gengridp)):
-            print(i, j, genfilenames[i][j])
+    #print('full gen grid:')
+    #for i in range(len(gengridw)):
+    #    for j in range(len(gengridp)):
+    #        print(i, j, genfilenames[i][j])
     
-    for sig in sigtypes:
-        for reg in regions:
-            for etabin in etabins:
-                print("{} {} {}: {}".format(sig, reg, etabin, get_num_m2pbins(reg, sig, etabin)))
+    #for sig in sigtypes:
+    #    for reg in regions:
+    #        for etabin in etabins:
+    #            print("{} {} {}: {}".format(sig, reg, etabin, get_num_m2pbins(reg, sig, etabin)))
 
 if __name__ == "__main__":
     main()

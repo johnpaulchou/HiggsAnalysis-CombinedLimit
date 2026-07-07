@@ -262,7 +262,7 @@ def monte_carlo_uncertainty_envelope(pdf, normalization, fitresult, binning, num
 
 """
 Parses a tree coming from HiggsCombine containing a limit (or significance)
-    
+
 Parameters:
     - rootfn: filename of root file
     - hasExpected: has expected limits in addition to observed. If this is false, the dictionary only contains 'mass' and 'obs' entries
@@ -308,7 +308,35 @@ def parse_HC_limit_tree(rootfn, hasExpected=True):
     return dict
 
 
+"""
+Parses a tree coming from HiggsCombine containing a limit (or significance)
 
+Parameters:
+
+Returns:
+"""
+
+def parse_toybased_sig_tree(rootfn):
+
+    # Try to open the ROOT TFile
+    rootfile = ROOT.TFile(rootfn, "READ")
+    if not rootfile or rootfile.IsZombie():
+        print("Error: Unable to open file "+rootfn+".")
+        return {}
+
+    # Try to get the tree
+    treename="limit"
+    tree = rootfile.Get(treename)
+    if not tree or not isinstance(tree, ROOT.TTree) or tree is None:
+        print("Error: Tree '", treename, "' not found or is not a valid TTree object in the file '", filename ,"'.")
+        return {}
+
+    dict = {}
+    tree.GetEntry(0)
+
+    dict["mass"]=tree.mh
+
+    return dict
 
 
 """
