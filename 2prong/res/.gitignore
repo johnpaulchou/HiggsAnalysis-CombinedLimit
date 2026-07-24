@@ -5,6 +5,7 @@ newcard.txt
 newcard.root
 playing/
 results/
+saved_results/
 roostats-*.root
 sigworkspace.root
 input
