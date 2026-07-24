@@ -1,6 +1,5 @@
 #!/bin/env python3
 
-import ROOT
 import common.tdrstyle as tdrstyle
 import common.common as common
 import files
@@ -8,12 +7,15 @@ import math
 import re
 import argparse
 import sys
+import ROOT
 
 tdrstyle.setTDRStyle()
 
 #PLOT_SIG_MIN = -0.2
-PLOT_SIG_MIN = -3.0
-PLOT_SIG_MAX = 4.5
+PLOT_SIG_MIN = -0.2
+PLOT_SIG_MAX = 4
+#PLOT_SIG_MAX = 3.6
+
 
 ###############################################################
 # start of the "main" function
@@ -27,18 +29,24 @@ if __name__ == "__main__":
     parser.add_argument("--drawSmooth",help="Draw a smoothed version of the limit plot",action=argparse.BooleanOptionalAction,default=False)
     parser.add_argument("--sigtype",help="signal type that we're using",choices=files.sigtypes, default=files.sigtypes[0])
     parser.add_argument("--fixedgrid",action='store_true', default=False)
+    parser.add_argument("--factor", default=False)
     parser.add_argument("-t", "--toybasedsig",action='store_true', default=False)
 
     args = parser.parse_args()
 
     #ROOT.gROOT.SetBatch(True)
 
+    if args.factor:
+        factor = float(args.factor)
+
     # create histograms
     if args.fixedgrid:
         xbinsw = (files.wmasspoints[1]-files.wmasspoints[0])
         ybinsw = (files.pmasspoints[1]-files.pmasspoints[0])
-        xbinslo, xbinshi = 0.85, 4
-        ybinslo, ybinshi = 550, 2925
+        print(xbinsw, ybinsw)
+        if args.sigtype == files.sigtypes[0]: xbinslo, xbinshi = 0.5, 3.95
+        if args.sigtype == files.sigtypes[1]: xbinslo, xbinshi = 0.95, 3.95
+        ybinslo, ybinshi = 550, 2920
         xbinslo = xbinslo - 0.5*xbinsw
         xbinshi = xbinshi + 0.5*xbinsw
         ybinslo = ybinslo - 0.5*ybinsw
@@ -56,22 +64,37 @@ if __name__ == "__main__":
         ybinshi = files.pmasspoints[ybinsn-1]+ybinsw*0.5
 
     hSig = ROOT.TH2D("hSig","Significance",xbinsn,xbinslo,xbinshi,ybinsn,ybinslo,ybinshi)
+    print(xbinsn,xbinslo,xbinshi,ybinsn,ybinslo,ybinshi)
 
-    # setup hGen
     def getdrawbin(imass):
         wmass, pmass = files.indexmasses(imass)
-        xbin = hGen.GetXaxis().FindBin(wmass)
-        ybin = hGen.GetYaxis().FindBin(pmass)
+        xbin = hSig.GetXaxis().FindBin(wmass)
+        ybin = hSig.GetYaxis().FindBin(pmass)
         return xbin, ybin
 
+    # setup hGen
     hGen = ROOT.TH2D("hGen","Generated Masspoints",xbinsn,xbinslo,xbinshi,ybinsn,ybinslo,ybinshi)
     for imass, entry in enumerate(files.genfilenames_raw):
         if not entry=='':
             xindex, yindex = getdrawbin(imass)
             hGen.SetBinContent(xindex,yindex,0.1)
 
+    #nx = hSig.GetNbinsX()
+    #ny = hSig.GetNbinsY()
+    #for y in range(ny, 0, -1):  # last y-bin first
+    #    for x in range(1, nx + 1):
+    #        hSig.SetBinContent(x, y, 0)
+    #for iimass in range(files.npoints):
+    #    windex, pindex=files.indexpair(iimass)
+    #    #print("set", iimass, windex, pindex)
+    #    hSig.SetBinContent(windex+1, pindex+1, 0)
+
+    sig_failed_mps = set()
+
     # loop over all of the arguments
     for count, file in enumerate(args.filenames):
+
+
 
         if not args.toybasedsig:
             dict=common.parse_HC_limit_tree(file,hasExpected=False)
@@ -115,21 +138,66 @@ if __name__ == "__main__":
                 continue
             sig = res.Significance()
             #dict=common.parse_toybased_sig_tree(file)
-            #imass=int(dict["mass"]) 
+            #imass=int(dict["mass"])
+
+            #if args.factor:
+            #    #print("before", sig)
+            #    sig = files.modify_significance(sig, factor)
+            #    #print("after", sig)
 
             #imass=count
-            windex,pindex=files.indexpair(imass)
+            #windex,pindex=files.indexpair(imass)
+            windex, pindex = getdrawbin(imass)
+            if windex == 0 or pindex == 0: continue
             #if sig < 0:
             #    sig = 0
+            #print(imass, windex, pindex)
+            prev = hSig.GetBinContent(windex,pindex)
+            #print(imass, windex, pindex, prev, sig, file)
+
+            if sig < 0: sig = -0.1
+
             if math.isinf(sig) or math.isnan(sig):
-                print(file)
-                print(imass)
-                print(sig, "nan")
+                #print(file)
+                #print(imass)
+                #print(sig, "nan")
                 sig = -100
-            hSig.SetBinContent(windex+1,pindex+1,sig)
-            #print("hi", imass, sig)
+                sig_failed_mps.add(imass)
 
+            #print("pre update 1", hSig.GetBinContent(21+1, 41+1))
+            #print("pre update 2", hSig.GetBinContent(22+1, 41+1))
 
+            if prev == 0:
+                #print("i")
+                #print(f"  imass {imass}: setting {sig}")
+                #print("hi update 1", hSig.GetBinContent(21+1, 41+1))
+                #print("hi update 2", hSig.GetBinContent(22+1, 41+1))
+                #print("hi update 3", hSig.GetBinContent(2+1, 4+1))
+                hSig.SetBinContent(windex,pindex,sig)
+                #print("bye update 1", hSig.GetBinContent(21+1, 41+1))
+                #print("bye update 2", hSig.GetBinContent(22+1, 41+1))
+                #print("bye update 3", hSig.GetBinContent(2+1, 4+1))
+            elif prev == sig:
+                #print("ii")
+                pass
+            elif prev == -100 and not sig == -100:
+                #print("iii")
+                print(f"  imass {imass}: replacing {prev} with {sig}")
+                hSig.SetBinContent(windex,pindex,sig)
+                sig_failed_mps.remove(imass)
+            elif sig == -100:
+                #print("iv")
+                pass    
+            else:
+                #print("v")
+                print(f"  imass {imass}: replacing {prev} with {sig}")
+                hSig.SetBinContent(windex,pindex,sig)
+                
+            #print("update 1", hSig.GetBinContent(21+1, 41+1))
+            #print("update 2", hSig.GetBinContent(22+1, 41+1))
+            #print("end")
+
+    
     nbins=200
     if args.drawSmooth:
         hSig=common.interpolate_th2d(hSig, nbins, nbins)
@@ -174,10 +242,7 @@ if __name__ == "__main__":
     hGen.SetMarkerStyle(5)
     hGen.SetMarkerColor(7)
     hGen.SetFillColor(7)
-    #hGen.SetLineWidth(1)
-    #hGen.SetLineStyle(1)
-    #hGen.SetMarkerSize(5)
-    hGen.Draw("box same")
+    #hGen.Draw("box same")
 
     can.Update()
     can.Draw()
@@ -189,3 +254,15 @@ if __name__ == "__main__":
     for y in range(ny, 0, -1):  # last y-bin first
         row = [f"{hSig.GetBinContent(hSig.GetBin(x, y)):.3f}" for x in range(1, nx + 1)]
         print(" ".join(row))
+
+    vals = []
+    for x in range(1, nx + 1):
+        for y in range(ny, 0, -1):
+            vals.append(hSig.GetBinContent(hSig.GetBin(x, y)))
+
+    print()
+    print("Max", max(vals))
+    if args.factor: print("Max after factor", files.modify_significance(max(vals), factor))
+    print()
+    print(len(sig_failed_mps), "masspoints with nan")
+    print(" ".join([str(mp) for mp in sig_failed_mps]))

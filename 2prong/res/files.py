@@ -6,6 +6,7 @@ import numpy
 import array
 import re
 import os
+from scipy.stats import norm
 
 # signal types
 sigtypes = ["eta","etaprime"]
@@ -66,7 +67,7 @@ workspacename="w"
 
 # input path
 input_top_level = './input'
-signal_input = 'signal_10percent_lowerphimass_etaprime'
+signal_input = 'signal_10percent_lowerphimass_eta'
 data_input = '.'
 datafilename = "{}/{}/egamma2018full.root".format(input_top_level, data_input)
 
@@ -82,8 +83,8 @@ for i in range(len(gengridw)):
         genfilenames[j][i]="./input/signal_"+gengridp[j][1]+"_"+gengridw[i][1]+".root"
 
 # omega and phi mass points to run over
-wmasspoints = numpy.linspace(0.5, 4, 11)
-pmasspoints = numpy.linspace(550, 2925, 20)
+wmasspoints = numpy.linspace(0.5, 3.95, 24)
+pmasspoints = numpy.linspace(550, 2920, 80)
 if extra_points == 1:
     add_w_points = [2.0, 3.0]
     add_p_points = [1000, 1500]
@@ -139,6 +140,28 @@ def get_xsection(phimass):
         x1, y1 = theory_xs[i + 1]
         if x0 <= phimass <= x1:
             return y0 + (y1 - y0) * (phimass - x0) / (x1 - x0)
+
+def modify_significance(sig, factor):
+    p = 1 - norm.cdf(sig)
+    p_modified = p * factor
+    if p_modified >= 1: return 0
+    sig_modified = norm.ppf(1 - p_modified)
+    return sig_modified
+
+def massage(histo, style=""):
+    nx = histo.GetNbinsX()
+    ny = histo.GetNbinsY()
+    #for y in range(ny, 0, -1):  # last y-bin first
+    for y in range(1, ny):
+        for x in range(1, nx+1):
+            old = histo.GetBinContent(histo.GetBin(x, y))
+            if style == "sideband_eta":
+                if (y <= 15 and old > 0) or \
+                   (x == 18 and y == 18) or \
+                   (x == 13 and (y == 19 or y == 20 or y == 21)) or \
+                   (x == 12 and (y >= 20 and y <= 23)) \
+                :
+                    histo.SetBinContent(histo.GetBin(x, y), -0.2)
 
 # set up the grid of generated points and their corresponding input files
 import os
